@@ -32,18 +32,33 @@ INSTRUCTIONS: Contents:
           - Control System Toolbox v10.5+
 
 -------------------------------------------------
-1. Loading sample photometry object:
+1. Loading single-session sample photometry object:
 
   - Using the sample datasets at https://www.dropbox.com/sh/wdotym743hmo4jc/AABKfTVxkH2JVkZXJ-7UpLyCa?dl=0
   
     - Navigate to the sample datafolder for animal B5, SNc day 13 (B5_SNc_13)
   
     - Open the file. It will initialize to the workspace as sObj or obj, depending on the dataset
+    
+Loading composte session object:
+
+  - Navigate to the sample Composite Datasets folder and open the file with the analysis of choice
 
 -------------------------------------------------
 2. Code to reproduce figures from Hamilos et al., 2020
 
-** Warning: under construction: 5/19/2020 18:15 EST
+** Warning: under construction: 5/19/2020 18:15 EST -- check back tonight for updates
+
+  - FIGURE 1:
+  
+    - 1b: Histograms
+            <<@AH: *** INSERT COMPOSITE OBJ ECDF
+    - 1c/d: CTA
+          <<@AH: *** INSERT COMPOSITE SNc 68 bin and B5_SNc_13
+          
+          
+   - FIGURE 2:
+     
 
 -------------------------------------------------
 3. To generate new objects from CED datasets:
