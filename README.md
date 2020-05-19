@@ -1,5 +1,5 @@
 # HSOManalysisPackages
-Contains MATLAB analysis files used in Hamilos et al., 2020 with a sample dataset, instructions, and all necessary dependencies.
+Contains MATLAB 2018B analysis files used in Hamilos et al., 2020 with a sample dataset, instructions, and all necessary custom dependencies.
 
 Please note!! This repo, license, and supporting instructional documentation is under construction.
 
@@ -48,25 +48,29 @@ INSTRUCTIONS: Contents:
 -------------------------------------------------
 3. To generate new objects from CED datasets:
 
-  i. Save CED/Spike2 dataset as .mat file. Ensure that the CED filename has the same name as the .mat file to avoid errors. Ensure waveforms and times are saved and use channel names.
+    i. Save CED/Spike2 dataset as .mat file. Ensure that the CED filename has the same name as the .mat file to avoid errors. Ensure waveforms and times are saved and use channel names.
   
-  ii. Put raw .mat files into directories in the following way:
+    ii. Put raw .mat files into directories in the following way:
 
-  HOSTdirectory >
+    HOSTdirectory >
+    
                 MOUSENAME_SIGNAL_DAY#
                 e.g.:
                 - B5_SNc_13
                 - B5_SNc_15
                 
-  Each session folder must contain a CED .mat file and an exclusions text file (.txt) with a filename containing the word "exclusions." Exclusions (for trials) may be written as numbers delimited by any character EXCEPT a dash (-). A dash character denotes a range of trials (e.g., 4-6 = 4,5,6). Any non-existant trials will not affect the file, e.g., excluding trials 400-1000 on a session with 420 trials will be interpreted as 400-420.
+    Each session folder must contain a CED .mat file and an exclusions text file (.txt) with a filename containing the word "exclusions." Exclusions (for trials) may be written as numbers delimited by any character EXCEPT a dash (-). A dash character denotes a range of trials (e.g., 4-6 = 4,5,6). Any non-existant trials will not affect the file, e.g., excluding trials 400-1000 on a session with 420 trials will be interpreted as 400-420.
 
-  For a standard photometry object, use:
+    For a standard photometry object, use:
+    
+        obj = CLASS_HSOM_photometry('v3x', MODE, NBINS, {'GFITMODE', GFITPARAM}, NSAMPLEBUFFER, [], [], 'off')
+    MODE: either 'times' or 'trials' -- indicates whether signals should be binned by time in trial or for bins with even numbers of trials in each bin
   
-    obj = CLASS_HSOM_photometry('v3x', MODE, NBINS, {'GFITMODE', GFITPARAM}, NSAMPLEBUFFER, [], [], 'off')
-  MODE: either 'times' or 'trials' -- indicates whether signals should be binned by time in trial or for bins with even numbers of trials in each bin
-  
-  NBINS: a number. For 'times' MODE: Using 17 for the standard task with 'times' results in 17 1-second timebins.   
-                  For 'trials' MODE: enter the number of bins you wish. If number exceeds number of trials, object will not intialize.
+    NBINS: a number. 
+    
+          For 'times' MODE: Using 17 for the standard task with 'times' results in 17 1-second timebins.   
+                  
+          For 'trials' MODE: enter the number of bins you wish. If number exceeds number of trials, object will not intialize.
                   
   GFITMODE, GFITPARAM: selects the signal dF/F method (or filtering for movement channels). In general:
   
@@ -85,6 +89,6 @@ INSTRUCTIONS: Contents:
   
     obj = CLASS_HSOM_photometry('v3x', 'times', 17, {'EMG', []}, 100000, [], [], 'off')
   
-  NB: data can be rebinned anytime for single session objects. Composite objects (averaging across sessions) cannot be changed after the initialization step.
+   NB: data can be rebinned anytime for single session objects. Composite objects (averaging across sessions) cannot be changed after the initialization step.
         
   
