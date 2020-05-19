@@ -22,20 +22,23 @@ INSTRUCTIONS: Contents:
 
     1. Clone or download the HSOManalysisPackages repository and add subfolders files to path in MATLAB 2018B or higher
     2. Make sure the following toolboxes are enabled in MATLAB: 
-          Curve Fitting Toolbox v3.5.8+
-          Statistics and Machine Learning Toolbox v11.4+
-          Signal Processing Toolbox v8.1+
-          Optimization Toolbox v8.2+
-          Image Processing Toolbox v10.3+
-          DSP System Toolbox v9.7+
-          Control System Toolbox v10.5+
+    
+          - Curve Fitting Toolbox v3.5.8+
+          - Statistics and Machine Learning Toolbox v11.4+
+          - Signal Processing Toolbox v8.1+
+          - Optimization Toolbox v8.2+
+          - Image Processing Toolbox v10.3+
+          - DSP System Toolbox v9.7+
+          - Control System Toolbox v10.5+
 
 -------------------------------------------------
 1. Loading sample photometry object:
 
-  Using the sample datasets at https://www.dropbox.com/sh/wdotym743hmo4jc/AABKfTVxkH2JVkZXJ-7UpLyCa?dl=0
-  Navigate to the sample datafolder for animal B5, SNc day 13 (B5_SNc_13)
-  Open the file
+  - Using the sample datasets at https://www.dropbox.com/sh/wdotym743hmo4jc/AABKfTVxkH2JVkZXJ-7UpLyCa?dl=0
+  
+    - Navigate to the sample datafolder for animal B5, SNc day 13 (B5_SNc_13)
+  
+    - Open the file. It will initialize to the workspace as sObj or obj, depending on the dataset
 
 -------------------------------------------------
 2. Code to reproduce figures from Hamilos et al., 2020
@@ -46,16 +49,19 @@ INSTRUCTIONS: Contents:
 3. To generate new objects from CED datasets:
 
   i. Save CED/Spike2 dataset as .mat file. Ensure that the CED filename has the same name as the .mat file to avoid errors. Ensure waveforms and times are saved and use channel names.
+  
   ii. Put raw .mat files into directories in the following way:
 
   HOSTdirectory >
                 MOUSENAME_SIGNAL_DAY#
                 e.g.:
-                B5_SNc_13
-                B5_SNc_15
+                - B5_SNc_13
+                - B5_SNc_15
+                
   Each session folder must contain a CED .mat file and an exclusions text file (.txt) with a filename containing the word "exclusions." Exclusions (for trials) may be written as numbers delimited by any character EXCEPT a dash (-). A dash character denotes a range of trials (e.g., 4-6 = 4,5,6). Any non-existant trials will not affect the file, e.g., excluding trials 400-1000 on a session with 420 trials will be interpreted as 400-420.
 
   For a standard photometry object, use:
+  
     obj = CLASS_HSOM_photometry('v3x', MODE, NBINS, {'GFITMODE', GFITPARAM}, NSAMPLEBUFFER, [], [], 'off')
   MODE: either 'times' or 'trials' -- indicates whether signals should be binned by time in trial or for bins with even numbers of trials in each bin
   
