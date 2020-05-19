@@ -45,8 +45,8 @@ INSTRUCTIONS: Contents:
 -------------------------------------------------
 3. To generate new objects from CED datasets:
 
-  1. Save CED/Spike2 dataset as .mat file. Ensure that the CED filename has the same name as the .mat file to avoid errors. Ensure waveforms and times are saved and use channel names.
-  2. Put raw .mat files into directories in the following way:
+  i. Save CED/Spike2 dataset as .mat file. Ensure that the CED filename has the same name as the .mat file to avoid errors. Ensure waveforms and times are saved and use channel names.
+  ii. Put raw .mat files into directories in the following way:
 
   HOSTdirectory >
                 MOUSENAME_SIGNAL_DAY#
@@ -58,18 +58,25 @@ INSTRUCTIONS: Contents:
   For a standard photometry object, use:
     obj = CLASS_HSOM_photometry('v3x', MODE, NBINS, {'GFITMODE', GFITPARAM}, NSAMPLEBUFFER, [], [], 'off')
   MODE: either 'times' or 'trials' -- indicates whether signals should be binned by time in trial or for bins with even numbers of trials in each bin
+  
   NBINS: a number. For 'times' MODE: Using 17 for the standard task with 'times' results in 17 1-second timebins.   
-                  For 'trials' MODE: enter the number of bins you wish. If number exceeds number of trials, object will not intialize. 
+                  For 'trials' MODE: enter the number of bins you wish. If number exceeds number of trials, object will not intialize.
+                  
   GFITMODE, GFITPARAM: selects the signal dF/F method (or filtering for movement channels). In general:
+  
         {'box', 200000} -- uses the moving average dF/F method with 200000 sample window (200 s at 1kHz sampling)
         {'EMG', []} -- applies default rectification of EMG signal
         {'X', []} -- applies default bandpass filtering followed by rectification for accelerometer signals
         {'CamO', 30} -- processes camera data sampled at 30 Hz
+        
   NSAMPLEBUFFER: the number of samples buffered into the ITI. Standard is 30000 for photometry data, 100000 for movement control data
 
+
   Standard init for photometry:
+  
     obj = CLASS_HSOM_photometry('v3x', 'times', 17, {'box', 200000}, 30000, [], [], 'off')
   Standard init for EMG:
+  
     obj = CLASS_HSOM_photometry('v3x', 'times', 17, {'EMG', []}, 100000, [], [], 'off')
   
   NB: data can be rebinned anytime for single session objects. Composite objects (averaging across sessions) cannot be changed after the initialization step.
