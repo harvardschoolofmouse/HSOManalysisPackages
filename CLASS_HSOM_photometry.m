@@ -20,7 +20,7 @@
 % 
 % --------------------------------------------------------------------------------------
 
-classdef CLASS_photometry_roadmapv1_4 < handle
+classdef CLASS_HSOM_photometry < handle
 	properties 
 		Plot 			% Keeps track of plotting parameters, including lick times/positions
 		iv 				% Holds on to init variables... or some of them
@@ -43,7 +43,7 @@ classdef CLASS_photometry_roadmapv1_4 < handle
 	%		Methods: Initialization
 	%-------------------------------------------------------
 	methods
-		function obj = CLASS_photometry_roadmapv1_4(data, Mode, nbins, gfit, gtimes, xRaw, xTimes, stimMode) % choose large nbins to retain resolution
+		function obj = CLASS_HSOM_photometry(data, Mode, nbins, gfit, gtimes, xRaw, xTimes, stimMode) % choose large nbins to retain resolution
 			% 
 			% 	Version 3.x: Now we allow user to select data from a folder of files and to combine using ts methods...
 			% 				The idea is that we will be processing multiple files at once. Of course, we could do single files this way, too, instead of using Roadmap in the future
@@ -81,7 +81,7 @@ classdef CLASS_photometry_roadmapv1_4 < handle
 				warning(sprintf('VERSION NOTES: \n\n Only use v3x for forced 0ms rxn window operant data... preprocess with roadmap for now if not \n Not able to do GLM mode yet with v3.x \n v3.x not compatible with siITI yet. \n If no exclusions file present, not excluding any trials beyond what was done in initial processing for that dataset.'))
 				% 
 				% 	For dlight stim/nostim, use:
-				% 		obj = CLASS_photometry_roadmapv1_4('v3x', 'times', 17, {'MultiBaseline', 10}, 30000, [], [], stimMode)
+				% 		obj = CLASS_HSOM_photometry('v3x', 'times', 17, {'MultiBaseline', 10}, 30000, [], [], stimMode)
 				% 
 				if nargin < 2
 					Mode = 'times';
@@ -633,7 +633,7 @@ classdef CLASS_photometry_roadmapv1_4 < handle
                     eval(['sObj = sObj.' sObjfield{1} ';']);
 				else
 					obj.updateLog('		No statObj in folder or too many! Processing data from scratch to create a sObj')
-					sObj = CLASS_photometry_roadmapv1_4('stimNphot', 'times', 1, gfitStyle, timePad, [], [], stimMode);
+					sObj = CLASS_HSOM_photometry('stimNphot', 'times', 1, gfitStyle, timePad, [], [], stimMode);
 				end
 				% 
 				% 	Check that the sObj has all the necessary components and correct gfits as needed
@@ -13117,8 +13117,8 @@ classdef CLASS_photometry_roadmapv1_4 < handle
 		% 	ONLY USE THIS IN CONTEXT OF GLM - IF WE HAVE CHANGED FLUSH.T_TIMES I THINK IT SCREWS US UP! 3/16/19
 		%   
             chk = dbstack;
-            if ~strcmp(chk(2).name, 'CLASS_photometry_roadmapv1_4.nestedGLM') && ~strcmp(chk(2).name, 'CLASS_photometry_roadmapv1_4.build_a_trial2lick')
-                if ~numel(chk) > 2 || numel(chk) >= 3 && ~strcmp(chk(3).name, 'CLASS_photometry_roadmapv1_4.simulateCTA')
+            if ~strcmp(chk(2).name, 'CLASS_HSOM_photometry.nestedGLM') && ~strcmp(chk(2).name, 'CLASS_HSOM_photometry.build_a_trial2lick')
+                if ~numel(chk) > 2 || numel(chk) >= 3 && ~strcmp(chk(3).name, 'CLASS_HSOM_photometry.simulateCTA')
                     disp('****DONT USE THIS METHOD AFTER USING nestedGLM, will go with trimmed dataset!!! NOTE TO FIX THIS!!!!!!!!!!!!!!!!')
                 end
             end
@@ -13606,7 +13606,7 @@ classdef CLASS_photometry_roadmapv1_4 < handle
 				% 
 				% 	Create empty new object
 				% 	
-				obj3 = CLASS_photometry_roadmapv1_4();
+				obj3 = CLASS_HSOM_photometry();
 				% 
 				% 	Copy over relevant properties from obj 1
 				% 
@@ -13802,7 +13802,7 @@ classdef CLASS_photometry_roadmapv1_4 < handle
 				% 
 				% 	Create empty new object
 				% 	
-				obj3 = CLASS_photometry_roadmapv1_4();
+				obj3 = CLASS_HSOM_photometry();
 				% 
 				% 	Copy over relevant properties from obj 1
 				% 
