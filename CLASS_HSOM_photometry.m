@@ -1,5 +1,7 @@
 %% CLASS_HSOM_photometry.m: Create photometry object(s) for HSOM
 % 
+% 	GITHUB HSOM VERSION
+% 
 %   Created: 8-10-18		Allison Hamilos (ahamilos{at}g.harvard.edu)  
 % 	LastMod: 5-19-2020		Allison Hamilos (ahamilos{at}g.harvard.edu)
 % 
