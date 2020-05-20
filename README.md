@@ -46,7 +46,7 @@ Loading composte session object:
 -------------------------------------------------
 2. Code to reproduce figures from Hamilos et al., 2020
 
-**Warning: under construction: 5/19/2020 18:15 EST -- Please check back tomorrow
+**Warning: under construction: 5/19/2020 18:15 EST -- Please check back tomorrow**
 
   - FIGURE 1:
   
