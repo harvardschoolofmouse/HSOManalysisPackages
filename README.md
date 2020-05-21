@@ -32,7 +32,7 @@ INSTRUCTIONS: Contents:
 
     3. Download linspecer v1.4.0.0+ by Jonathan C. Lansey from MATLAB FileExchange: 
     
-    https://www.mathworks.com/matlabcentral/fileexchange/42673-beautiful-and-distinguishable-line-colors-colormap?focused=5372538&tab=function
+        https://www.mathworks.com/matlabcentral/fileexchange/42673-beautiful-and-distinguishable-line-colors-colormap?focused=5372538&tab=function
     
 -------------------------------------------------
 1. Loading single-session sample photometry object:
