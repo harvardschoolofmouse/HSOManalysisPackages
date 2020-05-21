@@ -72,10 +72,12 @@ Loading composte session object:
           %     NB: [6,9,13,15] are the timebins -- you can plot any between 1-68
           %
           xlim([-1.5,5])
-          
+          %
           % Example figure files included in Dropbox folder
-          
-          % see CLASS_HSOM_photometry > plot documentation for instructions to parameterize the plot function, there are several additional options and functionalities!
+          %
+          % See CLASS_HSOM_photometry > plot documentation for instructions 
+          %   to parameterize the plot function, there are several 
+          %   additional options and functionalities you can try!
           
           
    - FIGURE 2:
