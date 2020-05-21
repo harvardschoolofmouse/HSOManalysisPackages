@@ -1358,7 +1358,7 @@ classdef CLASS_HSOM_photometry < handle
 			% 	Save the final object
 			% 
 			timestamp_now = datestr(now,'mm_dd_yy__HH_MM_AM');
-            if ~strcompi(obj.iv.signalname,'none')
+            if ~strcmpi(obj.iv.signalname,'none')
     			savefilename = cell2mat(['V3xFinal_' obj.iv.signalname '_statObj_Mode' obj.Mode '_' num2str(numel(obj.BinnedData.CTA)) 'bins_stimMode' stimMode, '_' timestamp_now]);
             else
                 savefilename = cell2mat(['V3xFinal_' obj.iv.signalname '_statObj_Mode' obj.Mode '_bins_stimMode' stimMode, '_' timestamp_now]);
