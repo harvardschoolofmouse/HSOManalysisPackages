@@ -110,7 +110,7 @@ Loading composte session object:
 
 License Notes:
 
-    1. Note that linspecer v1.4.0.0+ by Jonathan C. Lansey is available from MATLAB FileExchange and included in dependencies with its original license: 
+   1. Note that linspecer v1.4.0.0+ by Jonathan C. Lansey is available from MATLAB FileExchange and included in dependencies with its original license: 
     
         https://www.mathworks.com/matlabcentral/fileexchange/42673-beautiful-and-distinguishable-line-colors-colormap?focused=5372538&tab=function
 
