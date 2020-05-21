@@ -61,10 +61,16 @@ Loading composte session object:
           To plot CLTAs of composite datasets with 500 ms timebins for averaging:
           
           obj = CLASS_HSOM_photometry('v3x', 'times', 68, {'box', 200000}, 30000, [], [], 'off')
-          % select either SNc or tdt to make a composite SNc or tdt object
+          %   Select either SNc or tdt to make a composite SNc or tdt object. 
+          %     Then select the corresponding HOST folder from the 
+          %     Dropbox sample data.
           
-          % Plotting: NB: you can use the plot function on single-session datasets (e.g., B5_SNc_13) and composite datasets
-          obj.plot('CLTA', [6, 9, 13, 15], false, 10, 'last-to-first', 1) % [6,9,13,15] are the timebins -- you can plot any between 1-68
+          %     Plotting: NB: you can use the plot function on single-session 
+          %       datasets (e.g., B5_SNc_13) and composite datasets
+          obj.plot('CLTA', [6, 9, 13, 15], false, 10, 'last-to-first', 1) 
+          %
+          %     NB: [6,9,13,15] are the timebins -- you can plot any between 1-68
+          %
           xlim([-1.5,5])
           
           % Example figure files included in Dropbox folder
