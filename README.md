@@ -52,6 +52,7 @@ Loading composte session object:
   
     - 1b: Histograms
             
+            % Open folder Figure 1 > 1B Histograms (example output figure is in folder)
             load('CollatedStatAnalysisObj_cdf_20191107_18_10_runIDno4486.mat')
             obj.plot('hxg-xsesh')
     - 1c-f: CLTA (cue/lick triggered averages)
