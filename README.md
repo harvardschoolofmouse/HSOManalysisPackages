@@ -71,6 +71,10 @@ Loading composte session object:
           obj.plot('CLTA', [6, 9, 13, 15], false, 10, 'last-to-first', 1) 
           %
           %     NB: [6,9,13,15] are the timebins -- you can plot any between 1-68
+          %     NB2: Change tail in Matlab (click the warning) to 
+          %       change limits on right-hand side of plot
+          %       5000: makes plots in 1C, 1D
+          %       -150:  makes plots in 1E, 1F
           %
           xlim([-1.5,5])
           %
