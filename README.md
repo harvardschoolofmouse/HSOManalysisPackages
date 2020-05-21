@@ -29,10 +29,6 @@ INSTRUCTIONS: Contents:
           - Image Processing Toolbox v10.3+
           - DSP System Toolbox v9.7+
           - Control System Toolbox v10.5+
-
-    3. Download linspecer v1.4.0.0+ by Jonathan C. Lansey from MATLAB FileExchange: 
-    
-        https://www.mathworks.com/matlabcentral/fileexchange/42673-beautiful-and-distinguishable-line-colors-colormap?focused=5372538&tab=function
     
 -------------------------------------------------
 1. Loading single-session sample photometry object:
@@ -108,5 +104,13 @@ Loading composte session object:
     obj = CLASS_HSOM_photometry('v3x', 'times', 17, {'EMG', []}, 100000, [], [], 'off')
   
    NB: data can be rebinned anytime for single session objects. Composite objects (averaging across sessions) cannot be changed after the initialization step.
-        
-  
+
+
+--------------------------------------
+
+License Notes:
+
+    1. Note that linspecer v1.4.0.0+ by Jonathan C. Lansey is available from MATLAB FileExchange and included in dependencies with its original license: 
+    
+        https://www.mathworks.com/matlabcentral/fileexchange/42673-beautiful-and-distinguishable-line-colors-colormap?focused=5372538&tab=function
+
