@@ -3,7 +3,7 @@ Contains MATLAB 2018B analysis files used in Hamilos et al., 2020 with a sample 
 
 **Please note!! This supporting instructional documentation is under construction.**
 
-Last Update on May 19, 2020. Please contact ahamilos{at}g.harvard.edu if you have questions or something isn't working. 
+Last Update on May 21, 2020. Please contact ahamilos{at}g.harvard.edu if you have questions or something isn't working. 
 
   > For example datasets to use with the sample code, please see:
   > https://www.dropbox.com/sh/wdotym743hmo4jc/AABKfTVxkH2JVkZXJ-7UpLyCa?dl=0
@@ -46,12 +46,14 @@ Loading composte session object:
 -------------------------------------------------
 2. Code to reproduce figures from Hamilos et al., 2020
 
-**Warning: under construction: 5/19/2020 18:15 EST -- Please check back tomorrow**
+**Warning: under construction: 5/21/2020 11:21 EST -- Please check back tomorrow**
 
-  - FIGURE 1:
+  - FIGURE 1: Use the Figure 1 dataset filefolder from dropbox
   
     - 1b: Histograms
-            <<@AH: *** INSERT COMPOSITE OBJ ECDF
+            
+            load('CollatedStatAnalysisObj_cdf_20191107_18_10_runIDno4486.mat')
+            obj.plot('hxg-xsesh')
     - 1c/d: CTA
           <<@AH: *** INSERT COMPOSITE SNc 68 bin and B5_SNc_13
           
