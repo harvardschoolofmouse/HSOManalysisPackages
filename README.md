@@ -58,7 +58,7 @@ Loading composte session object:
     
          NB: Example dataset has 2 mice recorded at SNc and shows basic pattern found more cleanly in the full average across all animals (12-mouse full SNc/tdt dataset and 4-mouse DA2m datasets are too large to put on Dropbox, available on reasonable request to Allison Hamilos, ahamilos{at}g.harvard.edu). The all-mice figures are saved to the 1C-F folders
           
-          To plot CLTAs of composite datasets with 500 ms timebins for averaging:
+          To plot CLTAs of composite datasets with 250 ms timebins for averaging:
           
           obj = CLASS_HSOM_photometry('v3x', 'times', 68, {'box', 200000}, 30000, [], [], 'off')
           %   Select either SNc or tdt to make a composite SNc or tdt object. 
