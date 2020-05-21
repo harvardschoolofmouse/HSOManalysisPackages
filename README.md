@@ -54,8 +54,22 @@ Loading composte session object:
             
             load('CollatedStatAnalysisObj_cdf_20191107_18_10_runIDno4486.mat')
             obj.plot('hxg-xsesh')
-    - 1c/d: CTA
-          <<@AH: *** INSERT COMPOSITE SNc 68 bin and B5_SNc_13
+    - 1c-f: CLTA (cue/lick triggered averages)
+    
+         NB: Example dataset has 2 mice recorded at SNc and shows basic pattern found more cleanly in the full average across all animals (12-mouse full SNc/tdt dataset and 4-mouse DA2m datasets are too large to put on Dropbox, available on reasonable request to Allison Hamilos, ahamilos{at}g.harvard.edu). The all-mice figures are saved to the 1C-F folders
+          
+          To plot CLTAs of composite datasets with 500 ms timebins for averaging:
+          
+          obj = CLASS_HSOM_photometry('v3x', 'times', 68, {'box', 200000}, 30000, [], [], 'off')
+          % select either SNc or tdt to make a composite SNc or tdt object
+          
+          % Plotting: NB: you can use the plot function on single-session datasets (e.g., B5_SNc_13) and composite datasets
+          obj.plot('CLTA', [6, 9, 13, 15], false, 10, 'last-to-first', 1) % [6,9,13,15] are the timebins -- you can plot any between 1-68
+          xlim([-1.5,5])
+          
+          % Example figure files included in Dropbox folder
+          
+          % see CLASS_HSOM_photometry > plot documentation for instructions to parameterize the plot function, there are several additional options and functionalities!
           
           
    - FIGURE 2:
