@@ -1,7 +1,7 @@
 # HSOManalysisPackages
 Contains MATLAB 2018B analysis files used in Hamilos et al., 2020 with a sample dataset, instructions, and all necessary custom dependencies.
 
-**Please note!! Thiis supporting instructional documentation is under construction.**
+**Please note!! This supporting instructional documentation is under construction.**
 
 Last Update on May 19, 2020. Please contact ahamilos{at}g.harvard.edu if you have questions or something isn't working. 
 
@@ -30,6 +30,10 @@ INSTRUCTIONS: Contents:
           - DSP System Toolbox v9.7+
           - Control System Toolbox v10.5+
 
+    3. Download linspecer v1.4.0.0+ by Jonathan C. Lansey from MATLAB FileExchange: 
+    
+    https://www.mathworks.com/matlabcentral/fileexchange/42673-beautiful-and-distinguishable-line-colors-colormap?focused=5372538&tab=function
+    
 -------------------------------------------------
 1. Loading single-session sample photometry object:
 
