@@ -44,9 +44,12 @@ INSTRUCTIONS: Contents:
      Suppose we wish to analyze GCaMP6f data recorded at SNc. We would first consult the "Dataset Map.txt" file and find all session folders containing SNc GCaMP6f signals that are nested under "\Single Session Data\Photometry\GCaMP6f and tdTomato Photometry and Behavior" (single sessions in this folder may have SNc, VTA and/or DLS data in the same file). Of course, there are many session folders fitting this description, but let's say for sake of demonstration we are interested in creating an analysis object to look at SNc GCaMP6f data from mouse H6 on days 5, 7, and 9. The Dataset Map will show the original folder names (H6_signalname_5, H6_signalname_7, H6_signalname_9). Copy these folders to a new directory named SNcHOST and change the "signalname" string in the foldername to "SNc" (the proper signal designation codes for all signals are found in the Dataset Map.txt file). Your analysis directory should be:
      
      ~/SNcHOST/, containing:
-     ~/H6_SNc_5
-     ~/H6_SNc_7
-     ~/H6_SNc_9
+     
+        ~/H6_SNc_5
+     
+        ~/H6_SNc_7
+     
+        ~/H6_SNc_9
      
      You are now ready to run the automated HSOM analysis package on these files to conduct a wide variety of analyses from plotting to model fitting.
      
