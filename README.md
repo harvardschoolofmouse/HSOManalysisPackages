@@ -196,10 +196,36 @@ NB that all original datasets from each figure are embedded within the paper in 
    
      Once again, we simply modify our object generating function:
           
-          obj = CLASS_photometry_roadmapv1_4('v3x', 'paired-nLicksBaseline', {2, [700,3330], [3334,7000], 5000}, {'box', 200000}, 30000, [], [], 'off')
+          obj = CLASS_HSOM_photometry('v3x', 'paired-nLicksBaseline', {2, [700,3330], [3334,7000], 5000}, {'box', 200000}, 30000, [], [], 'off')
           obj.plot('CTA', 'all', false, 100, 'last-to-first', 1)           
           obj.plotLOTA()
+
+
+   - FIGURE 5: Encoding GLM
+   
+      See the function we built to run the models and variations, which is documented in great detail in the CLASS_HSOM_photometry.m file. This function can run a variety of versions of the model on individual session data. There are a ton of additional QC and plotting features included in the model functions that go beyond what was shown in the paper, which may be of interest and use to the user. Please let ahamilos know if you have any questions or difficulty running the models by emailing ahamilos [at] g [dot] harvard [dot] edu, and I'll be happy to assist you. I also would like your feedback on how to make this part of the analysis more user-friendly, so any feedback is appreciated! See:
           
+          In CLASS_HSOM_photometry:
+          
+          function [th, X, a, yFit, x, xValidationStruct, CVmat] = nestedGLM(obj, cannedStyle, trimming, lam, th0_on, Events, x_style, basis, smoothing)
+     
+
+   - FIGURE 6: Single trial data
+   
+     WARNING: this won't work well for a composite object--the file will be too large! Use this for single session datasets. Load the object (original binning doesn't matter, we will rewrite it):
+          
+          obj.getBinnedTimeseries(obj.GLM.gfit, 'singleTrial', [], 30000,[],[],false);
+     
+     Now you can use the plot or analysis function of your choice.
+     
+     To run single-session decoding models, see the documentation provided in the CLASS_HSOM_photometry.m file. Again, we are very interested in making these tools more intuitive and user-friendly. Please reach out to ahamilos [at] g [dot] harvard [dot] edu, and I'll be happy to assist you.
+     
+          In CLASS_HSOM_photometry:
+          
+          function [b,dev,stats,X,y,yfit, LossImprovement] = GLM_predictLickTime(obj, Mode, Conditioning, Link, Debug, predictorSet,verbose,killMissing)
+     
+     
+     
 
 
 --------------------------------------
