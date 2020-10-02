@@ -10,9 +10,7 @@ Last Update on Oct 1, 2020. Please contact ahamilos{at}g.harvard.edu if you have
   >
   > For all original datasets, see our Zenodo repository at:
   >
-  > (tbd)
-  >
-  > See section 3. Instructions for generating new objects from raw CED datasets for use with files in the Zenodo repo
+  > (tbd, upload in progress. See section 0. Importing repo code and working with the Zenodo dataset repository)
 
 -------------------------------------------------
 INSTRUCTIONS: Contents:
