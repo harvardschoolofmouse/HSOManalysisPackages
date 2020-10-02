@@ -1,9 +1,9 @@
 # HSOManalysisPackages
 Contains MATLAB 2018B analysis files used in Hamilos et al., 2020 with a sample dataset, instructions, and all necessary custom dependencies.
 
-**Please note!! This supporting instructional documentation is under construction.**
+**Please note!! This supporting instructional documentation is under construction, and we are seeking feedback! Please don't hesitate to reach out with questionss and we will be happy to assist you as promptly as we can.**
 
-Last Update on Oct 1, 2020. Please contact ahamilos{at}g.harvard.edu if you have questions or something isn't working. 
+Last Update on Oct 2, 2020. Please contact ahamilos{at}g.harvard.edu if you have questions or something isn't working. 
 
   > For example datasets to use with the sample code, please see:
   > https://www.dropbox.com/sh/wdotym743hmo4jc/AABKfTVxkH2JVkZXJ-7UpLyCa?dl=0
