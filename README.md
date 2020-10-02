@@ -208,6 +208,10 @@ NB that all original datasets from each figure are embedded within the paper in 
           In CLASS_HSOM_photometry:
           
           function [th, X, a, yFit, x, xValidationStruct, CVmat] = nestedGLM(obj, cannedStyle, trimming, lam, th0_on, Events, x_style, basis, smoothing)
+          
+          Run to automatically run encoding fits on multiple datasets:
+          
+          AutoGLMencodingModel.m
      
 
    - FIGURE 6: Single trial data
