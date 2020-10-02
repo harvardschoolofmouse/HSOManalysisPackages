@@ -45,11 +45,9 @@ INSTRUCTIONS: Contents:
      
      ~/SNcHOST/, containing:
      
-        ~/H6_SNc_5
-     
-        ~/H6_SNc_7
-     
-        ~/H6_SNc_9
+        ~/H6_SNc_5/
+        ~/H6_SNc_7/
+        ~/H6_SNc_9/
      
      You are now ready to run the automated HSOM analysis package on these files to conduct a wide variety of analyses from plotting to model fitting.
      
@@ -109,7 +107,7 @@ Put raw .mat files into directories in the following way:
 -------------------------------------------------
 1. Loading single-session sample photometry object:
 
-  - Using the sample datasets at https://www.dropbox.com/sh/wdotym743hmo4jc/AABKfTVxkH2JVkZXJ-7UpLyCa?dl=0
+  - Using either your freshly-generated analysis objects OR using the sample analysis objects available at https://www.dropbox.com/sh/wdotym743hmo4jc/AABKfTVxkH2JVkZXJ-7UpLyCa?dl=0
   
     - Navigate to the sample datafolder for animal B5, SNc day 13 (B5_SNc_13)
   
@@ -163,9 +161,45 @@ NB that all original datasets from each figure are embedded within the paper in 
           %   additional options and functionalities you can try!
           
           
-   - FIGURE 2:
-     
+   - FIGURE 2: Cue-aligned averages
+   
+          As in Figure 1, the left-insets are CLTA plots. To generate the cue-aligned averaged in the main panels, simply modify the plot command as follows:
+          
+          %   Generate the object for the signal of choice:
+          %
+          obj = CLASS_HSOM_photometry('v3x', 'times', 68, {'box', 200000}, 30000, [], [], 'off')
+          %   Select either SNc or tdt to make a composite SNc or tdt object. 
+          %     Then select the corresponding HOST folder from the 
+          %     Dropbox sample data.
+          
+          %     Plotting: NB: you can use the plot function on single-session 
+          %       datasets (e.g., B5_SNc_13) and composite datasets
+          obj.plot('CTA', 4:28, false, 100, 'last-to-first', 1) 
+          %
+          %     NB: 4:28 are the timebins -- you can plot any between 1-68
+          %     NB2: 100 is the smoothing (in samples)
+          %
+          xlim([-4,10])
 
+          
+   - FIGURE 3: Lick-aligned movement control signals
+   
+          These are run exactly the same way as in Figures 1 and 2 except using analysis objects containing movement signals: EMG, X (accelerometer), CamO, or one of the red channles (SNcred, VTAred, or DLSred). Generate the objects as before and run the same plotting function *except* call 'LTA2l' as the Mode argument rather than 'CTA' or 'CTLA'. You can also try plotting with 'LTA'. This can be a bit misleading because 'LTA' Mode will not truncate the plot at the earliest cue time; thus it will not be as clear what signal occurred before the trial started in the average. As such, we recommend plotting with 'LTA2l' to trim the signal at the time of the earliest cue.
+          
+          NB that we custom-binned the times in the plots to show both early and rewarded times that would have enough time before the lick to avoid truncating the entire signal. The 1ms bin between 3333 and 3334 ms in the binning eliminates any ambiguity caused by rounding of the reward cut-off time.
+          
+          obj = CLASS_HSOM_photometry('v3x', 'custom', [0, 2000, 3333, 3334, 7000, 17000], {'box', 200000}, 60000, [], [], 'off')
+          obj.plot('LTA2l', [2,4], false, 100, 'last-to-first', 1) 
+     
+          
+   - FIGURE 4: CTA and Lamp-Off aligned averages
+   
+          Once again, we simply modify our object generating function:
+          
+          obj = CLASS_photometry_roadmapv1_4('v3x', 'paired-nLicksBaseline', {2, [700,3330], [3334,7000], 5000}, {'box', 200000}, 30000, [], [], 'off')
+          obj.plot('CTA', 'all', false, 100, 'last-to-first', 1)           
+          obj.plotLOTA()
+          
 
 
 --------------------------------------
