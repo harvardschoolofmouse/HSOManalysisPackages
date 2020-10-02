@@ -134,8 +134,8 @@ NB that all original datasets from each figure are embedded within the paper in 
     - 1c-f: CLTA (cue/lick triggered averages)
     
          NB: Example dataset has 2 mice recorded at SNc and shows basic pattern found more cleanly in the full average across all animals (12-mouse full SNc/tdt dataset and 4-mouse DA2m datasets are too large to put on Dropbox, available on reasonable request to Allison Hamilos, ahamilos{at}g.harvard.edu). The all-mice figures are saved to the 1C-F folders
-          
-     To plot CLTAs of composite datasets with 250 ms timebins for averaging:
+         
+         To plot CLTAs of composite datasets with 250 ms timebins for averaging:
           
           obj = CLASS_HSOM_photometry('v3x', 'times', 68, {'box', 200000}, 30000, [], [], 'off')
           %   Select either SNc or tdt to make a composite SNc or tdt object. 
@@ -163,7 +163,7 @@ NB that all original datasets from each figure are embedded within the paper in 
           
    - FIGURE 2: Cue-aligned averages
    
-    As in Figure 1, the left-insets are CLTA plots. To generate the cue-aligned averaged in the main panels, simply modify the plot command as follows:
+        As in Figure 1, the left-insets are CLTA plots. To generate the cue-aligned averaged in the main panels, simply modify the plot command as follows:
           
           %   Generate the object for the signal of choice:
           %
@@ -184,7 +184,7 @@ NB that all original datasets from each figure are embedded within the paper in 
           
    - FIGURE 3: Lick-aligned movement control signals
    
-    These are run exactly the same way as in Figures 1 and 2 except using analysis objects containing movement signals: EMG, X (accelerometer), CamO, or one of the red channles (SNcred, VTAred, or DLSred). Generate the objects as before and run the same plotting function *except* call 'LTA2l' as the Mode argument rather than 'CTA' or 'CTLA'. You can also try plotting with 'LTA'. This can be a bit misleading because 'LTA' Mode will not truncate the plot at the earliest cue time; thus it will not be as clear what signal occurred before the trial started in the average. As such, we recommend plotting with 'LTA2l' to trim the signal at the time of the earliest cue.
+      These are run exactly the same way as in Figures 1 and 2 except using analysis objects containing movement signals: EMG, X (accelerometer), CamO, or one of the red channles (SNcred, VTAred, or DLSred). Generate the objects as before and run the same plotting function *except* call 'LTA2l' as the Mode argument rather than 'CTA' or 'CTLA'. You can also try plotting with 'LTA'. This can be a bit misleading because 'LTA' Mode will not truncate the plot at the earliest cue time; thus it will not be as clear what signal occurred before the trial started in the average. As such, we recommend plotting with 'LTA2l' to trim the signal at the time of the earliest cue.
           
      NB that we custom-binned the times in the plots to show both early and rewarded times that would have enough time before the lick to avoid truncating the entire signal. The 1ms bin between 3333 and 3334 ms in the binning eliminates any ambiguity caused by rounding of the reward cut-off time.
           
