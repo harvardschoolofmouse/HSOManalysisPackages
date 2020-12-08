@@ -358,7 +358,7 @@ try
 			if ~isfield(obj.GLM, 'tdt') && ~redmode && ~noControlMode && ~noRedButHasMove
 				resave = true;
 				alert = ['ACTION NEEDED: AutoGLMdraft Job' num2str(jobID) ' requires UI Input']; 
-				mailAlert(alert);
+				mailAlertExternal(alert);
 				obj.addtdt;
 			end
 			% 
@@ -472,7 +472,7 @@ try
 				save(filename, 'results', '-v7.3');
 
 				alert = ['AutoGLMdraft Job' num2str(jobID) ' in Progress. d=' num2str(iset) '/' num2str(numel(folderNames)) ' n=' num2str(ikey) '/' num2str(numel(nesting_keys)) ' Complete']; 
-			    mailAlert(alert);
+			    mailAlertExternal(alert);
 			end
 			% 
 			% plot the final results for last nest of model
@@ -500,11 +500,11 @@ try
 	filename = [autoVersionID '_GLM_RESULTS_' tRunTD];
 	save(filename, 'RESULTS', '-v7.3');
 	alert = ['AutoGLMdraft Job' num2str(jobID) ' COMPLETE without errors!']; 
-	mailAlert(alert);
+	mailAlertExternal(alert);
 catch EX
 	alert = ['ERROR in AutoGLMdraft Job' num2str(jobID) ' in Progress. n=' num2str(iset) '/' num2str(numel(folderNames))]; 
     msg = ['Exception Thrown: ' EX.identifier ' | ' EX.message '\n\n' jobID];
-    mailAlert(alert, msg);
+    mailAlertExternal(alert, msg);
     rethrow(EX);
 end
 

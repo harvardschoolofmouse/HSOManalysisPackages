@@ -12,6 +12,6 @@ function [f, axs] = makeStandardFigure(naxes,subplots)
 	for ii = 1:naxes
 		axs(ii) = subplot(subplots(1), subplots(2),ii);
 		hold(axs(ii), 'on');
-		set(axs(ii), 'fontsize', 20)
+		set(axs(ii), 'fontsize', 12)
 	end
 end

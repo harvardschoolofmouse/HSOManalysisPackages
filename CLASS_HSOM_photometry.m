@@ -110,7 +110,7 @@ classdef CLASS_HSOM_photometry < handle
 				obj.init_v3x(Mode, nbins, gfitStyle, timePad, stimMode, divideByNTrialsPerBin);
 
 				alert = cell2mat(['Stat Obj Complete: ' obj.iv.signalname]); 
-			    mailAlert(alert);
+			    mailAlertExternal(alert);
 			elseif isstr(data) && strcmpi(data, 'stimNphot')
 				warning('off','MATLAB:Figure:FigureSavedToMATFile')
 				if nargin < 2

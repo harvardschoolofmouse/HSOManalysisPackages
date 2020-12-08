@@ -66,12 +66,12 @@ classdef CLASS_STATcollate_photometry_roadmapv1_4 < handle
 	    	disp('Collation of analyses is complete! The shell object is saved to Host Folder.')
 			alert = ['Photometry Collation Analysis Obj Complete: ' num2str(obj.iv.runID)]; 
 			reportErrors(obj);
-		    mailAlert(alert);
+		    mailAlertExternal(alert);
 		    if strcmpi(obj.iv.collateKey,'PCAdecoding')
 		    	cd('..');
 	    	elseif strcmpi(obj.iv.collateKey,'singleTrialOutliers')
 	    		alert = ['ACTION NEEDED--@singleTrialOutliers Need to select folders now. Photometry Collation Analysis Obj In Prog...: ' num2str(obj.iv.runID)]; 
-	    		mailAlert(alert);
+	    		mailAlertExternal(alert);
 	    		disp('	** We are in the process of reExcluding based on outliers, now creating the binned statObj... Select the host folder!')
 	    		obj = CLASS_photometry_roadmapv1_4('v3x', 'times', 34, {'box', 200000}, 30000, [], [], 'off');
     		end
@@ -3184,7 +3184,7 @@ classdef CLASS_STATcollate_photometry_roadmapv1_4 < handle
                         
                         obj.analysis.flush = []; % free up memory immediately before saving
                         % obj.save;
-                        % mailAlert(['mouseLevelXval Decoding Job' num2str(jobID) ' in Progress. Now complete: ' seshCode ' n=' num2str(in_d) '/' num2str(numel(n_d)) ' d=' num2str(find(d == id)) '/' num2str(numel(d))], roundID);
+                        % mailAlertExternal(['mouseLevelXval Decoding Job' num2str(jobID) ' in Progress. Now complete: ' seshCode ' n=' num2str(in_d) '/' num2str(numel(n_d)) ' d=' num2str(find(d == id)) '/' num2str(numel(d))], roundID);
                     end
                     % 
                     % 	Remove spent Stats fields to save space
@@ -3193,12 +3193,12 @@ classdef CLASS_STATcollate_photometry_roadmapv1_4 < handle
             catch EX
                 msg = ['Exception Thrown: ' EX.identifier ' | ' EX.message '\n\n' roundID];
                 alert = ['ERROR in mouseLevelXval Decoding Job in Progress.']; 
-                mailAlert(alert, msg);
+                mailAlertExternal(alert, msg);
                 rethrow(EX)
             end
 			disp('==================================================================================') 
 			disp('Complete.')
-			mailAlert(['mouseLevelXval Decoding Job' num2str(jobID) ' COMPLETE without errors!']);
+			mailAlertExternal(['mouseLevelXval Decoding Job' num2str(jobID) ' COMPLETE without errors!']);
 		end
 		function refitXval(obj, dd, nn, lam)
             
@@ -3345,11 +3345,11 @@ classdef CLASS_STATcollate_photometry_roadmapv1_4 < handle
 				%	Create obj with all the results together	 
 				% 
 				alert = ['ALL DONE: Decoding Refit XvalResults COMPLETE. d=' num2str(max(d)) ' n=' mat2str(max(nn))]; 
-			    mailAlert(alert);
+			    mailAlertExternal(alert);
 		    catch EX
                 alert = ['ERROR in refitXval']; 
                 msg = ['Exception Thrown: ' EX.identifier ' | ' EX.message ];
-                mailAlert(alert, msg);
+                mailAlertExternal(alert, msg);
                 rethrow(EX)
             end
 			disp('==================================================================================') 

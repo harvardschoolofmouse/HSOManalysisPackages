@@ -98,7 +98,7 @@ classdef CLASS_HSOM_optogenetics_legacy_obj < handle
 			if strcmp(obj.iv.Mode, 'batch') 
 				disp('Batch processing is complete! The shell object is not saved.')
 				alert = ['Optogenetics Legacy Batch Obj Complete: ' num2str(obj.iv.runID)]; 
-			    mailAlert(alert);
+			    mailAlertExternal(alert);
 		    elseif strcmp(obj.iv.Mode, 'collate')
 		    	% 
 		    	% 	Save the collated results
@@ -106,7 +106,7 @@ classdef CLASS_HSOM_optogenetics_legacy_obj < handle
 		    	obj.save;
 		    	disp('Batch analysis is complete! The shell object is saved to Host Folder.')
 				alert = ['Optogenetics Legacy Analysis Obj Complete: ' num2str(obj.iv.runID)]; 
-			    mailAlert(alert);
+			    mailAlertExternal(alert);
 		    else
 				obj.getParsibleLicks;
 				obj.resetBootResults;
