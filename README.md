@@ -1,25 +1,29 @@
 # HSOManalysisPackages
-Contains MATLAB 2018B analysis files used in Hamilos et al., 2020 with a sample dataset, instructions, and all necessary custom dependencies.
+Contains MATLAB 2018B analysis files used in Hamilos et al., 2020 (https://doi.org/10.1101/2020.05.13.094904) with a sample dataset, instructions, all necessary custom dependencies and all original single session datasets available via Zenodo.
 
-**Please note!! This supporting instructional documentation is under construction.**
+**Please note!! This supporting instructional documentation is under construction, and we are seeking feedback! Please don't hesitate to reach out with questionss and we will be happy to assist you as promptly as we can.**
 
-Last Update on May 21, 2020. Please contact ahamilos{at}g.harvard.edu if you have questions or something isn't working. 
+Last Update on Oct 2, 2020. Please contact ahamilos{at}g.harvard.edu if you have questions or something isn't working. 
 
   > For example datasets to use with the sample code, please see:
   > https://www.dropbox.com/sh/wdotym743hmo4jc/AABKfTVxkH2JVkZXJ-7UpLyCa?dl=0
+  >
+  > For all original datasets, see our Zenodo repository at:
+  >
+  > (tbd, upload in progress. See section 0. Importing repo code and working with the Zenodo dataset repository)
 
 -------------------------------------------------
 INSTRUCTIONS: Contents:
   
-  0. Importing repo code
-  1. Loading sample photometry object
-  2. Code to reproduce figures from Hamilos et al., 2020
-  3. Instructions for generating new objects from raw CED datasets
-
+  0. Importing repo code and working with the Zenodo dataset repository
+  1. Instructions for generating new analysis objects from raw single-session datasets
+  2. Loading a sample session analysis object
+  3. Code to reproduce figures from Hamilos et al., 2020
+  
 -------------------------------------------------
 0. Importing repo code (designed for Windows 7 and MacOS 10.14)
 
-    1. Clone or download the HSOManalysisPackages repository and add subfolders files to path in MATLAB 2018B or higher
+    1. Clone or download the HSOManalysisPackages repository and add the files and subfolders to the path in MATLAB 2018B or higher
     2. Make sure the following toolboxes are enabled in MATLAB: 
     
           - Curve Fitting Toolbox v3.5.8+
@@ -29,71 +33,36 @@ INSTRUCTIONS: Contents:
           - Image Processing Toolbox v10.3+
           - DSP System Toolbox v9.7+
           - Control System Toolbox v10.5+
-    
--------------------------------------------------
-1. Loading single-session sample photometry object:
-
-  - Using the sample datasets at https://www.dropbox.com/sh/wdotym743hmo4jc/AABKfTVxkH2JVkZXJ-7UpLyCa?dl=0
-  
-    - Navigate to the sample datafolder for animal B5, SNc day 13 (B5_SNc_13)
-  
-    - Open the file. It will initialize to the workspace as sObj or obj, depending on the dataset
-    
-Loading composte session object:
-
-  - Navigate to the sample Composite Datasets folder and open the file with the analysis of choice
-
--------------------------------------------------
-2. Code to reproduce figures from Hamilos et al., 2020
-
-**Warning: under construction: 5/21/2020 11:21 EST -- Please check back tomorrow**
-
-  - FIGURE 1: Use the Figure 1 dataset filefolder from dropbox
-  
-    - 1b: Histograms
-            
-            % Open folder Figure 1 > 1B Histograms (example output figure is in folder)
-            load('CollatedStatAnalysisObj_cdf_20191107_18_10_runIDno4486.mat')
-            obj.plot('hxg-xsesh')
-    - 1c-f: CLTA (cue/lick triggered averages)
-    
-         NB: Example dataset has 2 mice recorded at SNc and shows basic pattern found more cleanly in the full average across all animals (12-mouse full SNc/tdt dataset and 4-mouse DA2m datasets are too large to put on Dropbox, available on reasonable request to Allison Hamilos, ahamilos{at}g.harvard.edu). The all-mice figures are saved to the 1C-F folders
           
-          To plot CLTAs of composite datasets with 250 ms timebins for averaging:
-          
-          obj = CLASS_HSOM_photometry('v3x', 'times', 68, {'box', 200000}, 30000, [], [], 'off')
-          %   Select either SNc or tdt to make a composite SNc or tdt object. 
-          %     Then select the corresponding HOST folder from the 
-          %     Dropbox sample data.
-          
-          %     Plotting: NB: you can use the plot function on single-session 
-          %       datasets (e.g., B5_SNc_13) and composite datasets
-          obj.plot('CLTA', [6, 9, 13, 15], false, 10, 'last-to-first', 1) 
-          %
-          %     NB: [6,9,13,15] are the timebins -- you can plot any between 1-68
-          %     NB2: Change tail in Matlab (click the warning) to 
-          %       change limits on right-hand side of plot
-          %       5000: makes plots in 1C, 1D
-          %       -150:  makes plots in 1E, 1F
-          %
-          xlim([-1.5,5])
-          %
-          % Example figure files included in Dropbox folder
-          %
-          % See CLASS_HSOM_photometry > plot documentation for instructions 
-          %   to parameterize the plot function, there are several 
-          %   additional options and functionalities you can try!
-          
-          
-   - FIGURE 2:
+     3. Download the single session dataset repository from Zenodo. The zip file is ~57.6 GB. Extract the files. 
+     4. Once the repository has been extracted, the data can be accessed in one of two ways:
      
-
+     I. Each experiment is divided by directory, and following the directory path will terminate with single session directories marked with the mouse's name and session number (MOUSENAME_SIGNALNAME_SESSION#). These single session files may be imported directly into MATLAB for use as desired; each signal is its own timeseries variable with timestamps as well as voltage values for analog signals. All times are measured in seconds. This is the best option for someone desiring to write new analyses from scratch.
+     
+     II. For the user wishing to replicate analyses with the HSOM Analysis Suite, we have arranged datasets in the repository such that HSOM can automatically parse the files and create both single-session and composite-session analysis objects. To do so, one should open the "Dataset Map.txt" file from the base directory, which indicates which single session folders contain each type of data (e.g., SNc GCaMP6f photometry signals, DLS dLight1.1 photometry signals, etc). If storage space is not a barrier, we recommend copying the relevant single session directories from the repository folder into a HOST folder for each analysis, as follows:
+     
+     Suppose we wish to analyze GCaMP6f data recorded at SNc. We would first consult the "Dataset Map.txt" file and find all session folders containing SNc GCaMP6f signals that are nested under "\Single Session Data\Photometry\GCaMP6f and tdTomato Photometry and Behavior" (single sessions in this folder may have SNc, VTA and/or DLS data in the same file). Of course, there are many session folders fitting this description, but let's say for sake of demonstration we are interested in creating an analysis object to look at SNc GCaMP6f data from mouse H6 on days 5, 7, and 9. The Dataset Map will show the original folder names (H6_signalname_5, H6_signalname_7, H6_signalname_9). Copy these folders to a new directory named SNcHOST and change the "signalname" string in the foldername to "SNc" (the proper signal designation codes for all signals are found in the Dataset Map.txt file). Your analysis directory should be:
+     
+     ~/SNcHOST/, containing:
+     
+        ~/H6_SNc_5/
+        ~/H6_SNc_7/
+        ~/H6_SNc_9/
+     
+     You are now ready to run the automated HSOM analysis package on these files to conduct a wide variety of analyses from plotting to model fitting.
+     
+     NB: The single session folders each contain a text file with the word "exclusions" in the filename. This text file contains rare excluded trial numbers (if any). The user may decide to run analyses with or without exclusions. If no exclusions are desired, simply save an empty text file as "null_exclusions.txt" to the single session directory. Note that only one exclusions file may be present in each session's directory.
+         
 -------------------------------------------------
-3. To generate new objects from CED datasets:
 
-    i. Save CED/Spike2 dataset as .mat file. Ensure that the CED filename has the same name as the .mat file to avoid errors. Ensure waveforms and times are saved and use channel names.
+1. To generate new analysis objects from single session datasets (available on Zenodo):
+
+    i. CED/Spike2 datasets have been saved to each single session directory (MOUSENAME_signalname_SESSION#) as .mat files. If you are saving a new file with Spike2 from your own experiment, ensure that the spike2 filename has the same name as the .mat file to avoid errors. Ensure waveforms and times are saved and use channel names.
   
-    ii. Put raw .mat files into directories in the following way:
+    ii. The single session datasets on Zenodo are arranged into directories based on experiment for automatic collation into both single-session and composite analysis objects, as described in Section 0, above:
+    
+    
+Put raw .mat files into directories in the following way:
 
     HOSTdirectory >
     
@@ -133,6 +102,134 @@ Loading composte session object:
     obj = CLASS_HSOM_photometry('v3x', 'times', 17, {'EMG', []}, 100000, [], [], 'off')
   
    NB: data can be rebinned anytime for single session objects. Composite objects (averaging across sessions) cannot be changed after the initialization step.
+    
+    
+-------------------------------------------------
+1. Loading single-session sample photometry object:
+
+  - Using either your freshly-generated analysis objects OR using the sample analysis objects available at https://www.dropbox.com/sh/wdotym743hmo4jc/AABKfTVxkH2JVkZXJ-7UpLyCa?dl=0
+  
+    - Navigate to the sample datafolder for animal B5, SNc day 13 (B5_SNc_13)
+  
+    - Open the file. It will initialize to the workspace as sObj or obj, depending on the dataset
+    
+Loading composte session object:
+
+  - Navigate to the sample Composite Datasets folder and open the file with the analysis of choice
+
+-------------------------------------------------
+2. Code to reproduce figures from Hamilos et al., 2020
+
+NB that all original datasets from each figure are embedded within the paper in the Online Supplementary Materials on the publisher's website. This code can be used to reproduce the same analyses, as well as to recapitulate the analyses on new datasets produced by the user.
+
+**Warning: under construction: 10/1/2020 19:22 EST -- Please check back later for updates**
+
+  - FIGURE 1: Use the Figure 1 dataset filefolder from dropbox
+  
+    - 1b: Histograms
+            
+            % Open folder Figure 1 > 1B Histograms (example output figure is in folder)
+            load('CollatedStatAnalysisObj_cdf_20191107_18_10_runIDno4486.mat')
+            obj.plot('hxg-xsesh')
+    - 1c-f: CLTA (cue/lick triggered averages)
+    
+         NB: Example dataset has 2 mice recorded at SNc and shows basic pattern found more cleanly in the full average across all animals (12-mouse full SNc/tdt dataset and 4-mouse DA2m datasets are too large to put on Dropbox, available on reasonable request to Allison Hamilos, ahamilos{at}g.harvard.edu). The all-mice figures are saved to the 1C-F folders
+         
+         To plot CLTAs of composite datasets with 250 ms timebins for averaging:
+          
+          obj = CLASS_HSOM_photometry('v3x', 'times', 68, {'box', 200000}, 30000, [], [], 'off')
+          %   Select either SNc or tdt to make a composite SNc or tdt object. 
+          %     Then select the corresponding HOST folder from the 
+          %     Dropbox sample data.
+          
+          %     Plotting: NB: you can use the plot function on single-session 
+          %       datasets (e.g., B5_SNc_13) and composite datasets
+          obj.plot('CLTA', [6, 9, 13, 15], false, 10, 'last-to-first', 1) 
+          %
+          %     NB: [6,9,13,15] are the timebins -- you can plot any between 1-68
+          %     NB2: Change tail in Matlab (click the warning) to 
+          %       change limits on right-hand side of plot
+          %       5000: makes plots in 1C, 1D
+          %       -150:  makes plots in 1E, 1F
+          %
+          xlim([-1.5,5])
+          %
+          % Example figure files included in Dropbox folder
+          %
+          % See CLASS_HSOM_photometry > plot documentation for instructions 
+          %   to parameterize the plot function, there are several 
+          %   additional options and functionalities you can try!
+          
+          
+   - FIGURE 2: Cue-aligned averages
+   
+        As in Figure 1, the left-insets are CLTA plots. To generate the cue-aligned averaged in the main panels, simply modify the plot command as follows:
+          
+          %   Generate the object for the signal of choice:
+          %
+          obj = CLASS_HSOM_photometry('v3x', 'times', 68, {'box', 200000}, 30000, [], [], 'off')
+          %   Select either SNc or tdt to make a composite SNc or tdt object. 
+          %     Then select the corresponding HOST folder from the 
+          %     Dropbox sample data.
+          
+          %     Plotting: NB: you can use the plot function on single-session 
+          %       datasets (e.g., B5_SNc_13) and composite datasets
+          obj.plot('CTA', 4:28, false, 100, 'last-to-first', 1) 
+          %
+          %     NB: 4:28 are the timebins -- you can plot any between 1-68
+          %     NB2: 100 is the smoothing (in samples)
+          %
+          xlim([-4,10])
+
+          
+   - FIGURE 3: Lick-aligned movement control signals
+   
+      These are run exactly the same way as in Figures 1 and 2 except using analysis objects containing movement signals: EMG, X (accelerometer), CamO, or one of the red channles (SNcred, VTAred, or DLSred). Generate the objects as before and run the same plotting function *except* call 'LTA2l' as the Mode argument rather than 'CTA' or 'CTLA'. You can also try plotting with 'LTA'. This can be a bit misleading because 'LTA' Mode will not truncate the plot at the earliest cue time; thus it will not be as clear what signal occurred before the trial started in the average. As such, we recommend plotting with 'LTA2l' to trim the signal at the time of the earliest cue.
+          
+     NB that we custom-binned the times in the plots to show both early and rewarded times that would have enough time before the lick to avoid truncating the entire signal. The 1ms bin between 3333 and 3334 ms in the binning eliminates any ambiguity caused by rounding of the reward cut-off time.
+          
+          obj = CLASS_HSOM_photometry('v3x', 'custom', [0, 2000, 3333, 3334, 7000, 17000], {'box', 200000}, 60000, [], [], 'off')
+          obj.plot('LTA2l', [2,4], false, 100, 'last-to-first', 1) 
+     
+          
+   - FIGURE 4: CTA and Lamp-Off aligned averages
+   
+     Once again, we simply modify our object generating function:
+          
+          obj = CLASS_HSOM_photometry('v3x', 'paired-nLicksBaseline', {2, [700,3330], [3334,7000], 5000}, {'box', 200000}, 30000, [], [], 'off')
+          obj.plot('CTA', 'all', false, 100, 'last-to-first', 1)           
+          obj.plotLOTA()
+
+
+   - FIGURE 5: Encoding GLM
+   
+      See the function we built to run the models and variations, which is documented in great detail in the CLASS_HSOM_photometry.m file. This function can run a variety of versions of the model on individual session data. There are a ton of additional QC and plotting features included in the model functions that go beyond what was shown in the paper, which may be of interest and use to the user. Please let ahamilos know if you have any questions or difficulty running the models by emailing ahamilos [at] g [dot] harvard [dot] edu, and I'll be happy to assist you. I also would like your feedback on how to make this part of the analysis more user-friendly, so any feedback is appreciated! See:
+          
+          In CLASS_HSOM_photometry:
+          
+          function [th, X, a, yFit, x, xValidationStruct, CVmat] = nestedGLM(obj, cannedStyle, trimming, lam, th0_on, Events, x_style, basis, smoothing)
+          
+          Run to automatically run encoding fits on multiple datasets:
+          
+          AutoGLMencodingModel.m
+     
+
+   - FIGURE 6: Single trial data
+   
+     WARNING: this won't work well for a composite object--the file will be too large! Use this for single session datasets. Load the object (original binning doesn't matter, we will rewrite it):
+          
+          obj.getBinnedTimeseries(obj.GLM.gfit, 'singleTrial', [], 30000,[],[],false);
+     
+     Now you can use the plot or analysis function of your choice.
+     
+     To run single-session decoding models, see the documentation provided in the CLASS_HSOM_photometry.m file. Again, we are very interested in making these tools more intuitive and user-friendly. Please reach out to ahamilos [at] g [dot] harvard [dot] edu, and I'll be happy to assist you.
+     
+          In CLASS_HSOM_photometry:
+          
+          function [b,dev,stats,X,y,yfit, LossImprovement] = GLM_predictLickTime(obj, Mode, Conditioning, Link, Debug, predictorSet,verbose,killMissing)
+     
+     
+     
 
 
 --------------------------------------
