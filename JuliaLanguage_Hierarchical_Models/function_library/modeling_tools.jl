@@ -1642,7 +1642,7 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
 				                push!(se_ths[model], stats_df.se_th)
 				                push!(dofs[model], stats_df.dof)
 			                else
-			                	println("*************went past number of iters desired, I think this happens when one model fits ok for a sampled dataset, when a later model does not.")# break
+			                	# println("*************went past number of iters desired, I think this happens when one model fits ok for a sampled dataset, when a later model does not.")# break
 			                end
 			            else
 			                error("not implemented for non-logit yet")
@@ -1665,6 +1665,7 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
 			        	end
 			        else
 			        	println(typeof(e))
+			        	println("	")
 			        	warning("YIKES! WEIRD ERROR - could be fit never converged!")
 			        	# rethrow()
 		        	end
