@@ -440,7 +440,7 @@ function Rsq(y, yfit)
 end
 
 
-function updownsample(df::DataFrame, refvect::Vector{Bool}, n::Int)
+function updownsample(df::DataFrame, refvect::Vector{Bool}, n::Int, downOnly=false)
     # refvect is the bool vector of states so we can up/downsample them
     # n is the number of desired resamples with replacement
     
@@ -448,7 +448,11 @@ function updownsample(df::DataFrame, refvect::Vector{Bool}, n::Int)
     idxs_false = findall(x->!x, refvect)
     
     # resample with replacement the true and false idxs
-    resampled_idx_true = [sample(idxs_true) for x = 1:n]
+    if downOnly
+    	resampled_idx_true = idxs_true
+    else
+	    resampled_idx_true = [sample(idxs_true) for x = 1:n]
+    end
     resampled_idx_false = [sample(idxs_false) for x = 1:n]
     all_idx = vcat(resampled_idx_true,resampled_idx_false)
     # warning("RBF: check that trial idxs not shuffled...")
@@ -863,21 +867,30 @@ function getCompositeTheta(ths, se_ths, dofs)
 # 			Difference: only one theta (e.g., b1) calculated at a time rather than all at once... 
 #				will use a wrapper to do for each other theta (e.g., b0, b2...)
 # 	% 	
-	N = length(ths); # the number of datasets, N degrees of freedom
+	# Only use non-nan indicies
+	idxs_nonan = findall(x->!isnan(x), dofs)
+
+	N = length(ths[idxs_nonan]); # the number of datasets, N degrees of freedom
 	# NN = N.*ones(1, size(ths, 2)); # I think the number of ths. We only do one th at a time, so NN is ignored
 	# NN = [number of b0, number of b1, number of b2...] this was needed because not all sets had tdt. We just need N
 	
-	meanTh = 1/N .* nansum(ths);
-	propagated_se_th = 1/N .* sqrt(nansum(se_ths.^2))
-	mdf = sum(dofs)#.*ones(1, size(meanTh,2)); # m is the number of degrees of freedom across all the models
+	
+	meanTh = 1/N .* nansum(ths[idxs_nonan]);
+	propagated_se_th = 1/N .* sqrt(nansum(se_ths[idxs_nonan].^2))
+	mdf = sum(dofs[idxs_nonan])#.*ones(1, size(meanTh,2)); # m is the number of degrees of freedom across all the models
 	# % 
 	# % 	Now, calculate the CI = b +/- t(0.025, n(m-1))*se
 	# % 
 	# for nn = 1:length(meanTh, 2)
 		# CImin(nn) = meanTh(nn) - abs(tinv(.025,numel(NN(nn))*(mdf(nn) - 1))).*propagated_se_th(nn);
 		# CImax(nn) = meanTh(nn) + abs(tinv(.025,numel(NN(nn))*(mdf(nn) - 1))).*propagated_se_th(nn);
-	CImin = meanTh - abs( quantile(TDist(N*(mdf - 1)),0.025) ).*propagated_se_th;
-	CImax = meanTh + abs( quantile(TDist(N*(mdf - 1)),0.025) ).*propagated_se_th;
+	if isnan(mdf)
+		CImin = NaN
+		CImax = NaN
+	else
+		CImin = meanTh - abs( quantile(TDist(N*(mdf - 1)),0.025) ).*propagated_se_th;
+		CImax = meanTh + abs( quantile(TDist(N*(mdf - 1)),0.025) ).*propagated_se_th;
+	end
 	# CImin = meanTh - abs( tinv(.025,N*(mdf - 1)) ).*propagated_se_th(nn);
 	# CImax = meanTh + abs( tinv(.025,N*(mdf - 1)) ).*propagated_se_th(nn);
 	
@@ -1012,9 +1025,9 @@ function get_model_stats(model; n::Int=0, th::Vector{Float64}=Vector{Float64}(un
         push!(CImax_z, confint(z, level=0.95, tail=:both)[2])
         push!(p_z, pvalue(z; tail = :both))
         t = OneSampleTTest(th[i], std_th[i], n, 0)
-        if round(confint(t; level = 0.95, tail = :both)[1],digits=2) != round(th[i] - abs(quantile(TDist(dof-1),0.025)).*se_th[i], digits=2)
-            warning(join(["Expected CImin=", confint(t; level = 0.95, tail = :both)[1], " but got ", th[i] - abs(quantile(TDist(dof-1),0.025)).*se_th[i]]))
-        end
+        # if round(confint(t; level = 0.95, tail = :both)[1],digits=2) != round(th[i] - abs(quantile(TDist(dof-1),0.025)).*se_th[i], digits=2)
+        #     warning(join(["Expected CImin=", confint(t; level = 0.95, tail = :both)[1], " but got ", th[i] - abs(quantile(TDist(dof-1),0.025)).*se_th[i]]))
+        # end
         push!(CImin_t, th[i] - abs(quantile(TDist(dof-1),0.025)).*se_th[i])
         push!(CImax_t, th[i] + abs(quantile(TDist(dof-1),0.025)).*se_th[i])
         push!(p_t, pvalue(t; tail = :both))
@@ -1191,6 +1204,7 @@ function theta_summary(stats_df::DataFrame; Mode = "sparseFit", result_df::DataF
 	    composite_se = []
 	    composite_CImin = []
 	    composite_CImax = []
+	    composite_mdof = []
 	    for i = 1:d
 	        # extract the proper theta and se_th
 	        th_plot = collect_theta(th_by_k_dataset, i)
@@ -1198,11 +1212,20 @@ function theta_summary(stats_df::DataFrame; Mode = "sparseFit", result_df::DataF
 	        se_th_plot = collect_theta(se_by_k_dataset, i);
 	        se_th = unwrap_theta(se_th_plot)
 	        # get composite theta
-	        (meanTh, propagated_se_th, CImin, CImax) = getCompositeTheta(th, se_th, dofs)
+	        if isnan(dofs[1])
+	        	meanTh = NaN#vec(nanmat(d,1))
+	        	propagated_se_th = NaN #vec(nanmat(d,1))
+	        	CImin = NaN#vec(nanmat(d,1))
+	        	CImax = NaN#vec(nanmat(d,1))
+	        	mdf = NaN
+	        else
+		        (meanTh, propagated_se_th, CImin, CImax,mdf) = getCompositeTheta(th, se_th, dofs)
+	        end
 	        push!(composite_th, meanTh)
 	        push!(composite_se, propagated_se_th)
 	        push!(composite_CImin, CImin)
 	        push!(composite_CImax, CImax)
+	        push!(composite_mdof, mdf)
 	    end
 	    k = length(dofs)
     elseif Mode == "oneFit"
@@ -1221,7 +1244,7 @@ function theta_summary(stats_df::DataFrame; Mode = "sparseFit", result_df::DataF
     ax.set_title(join(["coefficients, k=", k]))
     ax.set_xticks(collect(1:d))
     # xticks(collect(1:d), labels=stats_df.)
-    return (composite_th, composite_se, composite_CImin, composite_CImax, ax, f)
+    return (composite_th, composite_se, composite_CImin, composite_CImax, ax, f, composite_mdof)
 end
 
 
@@ -1547,7 +1570,7 @@ function get_k_1pt_datasets(full_df::DataFrame; threshold_retention=0.8)
 end
 
 
-function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, modelNames, modelClass="logit"; n_iters=10,updownsampleYID=false, figurePath=".", savePath=".", suppressFigures=suppressFigures)
+function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, modelNames, modelClass="logit"; n_iters=10,updownsampleYID=false, figurePath=".", savePath=".", suppressFigures=suppressFigures, slice="")
 	maxattempts = 10
     #
     # Here, we do model selection by AIC, BIC criteria and also find fit coeffs for bootstrapped models.
@@ -1564,70 +1587,93 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
     se_ths = [[] for _=1:length(modelNames)]
     dofs = [[] for _=1:length(modelNames)]
 
-    #
-    # Get the number of up/down samples by querying smote
-    #
-    X2, y2 =smote(all_df[!,[:Y, :X]], all_df[yID], k = 5, pct_under = 150, pct_over = 200)
-	df_balanced = X2
-	df_balanced[yID] = y2;
-	a = countmap(df_balanced[yID])
-	if a[true] != a[false]
-		println(a)
-		error("we didn't get an even number.")
-	end
-    npercat = a[true]
 
-    println(join(["Used smote to estimate the number of up/down sampling needed => using ", npercat, "=n"]))
-    retry = true # we should try to sample enough times to get cholesky factorizable matrix. I'll give it 10 shots
-    attempts = 1
-    for i = 1:n_iters
-        progressbar(i,n_iters)
-        while retry
-	        try # we might have a bad subsample and not be able to fit the model
-		        if updownsampleYID
-		            working_df = updownsample(all_df, all_df[yID], npercat); # I chose this based on the 
-		            # sample n that was picked by smote. In the next version for across models, be sure to adjust for the dataset...
-		        else
-		            working_df = all_df
-		        end
-		        train, test = TrainTestSplit(working_df, 0.75)
-		        for model = 1:length(modelNames)
-		            if modelClass == "logit"
-		                # get AIC, BIC with the original model and an average coefficient with propagated se
-		                (logit_model, _, accuracy_Sn, accuracy_test) = build_and_report_logit_model(formulas[model], train, test; modelName=modelNames[model], modelClass="logit", verbose=false)
-		                push!(AICs[model], aic(logit_model))
-		                push!(AICcs[model], aicc(logit_model))
-		                push!(BICs[model], bic(logit_model))
-		                push!(Sn_accuracy[model], accuracy_Sn)
-		                push!(test_accuracy[model], accuracy_test)
-		                stats_df = get_model_stats(logit_model)
-		                push!(th_names[model], stats_df.th_names)
-		                push!(ths[model], stats_df.th)
-		                push!(se_ths[model], stats_df.se_th)
-		                push!(dofs[model], stats_df.dof)
-		            else
-		                error("not implemented for non-logit yet")
-		            end
-		            retry = false
-		        end
-	        catch e 
-	        	if isa(e, PosDefException)
-		        	if attempts < maxattempts
-		        		println("***PosDefException...retrying. (", attempts, "/", maxattempts, ")")
-		        		retry = true
-		        		attempts = attempts + 1
-		    		else
-		    			warning(join(["PosDefException -- Matrix could not fit after ", attempts, " attempts at up/down sampling. Ignoring this set!"]))
-		    			retry = false
-		    			rethrow()
-		        	end
-		        else
-		        	rethrow()
-	        	end
+    #
+    #	Check the df isn't empty
+    #
+    if !isempty(all_df) && sum(all_df[yID])>15
+    	npercat = length(findall(x->x, all_df[yID]))
+    	println(join(["Downsampling the no-lick state => using ", npercat, "=n, the number of first-licks"]))
+	 #    #
+	 #    # Get the number of up/down samples by querying smote -- Jan thinks is no good
+	 #    #
+	 #    X2, y2 =smote(all_df[!,[:Y, :X]], all_df[yID], k = 5, pct_under = 150, pct_over = 200)
+		# df_balanced = X2
+		# df_balanced[yID] = y2;
+		# a = countmap(df_balanced[yID])
+		# if a[true] != a[false]
+		# 	println(a)
+		# 	error("we didn't get an even number.")
+		# end
+	 #    npercat = a[true]
+
+	    # println(join(["Used smote to estimate the number of up/down sampling needed => using ", npercat, "=n"]))
+	    retry = true # we should try to sample enough times to get cholesky factorizable matrix. I'll give it 10 shots
+	    attempts = 1
+	    nomodelfits = false
+	    for i = 1:n_iters
+	    	if !suppressFigures
+		        progressbar(i,n_iters)
 	        end
-        end
+	        retry=true
+	        while retry
+		        try # we might have a bad subsample and not be able to fit the model
+			        if updownsampleYID
+
+			            working_df = updownsample(all_df, all_df[yID], npercat); # I chose this based on the 
+			            # sample n that was picked by smote. In the next version for across models, be sure to adjust for the dataset...
+			        else
+			            working_df = all_df
+			        end
+			        train, test = TrainTestSplit(working_df, 0.75)
+			        for model = 1:length(modelNames)
+			            if modelClass == "logit"
+			                # get AIC, BIC with the original model and an average coefficient with propagated se
+			                if length(AICs[model]) != n_iters
+				                (logit_model, _, accuracy_Sn, accuracy_test) = build_and_report_logit_model(formulas[model], train, test; modelName=modelNames[model], modelClass="logit", verbose=false)
+				                push!(AICs[model], aic(logit_model))
+				                push!(AICcs[model], aicc(logit_model))
+				                push!(BICs[model], bic(logit_model))
+				                push!(Sn_accuracy[model], accuracy_Sn)
+				                push!(test_accuracy[model], accuracy_test)
+				                stats_df = get_model_stats(logit_model)
+				                push!(th_names[model], stats_df.th_names)
+				                push!(ths[model], stats_df.th)
+				                push!(se_ths[model], stats_df.se_th)
+				                push!(dofs[model], stats_df.dof)
+			                else
+			                	println("*************went past number of iters desired, I think this happens when one model fits ok for a sampled dataset, when a later model does not.")# break
+			                end
+			            else
+			                error("not implemented for non-logit yet")
+			            end
+			        end
+			        retry = false
+		        catch e 
+		        	if isa(e, PosDefException)
+			        	if attempts < maxattempts
+			        		if !suppressFigures
+			        			println("***PosDefException...retrying. (", attempts, "/", maxattempts, ")")
+		        			end
+			        		retry = true
+			        		attempts = attempts + 1
+			    		else
+			    			println(join(["***PosDefException -- Matrix could not fit after ", attempts, " attempts at up/down sampling. Ignoring this set!"]))
+			    			retry = false
+			    			# rethrow()
+			    			nomodelfits = true
+			        	end
+			        else
+			        	rethrow()
+		        	end
+		        end
+	        end
+	    end
+    else
+    	nomodelfits = true
+    	npercat = 0
     end
-    th_summary = DataFrame(modelName=[], composite_th=[], composite_se=[], composite_CImin=[], composite_CImax=[])
+    th_summary = DataFrame(modelName=[], composite_th=[], composite_se=[], composite_CImin=[], composite_CImax=[],composite_mdof = [])
     meanAIC = []
     meanAICc = []
     meanBIC = []
@@ -1635,42 +1681,109 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
     meanAccuracy_test = []
     axs = []
     fs = []
-    for model = 1:length(modelNames)
-        result_df = DataFrame(train_dof = [dofs[model][1]], train_ths = [[ths[model][1]]], train_se_ths=[[se_ths[model][1]]])
-        for i=2:n_iters
-            append!(result_df, 
-            DataFrame(train_dof = [dofs[model][i]], 
-                    train_ths = [[ths[model][i]]], 
-                    train_se_ths=[[se_ths[model][i]]],
-                ))      
-        end
-#         println(result_df)
-        (composite_th, composite_se, composite_CImin, composite_CImax, ax, f) = theta_summary(result_df; Mode = "sparseFit", result_df=result_df)
-        title(modelNames[model])
-        push!(axs, ax)
-        push!(fs, f)
-#         printFigure(join([modelNames[model], "_theta_summary_nboot", n_iters, "_npercat", npercat]); fig=fs[model])
-        
-        append!(th_summary, 
-            DataFrame(
-                modelName = modelNames[model],
-                composite_th=composite_th, 
-                composite_se=composite_se, 
-                composite_CImin=composite_CImin, 
-                composite_CImax=composite_CImax,
-                ))
-        push!(meanAIC,mean(AICs[model]))
-        push!(meanAICc,mean(AICcs[model]))
-        push!(meanBIC,mean(BICs[model]))
-        push!(meanAccuracy_Sn,mean(Sn_accuracy[model]))
-        push!(meanAccuracy_test,mean(test_accuracy[model]))
-        
+    if nomodelfits
+    	for model = 1:length(modelNames)
+    		#
+    		#  get d for each model
+    		#
+    		d = NaN
+    		try
+	    		d = length(formulas[model].rhs) + 1
+    		catch
+    			d = 2
+			end
+			NAMES = String[]
+			for i=0:d-1
+				push!(NAMES, join(["th",i]))
+			end
+			push!(th_names[model], NAMES)
+            push!(ths[model], vec(nanmat(d,1)))
+            push!(se_ths[model], vec(nanmat(d,1)))
+            push!(dofs[model], vec(nanmat(d,1))) 
+	        result_df = DataFrame(train_dof = [vec(nanmat(d,1))], train_ths = [[vec(nanmat(d,1))]], train_se_ths=[[vec(nanmat(d,1))]])
+	        
+	        for i=2:n_iters
+	        	push!(th_names[model], NAMES)
+	            push!(ths[model], vec(nanmat(d,1)))
+	            push!(se_ths[model], vec(nanmat(d,1)))
+	            push!(dofs[model], vec(nanmat(d,1)))  
+	            
+	            xxx = DataFrame(train_dof = [dofs[model][i]], 
+	                    train_ths = [[ths[model][i]]], 
+	                    train_se_ths=[[se_ths[model][i]]],
+	                )
+	            
+	            append!(result_df, xxx)   
+                   
+	        end
+
+	        (composite_th, composite_se, composite_CImin, composite_CImax, ax, f, composite_mdof) = theta_summary(result_df; Mode = "sparseFit", result_df=result_df)
+	        title(modelNames[model])
+	        push!(axs, ax)
+	        push!(fs, f)
+	#         printFigure(join([modelNames[model], "_theta_summary_nboot", n_iters, "_npercat", npercat]); fig=fs[model])
+	        
+	        append!(th_summary, 
+	            DataFrame(
+	                modelName = modelNames[model],
+	                composite_th=composite_th, 
+	                composite_se=composite_se, 
+	                composite_CImin=composite_CImin, 
+	                composite_CImax=composite_CImax,
+	                composite_mdof = composite_mdof,
+	                ))
+	        push!(meanAIC,NaN)
+	        push!(meanAICc,NaN)
+	        push!(meanBIC,NaN)
+	        push!(meanAccuracy_Sn,NaN)
+	        push!(meanAccuracy_test,NaN)
+	        AICs[model] = vec(nanmat(n_iters,1))
+			AICcs[model] = vec(nanmat(n_iters,1))
+			BICs[model] = vec(nanmat(n_iters,1))
+	        Sn_accuracy[model] = vec(nanmat(n_iters,1))
+	        test_accuracy[model] = vec(nanmat(n_iters,1))
+
+	    end
+    else
+	    for model = 1:length(modelNames)
+	        result_df = DataFrame(train_dof = [dofs[model][1]], train_ths = [[ths[model][1]]], train_se_ths=[[se_ths[model][1]]])
+	        for i=2:n_iters
+	            append!(result_df, 
+	            DataFrame(train_dof = [dofs[model][i]], 
+	                    train_ths = [[ths[model][i]]], 
+	                    train_se_ths=[[se_ths[model][i]]],
+	                ))      
+	        end
+	        
+
+	        (composite_th, composite_se, composite_CImin, composite_CImax, ax, f, composite_mdof) = theta_summary(result_df; Mode = "sparseFit", result_df=result_df)
+	        title(modelNames[model])
+	        push!(axs, ax)
+	        push!(fs, f)
+	#         printFigure(join([modelNames[model], "_theta_summary_nboot", n_iters, "_npercat", npercat]); fig=fs[model])
+	        
+	        append!(th_summary, 
+	            DataFrame(
+	                modelName = modelNames[model],
+	                composite_th=composite_th, 
+	                composite_se=composite_se, 
+	                composite_CImin=composite_CImin, 
+	                composite_CImax=composite_CImax,
+	                composite_mdof = composite_mdof,
+	                ))
+	        push!(meanAIC,mean(AICs[model]))
+	        push!(meanAICc,mean(AICcs[model]))
+	        push!(meanBIC,mean(BICs[model]))
+	        push!(meanAccuracy_Sn,mean(Sn_accuracy[model]))
+	        push!(meanAccuracy_test,mean(test_accuracy[model]))
+	        
+	    end
     end
     set_xaxes_same_scale(axs)
     set_yaxes_same_scale(axs)
     for i=1:length(fs)
         # println(i)
-        printFigure(join([modelNames[i], "_theta_summary_nboot", n_iters, "_npercat", npercat]); fig=fs[i],figurePath=figurePath)
+        printFigure(join([modelNames[i], "_theta_summary_nboot", n_iters, "_npercat", npercat, slice]); fig=fs[i],figurePath=figurePath)
     end
     if suppressFigures
     	for i=1:length(fs)
@@ -1685,7 +1798,7 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
     compare_AICBIC(meanAICc, AICcs; yl="AICc", iters=n_iters, ax=ax2, minmax="min")
     ax3=subplot(1,3,3)
     compare_AICBIC(meanBIC, BICs; yl="BIC", iters=n_iters, ax=ax3, minmax="min")
-    printFigure(join(["AICBIC_summary_nboot", n_iters, "_npercat", npercat]); fig=f, figurePath=figurePath)
+    printFigure(join(["AICBIC_summary_nboot", n_iters, "_npercat", npercat, slice]); fig=f, figurePath=figurePath)
     if suppressFigures
     	close()
 	end
@@ -1697,7 +1810,7 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
     ax2=subplot(1,3,2)
     compare_AICBIC(meanAccuracy_test, test_accuracy; yl="Test Accuracy", iters=n_iters, ax=ax2, minmax="max")
     ax2.set_ylim([0., 1.])
-    printFigure(join(["Accuracy_summary_nboot", n_iters, "_npercat", npercat]); fig=f, figurePath=figurePath)
+    printFigure(join(["Accuracy_summary_nboot", n_iters, "_npercat", npercat, slice]); fig=f, figurePath=figurePath)
     if suppressFigures
     	close()
 	end
@@ -1722,30 +1835,30 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
         )
     wd = pwd()
     try
-        cd(figurePath)
-        CSV.write("AICs.csv",DataFrame(AICs = AICs))
-        CSV.write("meanAIC.csv",DataFrame(meanAIC = meanAIC))
-        CSV.write("AICcs.csv",DataFrame(AICcs = AICcs))
-        CSV.write("meanAICc.csv",DataFrame(meanAICc = meanAICc))
-        CSV.write("BICs.csv",DataFrame(BICs = BICs))
-        CSV.write("meanBIC.csv",DataFrame(meanBIC = meanBIC))
-        CSV.write("testloss.csv",DataFrame(testloss = testloss))
-        CSV.write("Sn_accuracy.csv",DataFrame(Sn_accuracy = Sn_accuracy))
-        CSV.write("meanAccuracy_Sn.csv",DataFrame(meanAccuracy_Sn = meanAccuracy_Sn))
-        CSV.write("test_accuracy.csv",DataFrame(test_accuracy = test_accuracy))
-        CSV.write("meanAccuracy_test.csv",DataFrame(meanAccuracy_test = meanAccuracy_test))
-        CSV.write("th_names.csv",DataFrame(th_names = th_names))
-        CSV.write("ths.csv",DataFrame(ths = ths))
-        CSV.write("se_ths.csv",DataFrame(se_ths = se_ths))
-        CSV.write("dofs.csv",DataFrame(dofs = dofs))
-        saveDataFrame(th_summary, "th_summary"; path=savePath)
+        cd(savePath)
+        CSV.write(join(["AICs_", slice, ".csv"]),DataFrame(AICs = AICs))
+        CSV.write(join(["meanAIC_", slice, ".csv"]),DataFrame(meanAIC = meanAIC))
+        CSV.write(join(["AICcs_", slice, ".csv"]),DataFrame(AICcs = AICcs))
+        CSV.write(join(["meanAICc_", slice, ".csv"]),DataFrame(meanAICc = meanAICc))
+        CSV.write(join(["BICs_", slice, ".csv"]),DataFrame(BICs = BICs))
+        CSV.write(join(["meanBIC_", slice, ".csv"]),DataFrame(meanBIC = meanBIC))
+        CSV.write(join(["testloss_", slice, ".csv"]),DataFrame(testloss = testloss))
+        CSV.write(join(["Sn_accuracy_", slice, ".csv"]),DataFrame(Sn_accuracy = Sn_accuracy))
+        CSV.write(join(["meanAccuracy_Sn_", slice, ".csv"]),DataFrame(meanAccuracy_Sn = meanAccuracy_Sn))
+        CSV.write(join(["test_accuracy_", slice, ".csv"]),DataFrame(test_accuracy = test_accuracy))
+        CSV.write(join(["meanAccuracy_test_", slice, ".csv"]),DataFrame(meanAccuracy_test = meanAccuracy_test))
+        CSV.write(join(["th_names_", slice, ".csv"]),DataFrame(th_names = th_names))
+        CSV.write(join(["ths_", slice, ".csv"]),DataFrame(ths = ths))
+        CSV.write(join(["se_ths_", slice, ".csv"]),DataFrame(se_ths = se_ths))
+        CSV.write(join(["dofs_", slice, ".csv"]),DataFrame(dofs = dofs))
+        saveDataFrame(th_summary, join(["th_summary", slice,"_"]); path=savePath)
     catch
         warning("didn't work")
         cd(wd)
         rethrow()
     end
     cd(wd)
-    saveDataFrame(results, "results_df"; path=savePath)
+    saveDataFrame(results, join(["results_df",slice,"_"]); path=savePath)
     return results
 end
 function compare_AICBIC(meanAIC, AICs; yl="AIC", iters=0, ax=gca(), minmax="min")
@@ -1773,13 +1886,18 @@ function compare_AICBIC(meanAIC, AICs; yl="AIC", iters=0, ax=gca(), minmax="min"
     ax.set_title(join(["mean ", yl, " iters=", iters]))
 end
 function getBootCI(Vec::Vector; alph=0.05)
+	Vec = sort!(Vec)
     n = length(Vec)
     minix = round(Int,(alph/2)*n)
     maxix = round(Int,(1-(alph/2))*n)
-    if minix == 0
+    if minix == 0 #|| isnan(minix)
     	minix = 1
     end
+  #   if isnan(maxix)
+		# maxix = 1
+  #   end
     CImin = Vec[minix]
     CImax = Vec[maxix]
+    # println("mean=",mean(Vec), " (", CImin, ", ", CImax, ")")
     return (CImin, CImax)
 end

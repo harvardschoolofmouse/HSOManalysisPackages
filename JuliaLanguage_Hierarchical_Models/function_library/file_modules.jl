@@ -24,7 +24,7 @@ function refresh_tools(path; exact=false)
     try
         cd(path)
         a = readdir()
-        print("Refreshed ")
+        print("Refreshed (", timestamp_now(), ") ")
         for i = 1:length(a)
             if occursin(".jl", a[i])
             	if exact
@@ -145,6 +145,7 @@ function check_imported_data(data::TrialData; idx=nothing)
     figure(figsize=(5,3))
     plot(xs, ys, color="red", linewidth=2)
     xlabel("time (s)")
+    xticks(collect(range(0, stop=maximum(xs), length=5)))
     ylabel("dF/F")
     title(join([seshcode," t=", tNo, " lt=", lt, "s"]));
     println("mean: ", mean(ys))

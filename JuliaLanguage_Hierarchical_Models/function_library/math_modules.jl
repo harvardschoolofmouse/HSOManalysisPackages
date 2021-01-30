@@ -39,6 +39,19 @@ end
 function nanmat(r,c)
     NaN.*ones(r,c)
 end
+function nan2zero(vec)
+    if !(typeof(vec) <: Array)
+        if isnan(vec)
+            return 0.
+        else
+            return vec
+        end
+    else
+        ix = findall(x->isnan(x), vec)
+        vec[ix] = zeros(length(ix))
+        return vec
+    end
+end
 # function mean(y)
 #     sum(y)/length(y)
 # end
