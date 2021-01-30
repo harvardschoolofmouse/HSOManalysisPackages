@@ -1664,7 +1664,9 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
 			    			nomodelfits = true
 			        	end
 			        else
-			        	rethrow()
+			        	println(typeof(e))
+			        	warning("YIKES! WEIRD ERROR - could be fit never converged!")
+			        	# rethrow()
 		        	end
 		        end
 	        end
