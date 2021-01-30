@@ -111,7 +111,7 @@ end
 
 function printFigure(name; fig=gcf(), figurePath=figurePath, verbose=false)
 	if Sys.iswindows()
-		dlim="\" #"
+		dlim="\\" #"
 	else
 		dlim="/"
 	end
