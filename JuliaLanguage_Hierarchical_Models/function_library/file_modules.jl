@@ -78,14 +78,14 @@ function extract_data(path; blmode=false, LOImode=false)
         catch
         	# explain the error
         	println("	")
-        	println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ERROR")
-        	println("	On path ", path, "...")
-        	println("blmode=", blmode, "  LOImode=", LOImode)
-        	println("i=", i, "  ystart=", ystart, "  xstart=", xstart)
-        	println("Could not vec(readdlm(a[xstart+i], ',', Float64, '\n'));")
-        	println("a[xstart+i-1]=", a[xstart+i-1])
-        	println("a[ystart+i-1]=", a[ystart+i-1])
-        	println(a)
+        	println("\x1b[31m\"!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ERROR\"\x1b[0m")
+        	println("\x1b[31m\"	On path ", path, "...\"\x1b[0m")
+        	println("\x1b[31m\"blmode=", blmode, "  LOImode=", LOImode, "\"\x1b[0m")
+        	println("\x1b[31m\"i=", i, "  ystart=", ystart, "  xstart=", xstart, "\"\x1b[0m")
+        	println("\x1b[31m\"Could not vec(readdlm(a[xstart+i], ',', Float64, '\n'));\"\x1b[0m")
+        	println("\x1b[31m\"a[xstart+i-1]=", a[xstart+i-1], "\"\x1b[0m")
+        	println("\x1b[31m\"a[ystart+i-1]=", a[ystart+i-1], "\"\x1b[0m")
+        	# println(a)
         	rethrow()
         end
         if blmode # if baseline, we have extra baseline text on the filename
