@@ -68,6 +68,9 @@ function extract_data(path; blmode=false, LOImode=false)
     trialNo = Vector{Int}(undef, ystart)
     lickTime_s = Vector{Float64}(undef, ystart)
     for i = 1:ystart
+    	xx=[]
+    	yy=[]
+    	tt=[]
     	try
 	        xx = vec(readdlm(a[xstart+i], ',', Float64, '\n'));
 	        yy = vec(readdlm(a[ystart+i], ',', Float64, '\n'));
