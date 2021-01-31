@@ -255,10 +255,21 @@ function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=fa
     sessioncodes = Array{String}(undef, 0)
 
     for i = 1:length(tNo_sorted)
-        # get previous trial info
+        # get previous trial info. We will have some issues if there's an exclusion near begin of session, e.g., exc trial 1 or 2... OR if exclude multiple in a row...
         if tNo_sorted[i] != 1 && tNo_sorted[1]==1
             if tNo_sorted[i] != 2
                 # 2 trials back data...
+                try
+                	tNo_sorted[i] - tNo_sorted[i-2] == 2
+            	catch
+            		println("\x1b[31m\"!!!!!!!!!!!!!!!! ERROR!\"\x1b[0m")
+            		println("\x1b[31m\"      i=",i, "\"\x1b[0m")
+            		println("\x1b[31m\"      i-2=",i-2, "\"\x1b[0m")
+            		println("\x1b[31m\"      tNo_sorted[i]=",tNo_sorted[i], "\"\x1b[0m")
+            		println("\x1b[31m\"      Cant look 2 back...\"\x1b[0m")
+            		rethrow()
+            	end
+
                 if tNo_sorted[i] - tNo_sorted[i-2] == 2
                     # we have 2 trials back!
                     ltm2 = lt_sorted[i-2]
