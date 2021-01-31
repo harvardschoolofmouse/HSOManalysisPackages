@@ -266,6 +266,7 @@ function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=fa
             		println("\x1b[31m\"      i=",i, "\"\x1b[0m")
             		println("\x1b[31m\"      i-2=",i-2, "\"\x1b[0m")
             		println("\x1b[31m\"      tNo_sorted[i]=",tNo_sorted[i], "\"\x1b[0m")
+            		println("\x1b[31m\"      tNo_sorted[1:5]=",tNo_sorted[1:5], "\"\x1b[0m")
             		println("\x1b[31m\"      Cant look 2 back...\"\x1b[0m")
             		rethrow()
             	end
