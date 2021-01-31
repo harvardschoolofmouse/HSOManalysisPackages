@@ -33,11 +33,11 @@ function pretty_print_list(myList; orient="vertical", digits=3, enum=false)
     end
 end;
 function warning(msg::String)
-    red = "\033[1m\033[31m" 
-    println("********************************************************************************************")
-    println(string("     WARNING: ", msg))
-    println("********************************************************************************************")
-    return
+    red = "\033[1m\033[31m"
+    println("\x1b[31m\"      Cant look 2 back...\"\x1b[0m") 
+    println("\x1b[31m\"********************************************************************************************\"\x1b[0m")
+    println(join(["\x1b[31m\"     WARNING: ", msg, "\"\x1b[0m"]))
+    println("\x1b[31m\"********************************************************************************************\"\x1b[0m")
 end
 function progressbar(iter,total)
     done = ["=", "=", "=", "=", "=", "=", "=", "=", "=", "="]
