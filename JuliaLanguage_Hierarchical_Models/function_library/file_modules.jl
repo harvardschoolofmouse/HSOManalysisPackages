@@ -343,6 +343,20 @@ function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=fa
 		        outcomes2 = [false, false, false, false]
     		end
 		else # all other cases
+			 try
+            	tNo_sorted[i] - tNo_sorted[i-2] == 2
+        	catch
+        		println("\x1b[31m\"!!!!!!!!!!!!!!!! ERROR!\"\x1b[0m")
+        		println("\x1b[31m\"      i=",i, "\"\x1b[0m")
+        		println("\x1b[31m\"      i-1=",i-1, "\"\x1b[0m")
+        		println("\x1b[31m\"      i-2=",i-2, "\"\x1b[0m")
+        		println("\x1b[31m\"      tNo_sorted[i]=",tNo_sorted[i], "\"\x1b[0m")
+        		println("\x1b[31m\"      tNo_sorted[1:5]=",tNo_sorted[1:5], "\"\x1b[0m")
+        		println("\x1b[31m\"      Cant look 2 back...\"\x1b[0m")
+        		println("\x1b[31m\"      Data was obtained from ", path,"\"\x1b[0m")
+        		println("\x1b[31m\"      current directory: ", pwd(),"\"\x1b[0m")
+        		rethrow()
+        	end
             if tNo_sorted[i] - tNo_sorted[i-2] == 2
                 # we have 2 trials back!
                 ltm2 = lt_sorted[i-2]
