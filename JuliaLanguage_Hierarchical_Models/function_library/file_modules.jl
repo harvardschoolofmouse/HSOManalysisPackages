@@ -278,6 +278,7 @@ function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=fa
             		check_imported_data(data; idx=2)
             		check_imported_data(baseline_data; idx=2)
             		check_imported_data(LOI_data; idx=2)
+            		println("\x1b[31m\"      current directory: ", pwd(),"\"\x1b[0m")
             		rethrow()
             	end
 
