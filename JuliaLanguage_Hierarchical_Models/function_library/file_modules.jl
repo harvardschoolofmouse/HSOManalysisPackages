@@ -256,7 +256,7 @@ function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=fa
 
     for i = 1:length(tNo_sorted)
         # get previous trial info. We will have some issues if there's an exclusion near begin of session, e.g., exc trial 1 or 2... OR if exclude multiple in a row...
-        if tNo_sorted[i] == 1 
+        if i-1 <= 0#tNo_sorted[i] == 1 
          	# no previous trial! we have no outcome info...
             if normalize
                 ltm1 = 0.0
@@ -270,7 +270,7 @@ function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=fa
                 ltm2 = 0.0
             end
             outcomes2 = [false, false, false, false]
-        elseif tNo_sorted[i] == 2 
+        elseif if i-2 <=0#tNo_sorted[i] == 2 
         	# no 2 trials back!
             if normalize
                 ltm2 = 0.0
@@ -278,8 +278,8 @@ function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=fa
                 ltm2 = 0.0
             end
             outcomes2 = [false, false, false, false]
-        	if tNo_sorted[1] == 1 # But we do have 1 trial back
-        	 	# we have a prev trial!
+        	if i-1 >0 && tNo_sorted[i] - tNo_sorted[i-1] == 1#tNo_sorted[1] == 1 
+        		# But we do have 1 trial back
                 ltm1 = lt_sorted[i-1]
                 outcomes = [false, false, false, false]
                 if lt_sorted_nonorm[i-1] < 0.7
@@ -299,64 +299,8 @@ function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=fa
                 end
                 outcomes = [false, false, false, false]
             end
-        elseif tNo_sorted[i] == 3 && tNo_sorted[2]!=2 || tNo_sorted[i] == 3 && tNo_sorted[1]!=1
-        	if tNo_sorted[2]==2
-				ltm1 = lt_sorted[i-1]
-                outcomes = [false, false, false, false]
-                if lt_sorted_nonorm[i-1] < 0.7
-                    outcomes[1] = true
-                elseif lt_sorted_nonorm[i-1] >= 0.7 && lt_sorted_nonorm[i-1] < 3.333
-                    outcomes[2] = true
-                elseif lt_sorted_nonorm[i-1] >= 3.333 && lt_sorted_nonorm[i-1] < 7
-                    outcomes[3] = true
-                else
-                    outcomes[4] = true
-                end
-        	else
-	         	# There is no previous trial
-	        	if normalize
-	                ltm1 = 0.0
-	            else
-	                ltm1 = 0.0
-	            end
-	            outcomes = [false, false, false, false]
-            end
-    		if tNo_sorted[1]==1 # we have 2 trials back but not 1...
-    			# we have 2 trials back!
-                ltm2 = lt_sorted[1]
-                outcomes2 = [false, false, false, false]
-                if lt_sorted_nonorm[1] < 0.7
-                    outcomes2[1] = true
-                elseif lt_sorted_nonorm[1] >= 0.7 && lt_sorted_nonorm[1] < 3.333
-                    outcomes2[2] = true
-                elseif lt_sorted_nonorm[1] >= 3.333 && lt_sorted_nonorm[1] < 7
-                    outcomes2[3] = true
-                else
-                    outcomes2[4] = true
-                end
-    		else # we have no 2 trials back
-		        if normalize
-		            ltm2 = 0.0
-		        else
-		            ltm2 = 0.0
-		        end
-		        outcomes2 = [false, false, false, false]
-    		end
+        
 		else # all other cases
-			 try
-            	tNo_sorted[i] - tNo_sorted[i-2] == 2
-        	catch
-        		println("\x1b[31m\"!!!!!!!!!!!!!!!! ERROR!\"\x1b[0m")
-        		println("\x1b[31m\"      i=",i, "\"\x1b[0m")
-        		println("\x1b[31m\"      i-1=",i-1, "\"\x1b[0m")
-        		println("\x1b[31m\"      i-2=",i-2, "\"\x1b[0m")
-        		println("\x1b[31m\"      tNo_sorted[i]=",tNo_sorted[i], "\"\x1b[0m")
-        		println("\x1b[31m\"      tNo_sorted[1:5]=",tNo_sorted[1:5], "\"\x1b[0m")
-        		println("\x1b[31m\"      Cant look 2 back...\"\x1b[0m")
-        		println("\x1b[31m\"      Data was obtained from ", path,"\"\x1b[0m")
-        		println("\x1b[31m\"      current directory: ", pwd(),"\"\x1b[0m")
-        		rethrow()
-        	end
             if tNo_sorted[i] - tNo_sorted[i-2] == 2
                 # we have 2 trials back!
                 ltm2 = lt_sorted[i-2]
