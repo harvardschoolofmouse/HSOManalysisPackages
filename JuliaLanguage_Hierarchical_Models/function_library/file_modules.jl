@@ -85,6 +85,8 @@ function extract_data(path; blmode=false, LOImode=false)
         	println("\x1b[31m\"Could not vec(readdlm(a[xstart+i], ',', Float64, '\n'));\"\x1b[0m")
         	println("\x1b[31m\"a[xstart+i-1]=", a[xstart+i-1], "\"\x1b[0m")
         	println("\x1b[31m\"a[ystart+i-1]=", a[ystart+i-1], "\"\x1b[0m")
+        	println("\x1b[31m\"a[xstart+i]=", a[xstart+i], "\"\x1b[0m")
+        	println("\x1b[31m\"a[ystart+i]=", a[ystart+i], "\"\x1b[0m")
         	# println(a)
         	rethrow()
         end
