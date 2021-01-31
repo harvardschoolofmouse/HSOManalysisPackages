@@ -133,7 +133,12 @@ function check_imported_data(data::TrialData; idx=nothing)
     if isnothing(idx)
         idx = rand(1:length(data.xdata))
     else
-        idx = findall(x->x==idx, data.trialNo)[1]
+        idx = findall(x->x==idx, data.trialNo)
+        if !isempty(idx)
+	        idx = idx[1]
+        else
+        	idx = rand(1:length(data.xdata))
+    	end
         println(idx)
     end
     xs = data.xdata[idx]
