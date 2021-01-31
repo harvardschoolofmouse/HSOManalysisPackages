@@ -478,7 +478,7 @@ function truncate_at_cue_and_lickp250(td::TrialData; cbuffer_s=0., lbuffer_s=0,b
     trialNo = []
     lickTime_s = []
 
-    if !isempty(loi_data)
+    if typeof(loi_data) == TrialData
     	newxs_bl = []
 	    newys_bl = []
 	    trialNo_bl = []
@@ -495,7 +495,7 @@ function truncate_at_cue_and_lickp250(td::TrialData; cbuffer_s=0., lbuffer_s=0,b
         yy = td.ydata[i]
         lidx = findlast(x->x<=(td.lickTime_s[i]+lbuffer_s), xx)
 
-        if !isempty(loi_data)
+        if typeof(loi_data) == TrialData
 	    	xx_bl = bl_data.xdata[i]
 	    	yy_bl = bl_data.ydata[i]
 	    	xx_loi = loi_data.xdata[i]
@@ -510,7 +510,7 @@ function truncate_at_cue_and_lickp250(td::TrialData; cbuffer_s=0., lbuffer_s=0,b
 	        push!(newys, yy)
 	        push!(trialNo, td.trialNo[i])
 	        push!(lickTime_s, td.lickTime_s[i])
-	        if !isempty(loi_data)
+	        if typeof(loi_data) == TrialData
 	        	push!(newxs_bl, xx_bl)
 	        	push!(newxs_loi, xx_loi)
 		        push!(newys_bl, yy_bl)
@@ -523,7 +523,7 @@ function truncate_at_cue_and_lickp250(td::TrialData; cbuffer_s=0., lbuffer_s=0,b
         end
     end
     trial_data = TrialData(newxs, newys, trialNo, lickTime_s, td.path, td.sessionCode)
-    if !isempty(loi_data)
+    if typeof(loi_data) == TrialData
     	new_bl_data = TrialData(newxs_bl, newys_bl, trialNo_bl, lickTime_s_bl, bl_data.path, bl_data.sessionCode)
     	new_loi_data = TrialData(newxs_loi, newys_loi, trialNo_loi, lickTime_s_loi, loi_data.path, loi_data.sessionCode)
     	return (trial_data, new_bl_data, new_loi_data)
