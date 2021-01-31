@@ -472,17 +472,35 @@ function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=fa
     return df
 end;
 
-function truncate_at_cue_and_lickp250(td::TrialData; cbuffer_s=0., lbuffer_s=0)
+function truncate_at_cue_and_lickp250(td::TrialData; cbuffer_s=0., lbuffer_s=0,bl_data=[], loi_data=[])
     newxs = []
     newys = []
     trialNo = []
     lickTime_s = []
+
+    if !isempty(loi_data)
+    	newxs_bl = []
+	    newys_bl = []
+	    trialNo_bl = []
+	    lickTime_s_bl = []
+	    newxs_loi = []
+	    newys_loi = []
+	    trialNo_loi = []
+	    lickTime_s_loi = []
+    end
     
     for i = 1:length(td.xdata)
         xx = td.xdata[i]
         cidx = findfirst(x->x>=0. +cbuffer_s, xx)
         yy = td.ydata[i]
         lidx = findlast(x->x<=(td.lickTime_s[i]+lbuffer_s), xx)
+
+        if !isempty(loi_data)
+	    	xx_bl = bl_data.xdata[i]
+	    	yy_bl = bl_data.ydata[i]
+	    	xx_loi = loi_data.xdata[i]
+	    	yy_loi = loi_data.ydata[i]
+	    end
         if !isnothing(lidx)
 	        xx = xx[1:lidx]
 	        xx = xx[cidx:end]
@@ -492,10 +510,26 @@ function truncate_at_cue_and_lickp250(td::TrialData; cbuffer_s=0., lbuffer_s=0)
 	        push!(newys, yy)
 	        push!(trialNo, td.trialNo[i])
 	        push!(lickTime_s, td.lickTime_s[i])
+	        if !isempty(loi_data)
+	        	push!(newxs_bl, xx_bl)
+	        	push!(newxs_loi, xx_loi)
+		        push!(newys_bl, yy_bl)
+		        push!(newys_loi, yy_loi)
+		        push!(trialNo_bl, bl_data.trialNo[i])
+		        push!(trialNo_loi, loi_data.trialNo[i])
+		        push!(lickTime_s_bl, bl_data.lickTime_s[i])
+		        push!(lickTime_s_loi, loi_data.lickTime_s[i])
+	        end
         end
     end
     trial_data = TrialData(newxs, newys, trialNo, lickTime_s, td.path, td.sessionCode)
-    return trial_data 
+    if !isempty(loi_data)
+    	new_bl_data = TrialData(newxs_bl, newys_bl, trialNo_bl, lickTime_s_bl, bl_data.path, bl_data.sessionCode)
+    	new_loi_data = TrialData(newxs_loi, newys_loi, trialNo_loi, lickTime_s_loi, loi_data.path, loi_data.sessionCode)
+    	return (trial_data, new_bl_data, new_loi_data)
+	else
+	    return trial_data 
+    end
 end;
 
 function saveDataFrame(df, filename; path=nothing)

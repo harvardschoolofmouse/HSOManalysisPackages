@@ -348,12 +348,18 @@ function extract_data_with_baselineandLOI(path; normalize=true)
 	data_single_trial = extract_data(joinpath(path, "singletrial"), blmode=false, LOImode=false)
 	lb = -0.15
 	println("truncating data back: ",lb, "s")
-	data_single_trial = truncate_at_cue_and_lickp250(data_single_trial; cbuffer_s=0., lbuffer_s=lb)
-	check_imported_data(data_single_trial; idx=11)
-	printFigure(join(["datacheck_",data_single_trial.sessionCode,"_"]); fig=gcf(), figurePath=pwd())
+	
 	# data_single_trial.sessionCode = [sessionID for _=1:length(data_single_trial.sessionCode)]
 	data_baseline_trial = extract_data(joinpath(path, "baseline"), blmode=true, LOImode=false)
 	data_LOI_trial = extract_data(joinpath(path, "LOI"), blmode=false, LOImode=true)
+	
+	(data_single_trial,data_baseline_trial,data_LOI_trial) = truncate_at_cue_and_lickp250(data_single_trial; cbuffer_s=0., lbuffer_s=lb, bl_data=data_baseline_trial, loi_data=data_LOI_trial)
+	check_imported_data(data_single_trial; idx=11)
+	printFigure(join(["datacheck_",data_single_trial.sessionCode,"_"]); fig=gcf(), figurePath=pwd())
+	check_imported_data(data_baseline_trial; idx=11)
+	printFigure(join(["datacheck_bl_",data_baseline_trial.sessionCode,"_"]); fig=gcf(), figurePath=pwd())
+	check_imported_data(data_LOI_trial; idx=11)
+	printFigure(join(["datacheck_loi_",data_LOI_trial.sessionCode,"_"]); fig=gcf(), figurePath=pwd())
 	df = makeSessionDataFrame(data_single_trial; normalize=normalize, includeBL_LOI=true, baseline_data=data_baseline_trial, LOI_data=data_LOI_trial)
 	cd(ret_dir)
 	return df
