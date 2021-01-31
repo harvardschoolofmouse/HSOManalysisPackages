@@ -68,9 +68,22 @@ function extract_data(path; blmode=false, LOImode=false)
     trialNo = Vector{Int}(undef, ystart)
     lickTime_s = Vector{Float64}(undef, ystart)
     for i = 1:ystart
-        xx = vec(readdlm(a[xstart+i], ',', Float64, '\n'));
-        yy = vec(readdlm(a[ystart+i], ',', Float64, '\n'));
-        tt = split(a[xstart+i], "_")
+    	try
+	        xx = vec(readdlm(a[xstart+i], ',', Float64, '\n'));
+	        yy = vec(readdlm(a[ystart+i], ',', Float64, '\n'));
+	        tt = split(a[xstart+i], "_")
+        catch
+        	# explain the error
+        	println("	")
+        	println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ERROR")
+        	println("	On path ", path, "...")
+        	println("blmode=", blmode, "  LOImode=", LOImode)
+        	println("i=", i, "  ystart=", ystart, "  xstart=", xstart)
+        	println("Could not vec(readdlm(a[xstart+i], ',', Float64, '\n'));")
+        	println("a:")
+        	println(a)
+        	rethrow()
+        end
         if blmode # if baseline, we have extra baseline text on the filename
         	tNo = parse(Int, tt[3][2:end])
 	        lt = parse(Float64, tt[4][3:end-1])
