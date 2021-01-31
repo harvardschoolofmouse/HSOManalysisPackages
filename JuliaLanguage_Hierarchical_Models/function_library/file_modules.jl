@@ -270,7 +270,7 @@ function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=fa
                 ltm2 = 0.0
             end
             outcomes2 = [false, false, false, false]
-        elseif if i-2 <=0#tNo_sorted[i] == 2 
+        elseif i-2 <=0#tNo_sorted[i] == 2 
         	# no 2 trials back!
             if normalize
                 ltm2 = 0.0
