@@ -499,4 +499,6 @@ end
 
 
 
-
+function fixStringForOS(s::String)
+	
+end

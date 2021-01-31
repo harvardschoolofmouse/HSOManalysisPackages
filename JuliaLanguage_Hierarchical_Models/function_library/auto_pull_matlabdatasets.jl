@@ -737,7 +737,13 @@ function slice_dataframe_into_timebins(df::DataFrame, slice_width_ms::Float64=25
 	            end
 	            ss = names(df)[col]
 	            if typeof(cc) == String
-	                eval(Meta.parse(join(["__TrialData.",ss,"=[\"", cc ,"\"]"])))
+	            	if Sys.iswindows()
+	            		println(ss)
+	            		println(cc)
+	            		eval(Meta.parse(join(["__TrialData.",ss,"=[\"", cc ,"\"]"])))
+	            	else
+	                	eval(Meta.parse(join(["__TrialData.",ss,"=[\"", cc ,"\"]"])))
+                	end
 	            else
 	                eval(Meta.parse(join(["__TrialData.",ss,"=[",cc,"]"])))
 	            end
