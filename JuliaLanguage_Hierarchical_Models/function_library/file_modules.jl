@@ -299,14 +299,28 @@ function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=fa
                 end
                 outcomes = [false, false, false, false]
             end
-        elseif tNo_sorted[i] == 3 && tNo_sorted[2]!=2
-         	# There is no previous trial
-        	if normalize
-                ltm1 = 0.0
-            else
-                ltm1 = 0.0
+        elseif tNo_sorted[i] == 3 && tNo_sorted[2]!=2 || tNo_sorted[i] == 3 && tNo_sorted[1]!=1
+        	if tNo_sorted[2]==2
+				ltm1 = lt_sorted[i-1]
+                outcomes = [false, false, false, false]
+                if lt_sorted_nonorm[i-1] < 0.7
+                    outcomes[1] = true
+                elseif lt_sorted_nonorm[i-1] >= 0.7 && lt_sorted_nonorm[i-1] < 3.333
+                    outcomes[2] = true
+                elseif lt_sorted_nonorm[i-1] >= 3.333 && lt_sorted_nonorm[i-1] < 7
+                    outcomes[3] = true
+                else
+                    outcomes[4] = true
+                end
+        	else
+	         	# There is no previous trial
+	        	if normalize
+	                ltm1 = 0.0
+	            else
+	                ltm1 = 0.0
+	            end
+	            outcomes = [false, false, false, false]
             end
-            outcomes = [false, false, false, false]
     		if tNo_sorted[1]==1 # we have 2 trials back but not 1...
     			# we have 2 trials back!
                 ltm2 = lt_sorted[1]
@@ -320,7 +334,7 @@ function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=fa
                 else
                     outcomes2[4] = true
                 end
-    		else # we have no previous trials...so no 2 trials back either
+    		else # we have no 2 trials back
 		        if normalize
 		            ltm2 = 0.0
 		        else
