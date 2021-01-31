@@ -271,6 +271,7 @@ function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=fa
             		println("\x1b[31m\"      There should be a trial 2... findall(tNo==2)=",findall(x->x==2,tNo), "\"\x1b[0m")
             		println("\x1b[31m\"      There should be a trial 2... findall(tNo==1)=",findall(x->x==1,tNo), "\"\x1b[0m")
             		println("\x1b[31m\"      Cant look 2 back...\"\x1b[0m")
+            		println("\x1b[31m\"      Data was obtained from ", path,"\"\x1b[0m")
             		rethrow()
             	end
 
