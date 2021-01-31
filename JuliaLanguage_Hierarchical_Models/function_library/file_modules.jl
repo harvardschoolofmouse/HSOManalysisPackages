@@ -267,6 +267,9 @@ function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=fa
             		println("\x1b[31m\"      i-2=",i-2, "\"\x1b[0m")
             		println("\x1b[31m\"      tNo_sorted[i]=",tNo_sorted[i], "\"\x1b[0m")
             		println("\x1b[31m\"      tNo_sorted[1:5]=",tNo_sorted[1:5], "\"\x1b[0m")
+            		println("\x1b[31m\"      There should be a trial 2... findall(tNo_sorted==2)=",findall(x->x==2,tNo_sorted), "\"\x1b[0m")
+            		println("\x1b[31m\"      There should be a trial 2... findall(tNo==2)=",findall(x->x==2,tNo), "\"\x1b[0m")
+            		println("\x1b[31m\"      There should be a trial 2... findall(tNo==1)=",findall(x->x==1,tNo), "\"\x1b[0m")
             		println("\x1b[31m\"      Cant look 2 back...\"\x1b[0m")
             		rethrow()
             	end
