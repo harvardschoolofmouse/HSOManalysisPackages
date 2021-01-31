@@ -256,67 +256,98 @@ function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=fa
 
     for i = 1:length(tNo_sorted)
         # get previous trial info. We will have some issues if there's an exclusion near begin of session, e.g., exc trial 1 or 2... OR if exclude multiple in a row...
-        if tNo_sorted[i] != 1 && tNo_sorted[1]==1
-            if tNo_sorted[i] != 2
-                # 2 trials back data...
-                try
-                	tNo_sorted[i] - tNo_sorted[i-2] == 2
-            	catch
-            		println("\x1b[31m\"!!!!!!!!!!!!!!!! ERROR!\"\x1b[0m")
-            		println("\x1b[31m\"      i=",i, "\"\x1b[0m")
-            		println("\x1b[31m\"      i-2=",i-2, "\"\x1b[0m")
-            		println("\x1b[31m\"      tNo_sorted[i]=",tNo_sorted[i], "\"\x1b[0m")
-            		println("\x1b[31m\"      tNo_sorted[1:5]=",tNo_sorted[1:5], "\"\x1b[0m")
-            		println("\x1b[31m\"      There should be a trial 2... findall(tNo_sorted==2)=",findall(x->x==2,tNo_sorted), "\"\x1b[0m")
-            		println("\x1b[31m\"      There should be a trial 2... findall(tNo==2)=",findall(x->x==2,tNo), "\"\x1b[0m")
-            		println("\x1b[31m\"      There should be a trial 2... findall(tNo==1)=",findall(x->x==1,tNo), "\"\x1b[0m")
-            		println("\x1b[31m\"      Cant look 2 back...\"\x1b[0m")
-            		println("\x1b[31m\"      Data was obtained from ", path,"\"\x1b[0m")
-            		println("\x1b[31m\"      current directory: ", pwd(),"\"\x1b[0m")
-            		check_imported_data(data; idx=1)
-            		printFigure("test_data1", fig=gcf(),figurePath=pwd(), verbose=false)
-            		check_imported_data(baseline_data; idx=1)
-            		printFigure("test_bl1", fig=gcf(),figurePath=pwd(), verbose=false)
-            		check_imported_data(LOI_data; idx=1)
-            		printFigure("test_loi1", fig=gcf(),figurePath=pwd(), verbose=false)
-            		check_imported_data(data; idx=2)
-            		printFigure("test_data2", fig=gcf(),figurePath=pwd(), verbose=false)
-            		check_imported_data(baseline_data; idx=2)
-            		printFigure("test_bl2", fig=gcf(),figurePath=pwd(), verbose=false)
-            		check_imported_data(LOI_data; idx=2)
-            		printFigure("test_loi2", fig=gcf(),figurePath=pwd(), verbose=false)
-            		
-            		rethrow()
-            	end
-
-                if tNo_sorted[i] - tNo_sorted[i-2] == 2
-                    # we have 2 trials back!
-                    ltm2 = lt_sorted[i-2]
-                    outcomes2 = [false, false, false, false]
-                    if lt_sorted_nonorm[i-2] < 0.7
-                        outcomes2[1] = true
-                    elseif lt_sorted_nonorm[i-2] >= 0.7 && lt_sorted_nonorm[i-2] < 3.333
-                        outcomes2[2] = true
-                    elseif lt_sorted_nonorm[i-2] >= 3.333 && lt_sorted_nonorm[i-2] < 7
-                        outcomes2[3] = true
-                    else
-                        outcomes2[4] = true
-                    end
+        if tNo_sorted[i] == 1 
+         	# no previous trial! we have no outcome info...
+            if normalize
+                ltm1 = 0.0
+            else
+                ltm1 = 0.0
+            end
+            outcomes = [false, false, false, false]
+            if normalize
+                ltm2 = 0.0
+            else
+                ltm2 = 0.0
+            end
+            outcomes2 = [false, false, false, false]
+        elseif tNo_sorted[i] == 2 
+        	# no 2 trials back!
+            if normalize
+                ltm2 = 0.0
+            else
+                ltm2 = 0.0
+            end
+            outcomes2 = [false, false, false, false]
+        	if tNo_sorted[1] == 1 # But we do have 1 trial back
+        	 	# we have a prev trial!
+                ltm1 = lt_sorted[i-1]
+                outcomes = [false, false, false, false]
+                if lt_sorted_nonorm[i-1] < 0.7
+                    outcomes[1] = true
+                elseif lt_sorted_nonorm[i-1] >= 0.7 && lt_sorted_nonorm[i-1] < 3.333
+                    outcomes[2] = true
+                elseif lt_sorted_nonorm[i-1] >= 3.333 && lt_sorted_nonorm[i-1] < 7
+                    outcomes[3] = true
                 else
-                    # no 2 trials back! we have no outcome info...
-                    if normalize
-                        ltm2 = 1.0
-                    else
-                        ltm2 = 17.1
-                    end
-                    outcomes2 = [false, false, false, false]
+                    outcomes[4] = true
+                end
+            else # no prev trials!
+				if normalize
+                    ltm1 = 0.0
+                else
+                    ltm1 = 0.0
+                end
+                outcomes = [false, false, false, false]
+            end
+        elseif tNo_sorted[i] == 3 && tNo_sorted[2]!=2
+         	# There is no previous trial
+        	if normalize
+                ltm1 = 0.0
+            else
+                ltm1 = 0.0
+            end
+            outcomes = [false, false, false, false]
+    		if tNo_sorted[1]==1 # we have 2 trials back but not 1...
+    			# we have 2 trials back!
+                ltm2 = lt_sorted[1]
+                outcomes2 = [false, false, false, false]
+                if lt_sorted_nonorm[1] < 0.7
+                    outcomes2[1] = true
+                elseif lt_sorted_nonorm[1] >= 0.7 && lt_sorted_nonorm[1] < 3.333
+                    outcomes2[2] = true
+                elseif lt_sorted_nonorm[1] >= 3.333 && lt_sorted_nonorm[1] < 7
+                    outcomes2[3] = true
+                else
+                    outcomes2[4] = true
+                end
+    		else # we have no previous trials...so no 2 trials back either
+		        if normalize
+		            ltm2 = 0.0
+		        else
+		            ltm2 = 0.0
+		        end
+		        outcomes2 = [false, false, false, false]
+    		end
+		else # all other cases
+            if tNo_sorted[i] - tNo_sorted[i-2] == 2
+                # we have 2 trials back!
+                ltm2 = lt_sorted[i-2]
+                outcomes2 = [false, false, false, false]
+                if lt_sorted_nonorm[i-2] < 0.7
+                    outcomes2[1] = true
+                elseif lt_sorted_nonorm[i-2] >= 0.7 && lt_sorted_nonorm[i-2] < 3.333
+                    outcomes2[2] = true
+                elseif lt_sorted_nonorm[i-2] >= 3.333 && lt_sorted_nonorm[i-2] < 7
+                    outcomes2[3] = true
+                else
+                    outcomes2[4] = true
                 end
             else
                 # no 2 trials back! we have no outcome info...
                 if normalize
-                    ltm2 = 1.0
+                    ltm2 = 0.0
                 else
-                    ltm2 = 17.1
+                    ltm2 = 0.0
                 end
                 outcomes2 = [false, false, false, false]
             end
@@ -338,9 +369,9 @@ function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=fa
             elseif tNo_sorted[i] - tNo_sorted[i-1] == 2
                 # no previous trial! But we do have 2 trials back...
                 if normalize
-                    ltm1 = 1.0
+                    ltm1 = 0.0
                 else
-                    ltm1 = 17.1
+                    ltm1 = 0.0
                 end
                 outcomes = [false, false, false, false]
                 # we have 2 trials back!
@@ -358,26 +389,12 @@ function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=fa
             else
                 # no previous trial! we have no outcome info...
                 if normalize
-                    ltm1 = 1.0
+                    ltm1 = 0.0
                 else
-                    ltm1 = 17.1
+                    ltm1 = 0.0
                 end
                 outcomes = [false, false, false, false]
-            end
-        else
-            # no previous trial! we have no outcome info...
-            if normalize
-                ltm1 = 1.0
-            else
-                ltm1 = 17.1
-            end
-            outcomes = [false, false, false, false]
-            if normalize
-                ltm2 = 1.0
-            else
-                ltm2 = 17.1
-            end
-            outcomes2 = [false, false, false, false]
+            end         
         end
 
         for j = 1:length(ys_sorted[i])

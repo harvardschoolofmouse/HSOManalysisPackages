@@ -360,6 +360,7 @@ function extract_data_with_baselineandLOI(path; normalize=true)
 	printFigure(join(["datacheck_bl_",data_baseline_trial.sessionCode,"_"]); fig=gcf(), figurePath=pwd())
 	check_imported_data(data_LOI_trial; idx=11)
 	printFigure(join(["datacheck_loi_",data_LOI_trial.sessionCode,"_"]); fig=gcf(), figurePath=pwd())
+	println("saved figs to ", pwd())
 	df = makeSessionDataFrame(data_single_trial; normalize=normalize, includeBL_LOI=true, baseline_data=data_baseline_trial, LOI_data=data_LOI_trial)
 	cd(ret_dir)
 	return df
