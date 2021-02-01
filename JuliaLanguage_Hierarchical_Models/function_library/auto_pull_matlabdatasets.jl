@@ -803,7 +803,7 @@ function slice_dataframe_into_timebins(df::DataFrame, slice_width_ms::Float64=25
 	        newData = vcat(newData, __TrialData)
 	        # println("Bin No:", i, "Unique of df LickState:", unique(newData[:LickState]))
 	    end
-	    warning(join(["unique of LickState:", unique(binned_ndfs[1][:LickState])]))
+
 	    push!(binned_dfs, newData)
 	end
 	# for i = 1:nbins-1
@@ -837,7 +837,7 @@ function slice_dataframe_into_timebins(df::DataFrame, slice_width_ms::Float64=25
 	#     # end
 	#     push!(binned_dfs, newData)
 	# end
-
+	warning(join(["unique of LickState:", unique(binned_dfs[1][:LickState])]))
 
 	return (binned_dfs, binEdges)
 end
