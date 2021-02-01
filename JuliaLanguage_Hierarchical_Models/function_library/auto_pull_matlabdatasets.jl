@@ -792,6 +792,7 @@ function slice_dataframe_into_timebins(df::DataFrame, slice_width_ms::Float64=25
 	            else
 	                eval(Meta.parse(join(["__TrialData.",ss,"=[",cc,"]"])))
 	            end
+	            println(__TrialData)
 	            
 	        end
 	        newData = vcat(newData, __TrialData)
