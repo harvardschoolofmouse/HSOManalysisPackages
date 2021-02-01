@@ -133,11 +133,11 @@ function printFigure(name; fig=gcf(), figurePath=figurePath, verbose=false)
 	ret_dir = pwd()
 	if Sys.iswindows()
 		# dlim="\\" #"
-		println("here")
+		# println("here")
 		cd(figurePath)
-		println("here2")
+		# println("here2")
 		figname = join([name, "_", timestamp, ".eps"])
-		println("figname=", figname)
+		# println("figname=", figname)
 	else
 		dlim="/"
     	figname = join([figurePath,dlim, name, "_", timestamp, ".eps"])
@@ -149,9 +149,9 @@ function printFigure(name; fig=gcf(), figurePath=figurePath, verbose=false)
     if verbose
 	    println(figname)
     end
-    println("here3")
+    # println("here3")
     fig.savefig(figname, transparent=true, format="eps")
-    println("here4")
+    # println("here4")
     cd(ret_dir)
 end
 
