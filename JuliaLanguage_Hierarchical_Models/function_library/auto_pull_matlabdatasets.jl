@@ -776,7 +776,7 @@ function slice_dataframe_into_timebins(df::DataFrame, slice_width_ms::Float64=25
 	        coldata = []#[[] for _= 1:ncol(df)]
 	        for col = 1:ncol(df)
 	            if names(df)[col] == "LickState"
-	            	println(join(["SHOULD ALWAYS GET THIS for LickState. Returning true. names(df)[col] =", names(df)[col], " unique(df[tidx, col])=", unique(df[tidx, col])]))
+	            	println(join(["SHOULD ALWAYS GET THIS for LickState. names(df)[col] =", names(df)[col], " unique(df[tidx, col])=", unique(df[tidx, col])]))
 	            	# what does this actually do? We want to preseve a bool! What the heck?
 	                # cc = maximum(df[tidx, col])
 	                # let's instead return a bool
