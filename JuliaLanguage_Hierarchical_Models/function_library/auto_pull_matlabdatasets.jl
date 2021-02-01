@@ -778,7 +778,7 @@ function slice_dataframe_into_timebins(df::DataFrame, slice_width_ms::Float64=25
 	            	# what does this actually do? We want to preseve a bool! What the heck?
 	                # cc = maximum(df[tidx, col])
 	                # let's instead return a bool
-	                println("Number of lick states this trial: ", length(findall(x->x, df[tidx, col])))
+	                # println("Number of lick states this trial: ", length(findall(x->x, df[tidx, col])))
 	                cc = length(findall(x->x, df[tidx, col]))
 	            elseif typeof(df[!,col][1])<:Number
 	                cc = mean(df[tidx, col])
