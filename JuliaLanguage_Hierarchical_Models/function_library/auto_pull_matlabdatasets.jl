@@ -540,7 +540,8 @@ function combine_AICBIC_across_sessions(results, compositesavepath, runID, packa
     compare_AICBIC(mean_all_AICcs, allAICcs; yl=join(["AICc nsesh=",n_sesh]), iters=n_iters, ax=ax2, minmax="min")
     ax3=subplot(1,3,3)
     compare_AICBIC(mean_all_BICs, allBICs; yl=join(["BIC nsesh=",n_sesh]), iters=n_iters, ax=ax3, minmax="min")
-    printFigure(join(["compositeAICBIC_summary_nboot", n_iters, "_nsesh", n_sesh, "_", packagename]); fig=f, figurePath=compositesavepath)
+    # printFigure(join(["compositeAICBIC_summary_nboot", n_iters, "_nsesh", n_sesh, "_", packagename]); fig=f, figurePath=compositesavepath)
+    printFigure(join(["compositeAICBIC_summary_nboot", n_iters, "_nsesh", n_sesh]); fig=f, figurePath=compositesavepath)
     
     f = figure(figsize=(20,3))
     ax1=subplot(1,3,1)
@@ -550,34 +551,56 @@ function combine_AICBIC_across_sessions(results, compositesavepath, runID, packa
     compare_AICBIC(mean_all_test_accuracy, all_test_accuracy; yl=join(["Test Accuracy nsesh=",n_sesh]), iters=n_iters, ax=ax2, minmax="max")
     ax2.set_ylim([0., 1.])
     ax3=subplot(1,3,3)
-    printFigure(join(["composite_Accuracy_summary_nboot", n_iters, "_nsesh", n_sesh, "_", packagename]); fig=f, figurePath=compositesavepath)
+    # printFigure(join(["composite_Accuracy_summary_nboot", n_iters, "_nsesh", n_sesh, "_", packagename]); fig=f, figurePath=compositesavepath)
+    printFigure(join(["composite_Accuracy_summary_nboot", n_iters, "_nsesh", n_sesh]); fig=f, figurePath=compositesavepath)
     #
     # Save the variables to the composite folder
     #
     ret_dir = pwd()
     cd(compositesavepath)
 
+    # CSV.write(join(["composite_AICs_nboot", n_iters, "_nsesh", n_sesh, 
+    #             "_", packagename, ".csv"]),DataFrame(allAICs = allAICs))
+    # CSV.write(join(["composite_meanAIC_nboot", n_iters, "_nsesh", n_sesh, 
+    #             "_", packagename, ".csv"]),DataFrame(mean_all_AICs = mean_all_AICs))
+    # CSV.write(join(["composite_AICcs_nboot", n_iters, "_nsesh", n_sesh, 
+    #             "_", packagename, ".csv"]),DataFrame(allAICcs = allAICcs))
+    # CSV.write(join(["composite_meanAICc_nboot", n_iters, "_nsesh", n_sesh, 
+    #             "_", packagename, ".csv"]),DataFrame(mean_all_AICcs = mean_all_AICcs))
+    # CSV.write(join(["composite_BICs_nboot", n_iters, "_nsesh", n_sesh, 
+    #             "_", packagename, ".csv"]),DataFrame(allBICs = allBICs))
+    # CSV.write(join(["composite_meanBIC_nboot", n_iters, "_nsesh", n_sesh, 
+    #             "_", packagename, ".csv"]),DataFrame(mean_all_BICs = mean_all_BICs))
+    
+    # CSV.write(join(["composite_Sn_accuracy_nboot", n_iters, "_nsesh", n_sesh, 
+    #             "_", packagename, ".csv"]),DataFrame(all_Sn_accuracy = all_Sn_accuracy))
+    # CSV.write(join(["composite_meanSn_accuracy_nboot", n_iters, "_nsesh", n_sesh, 
+    #             "_", packagename, ".csv"]),DataFrame(mean_all_Sn_accuracy = mean_all_Sn_accuracy))
+    # CSV.write(join(["composite_test_accuracy_nboot", n_iters, "_nsesh", n_sesh, 
+    #             "_", packagename, ".csv"]),DataFrame(all_test_accuracy = all_test_accuracy))
+    # CSV.write(join(["composite_meantest_accuracy_nboot", n_iters, "_nsesh", n_sesh, 
+    #             "_", packagename, ".csv"]),DataFrame(mean_all_test_accuracy = mean_all_test_accuracy))
     CSV.write(join(["composite_AICs_nboot", n_iters, "_nsesh", n_sesh, 
-                "_", packagename, ".csv"]),DataFrame(allAICs = allAICs))
+                ".csv"]),DataFrame(allAICs = allAICs))
     CSV.write(join(["composite_meanAIC_nboot", n_iters, "_nsesh", n_sesh, 
-                "_", packagename, ".csv"]),DataFrame(mean_all_AICs = mean_all_AICs))
+                ".csv"]),DataFrame(mean_all_AICs = mean_all_AICs))
     CSV.write(join(["composite_AICcs_nboot", n_iters, "_nsesh", n_sesh, 
-                "_", packagename, ".csv"]),DataFrame(allAICcs = allAICcs))
+                ".csv"]),DataFrame(allAICcs = allAICcs))
     CSV.write(join(["composite_meanAICc_nboot", n_iters, "_nsesh", n_sesh, 
-                "_", packagename, ".csv"]),DataFrame(mean_all_AICcs = mean_all_AICcs))
+                ".csv"]),DataFrame(mean_all_AICcs = mean_all_AICcs))
     CSV.write(join(["composite_BICs_nboot", n_iters, "_nsesh", n_sesh, 
-                "_", packagename, ".csv"]),DataFrame(allBICs = allBICs))
+                ".csv"]),DataFrame(allBICs = allBICs))
     CSV.write(join(["composite_meanBIC_nboot", n_iters, "_nsesh", n_sesh, 
-                "_", packagename, ".csv"]),DataFrame(mean_all_BICs = mean_all_BICs))
+                ".csv"]),DataFrame(mean_all_BICs = mean_all_BICs))
     
     CSV.write(join(["composite_Sn_accuracy_nboot", n_iters, "_nsesh", n_sesh, 
-                "_", packagename, ".csv"]),DataFrame(all_Sn_accuracy = all_Sn_accuracy))
+                ".csv"]),DataFrame(all_Sn_accuracy = all_Sn_accuracy))
     CSV.write(join(["composite_meanSn_accuracy_nboot", n_iters, "_nsesh", n_sesh, 
-                "_", packagename, ".csv"]),DataFrame(mean_all_Sn_accuracy = mean_all_Sn_accuracy))
+                ".csv"]),DataFrame(mean_all_Sn_accuracy = mean_all_Sn_accuracy))
     CSV.write(join(["composite_test_accuracy_nboot", n_iters, "_nsesh", n_sesh, 
-                "_", packagename, ".csv"]),DataFrame(all_test_accuracy = all_test_accuracy))
+                ".csv"]),DataFrame(all_test_accuracy = all_test_accuracy))
     CSV.write(join(["composite_meantest_accuracy_nboot", n_iters, "_nsesh", n_sesh, 
-                "_", packagename, ".csv"]),DataFrame(mean_all_test_accuracy = mean_all_test_accuracy))
+                ".csv"]),DataFrame(mean_all_test_accuracy = mean_all_test_accuracy))
     
     cd(ret_dir)
 end
