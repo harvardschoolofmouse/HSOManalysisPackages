@@ -892,7 +892,7 @@ function getCompositeTheta(ths, se_ths, dofs)
 			CImin = meanTh - abs( quantile(TDist(N*(mdf - 1)),0.025) ).*propagated_se_th;
 			CImax = meanTh + abs( quantile(TDist(N*(mdf - 1)),0.025) ).*propagated_se_th;
 		catch
-			warning("Got error at TDist... N*(mdf - 1))=", N*(mdf - 1), "\n Returning NaN for CI...")
+			warning(join(["Got error at TDist... N*(mdf - 1))=", N*(mdf - 1), "\n Returning NaN for CI..."]))
 			CImin = NaN
 			CImax = NaN
 		end
