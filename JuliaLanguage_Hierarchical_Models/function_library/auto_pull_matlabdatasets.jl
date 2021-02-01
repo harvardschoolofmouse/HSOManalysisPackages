@@ -458,14 +458,22 @@ function combine_th_across_sessions(results, compositesavepath, runID,packagenam
         #
         # Save the composite variables
         #
-        CSV.write(join(["MODELno",model, "_composite_ths_nboot", n_iters, "_nsesh", n_sesh, 
-                    "_", packagename, ".csv"]),DataFrame(train_ths = result_df.train_ths))
-        CSV.write(join(["MODELno",model, "_composite_se_ths_nboot", n_iters, "_nsesh", n_sesh, 
-                    "_", packagename, ".csv"]),DataFrame(train_se_ths = result_df.train_se_ths))
-        CSV.write(join(["MODELno",model, "_composite_dofs_nboot", n_iters, "_nsesh", n_sesh, 
-                    "_", packagename, ".csv"]),DataFrame(train_dof = result_df.train_dof))
-        CSV.write(join(["MODELno",model, "_composite_th_summary_nboot", n_iters, "_nsesh", n_sesh, 
-                    "_", packagename, ".csv"]),DataFrame(th_summary = th_summary))
+        # CSV.write(join(["MODELno",model, "_composite_ths_nboot", n_iters, "_nsesh", n_sesh, 
+        #             "_", packagename, ".csv"]),DataFrame(train_ths = result_df.train_ths))
+        # CSV.write(join(["MODELno",model, "_composite_se_ths_nboot", n_iters, "_nsesh", n_sesh, 
+        #             "_", packagename, ".csv"]),DataFrame(train_se_ths = result_df.train_se_ths))
+        # CSV.write(join(["MODELno",model, "_composite_dofs_nboot", n_iters, "_nsesh", n_sesh, 
+        #             "_", packagename, ".csv"]),DataFrame(train_dof = result_df.train_dof))
+        # CSV.write(join(["MODELno",model, "_composite_th_summary_nboot", n_iters, "_nsesh", n_sesh, 
+        #             "_", packagename, ".csv"]),DataFrame(th_summary = th_summary))
+        CSV.write(join([modelNames[model], "_composite_ths_nboot", n_iters, "_nsesh", n_sesh, 
+                    ".csv"]),DataFrame(train_ths = result_df.train_ths))
+        CSV.write(join([modelNames[model], "_composite_se_ths_nboot", n_iters, "_nsesh", n_sesh, 
+                    ".csv"]),DataFrame(train_se_ths = result_df.train_se_ths))
+        CSV.write(join([modelNames[model], "_composite_dofs_nboot", n_iters, "_nsesh", n_sesh, 
+                    ".csv"]),DataFrame(train_dof = result_df.train_dof))
+        CSV.write(join([modelNames[model], "_composite_th_summary_nboot", n_iters, "_nsesh", n_sesh, 
+                    ".csv"]),DataFrame(th_summary = th_summary))
     end
 
     set_xaxes_same_scale(axs)
