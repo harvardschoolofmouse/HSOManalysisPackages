@@ -775,7 +775,11 @@ function slice_dataframe_into_timebins(df::DataFrame, slice_width_ms::Float64=25
 	        coldata = []#[[] for _= 1:ncol(df)]
 	        for col = 1:ncol(df)
 	            if names(df)[col] == :LickState
-	                cc = maximum(df[tidx, col])
+	            	# what does this actually do? We want to preseve a bool! What the heck?
+	                # cc = maximum(df[tidx, col])
+	                # let's instead return a bool
+	                println("Number of lick states this trial: ", length(findall(x->x, df[tidx, col])))
+	                cc = length(findall(x->x, df[tidx, col]))
 	            elseif typeof(df[!,col][1])<:Number
 	                cc = mean(df[tidx, col])
 	            else 
@@ -792,7 +796,7 @@ function slice_dataframe_into_timebins(df::DataFrame, slice_width_ms::Float64=25
 	            else
 	                eval(Meta.parse(join(["__TrialData.",ss,"=[",cc,"]"])))
 	            end
-	            println(__TrialData)
+	            # println(__TrialData)
 	            
 	        end
 	        newData = vcat(newData, __TrialData)
