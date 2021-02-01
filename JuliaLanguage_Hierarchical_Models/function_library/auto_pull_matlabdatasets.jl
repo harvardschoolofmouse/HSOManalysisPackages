@@ -482,6 +482,7 @@ function combine_th_across_sessions(results, compositesavepath, runID,packagenam
     set_xaxes_same_scale(axs)
     set_yaxes_same_scale(axs)
     println("Figs saved to:", compositesavepath)
+    cd(compositesavepath)
     for i=1:length(fs)
         # println(i)
         # printFigure(join(["composite_", modelNames[i], "_theta_summary_nboot", n_iters, "_nsesh", n_sesh, "_", packagename]); fig=fs[i],figurePath=compositesavepath)

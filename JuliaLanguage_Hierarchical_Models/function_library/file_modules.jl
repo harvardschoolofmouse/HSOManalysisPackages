@@ -129,20 +129,25 @@ function timestamp_now()
 end
 
 function printFigure(name; fig=gcf(), figurePath=figurePath, verbose=false)
+	timestamp = timestamp_now()
+	ret_dir = pwd()
 	if Sys.iswindows()
 		dlim="\\" #"
+		cd(figurePath)
+		figname = join([name, "_", timestamp, ".eps"])
 	else
 		dlim="/"
+    	figname = join([figurePath,dlim, name, "_", timestamp, ".eps"])
 	end
 
     # gcf() = fig  
     # fig
-    timestamp = timestamp_now()
-    figname = join([figurePath,dlim, name, "_", timestamp, ".eps"])
+    
     if verbose
 	    println(figname)
     end
     fig.savefig(figname, transparent=true, format="eps")
+    cd(ret_dir)
 end
 
 function check_imported_data(data::TrialData; idx=nothing)
