@@ -747,6 +747,7 @@ function bootlogit_timeslice_postprocessingfunction1(results::DataFrame, composi
 end
 
 function slice_dataframe_into_timebins(df::DataFrame, slice_width_ms::Float64=250.)
+	warning("fixed LS encoding. Should have bools now, yay.")
 	#
 	# We have a dataframe whose :X column is the time in the interval.
 	#   We want to divide this into timebins
@@ -802,6 +803,7 @@ function slice_dataframe_into_timebins(df::DataFrame, slice_width_ms::Float64=25
 	        newData = vcat(newData, __TrialData)
 	        # println("Bin No:", i, "Unique of df LickState:", unique(newData[:LickState]))
 	    end
+	    warning(join(["unique of LickState:", unique(binned_ndfs[1][:LickState])]))
 	    push!(binned_dfs, newData)
 	end
 	# for i = 1:nbins-1
