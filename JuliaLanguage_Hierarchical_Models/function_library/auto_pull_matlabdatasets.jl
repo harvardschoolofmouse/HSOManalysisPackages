@@ -888,8 +888,8 @@ function plot_th_vs_timeslice(by_slice_composite_ths; savedir=pwd())
             gca().set_xticks(1:nTimeSlices)
             xlabel("Timeslice")
             if !isempty(findall(x->!isnan(x), thi))
-	            mn = maximum([minimum(thi[findall(x->!isnan(x), thi)]), -10])
-	            mx = minimum([maximum(thi[findall(x->!isnan(x), thi)]), 10])
+	            mn = maximum([minimum(thi[findall(x->!isnan(x), thi)]), -10]) - 1
+	            mx = minimum([maximum(thi[findall(x->!isnan(x), thi)]), 10]) + 1
             else
             	mn = -10
             	mx = 10
@@ -933,9 +933,15 @@ function plot_th_vs_timeslice(by_slice_composite_ths; savedir=pwd())
         plot_with_CI(thiii, CIminiii, CImaxiii; dataLabels="", ylab="wt", ax=gca())
         gca().set_xticks(1:d_model)
         xlabel("th")
-        
-        mn = maximum([minimum(thiii[findall(x->!isnan(x), thiii)]), -10]) - 1
-        mx = minimum([maximum(thiii[findall(x->!isnan(x), thiii)]), 10]) + 1
+        if !isempty(findall(x->!isnan(x), thiii))
+	        mn = maximum([minimum(thiii[findall(x->!isnan(x), thiii)]), -10]) - 1
+    	    mx = minimum([maximum(thiii[findall(x->!isnan(x), thiii)]), 10]) + 1
+	    else
+	    	mn = -10
+	    	mx = 10
+	    else
+
+	    end
         ylim([mn,mx])
         ylabel("weight")
         title(join(["model: ", imodel, " nslices=", composite_th_summaries.nslices]))
