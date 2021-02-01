@@ -1592,7 +1592,14 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
     #	Check the df isn't empty
     #
     if !isempty(all_df) && sum(all_df[yID])>15
-    	npercat = length(findall(x->x, all_df[yID]))
+    	try 
+	    	npercat = length(findall(x->x, all_df[yID]))
+    	catch
+    		println("\x1b[31m\"!!!!!!!!!!!!!!!! ERROR!\"\x1b[0m")
+    		println("\x1b[31m\"      sum(all_df[yID])=",sum(all_df[yID]), "\"\x1b[0m")
+    		println("\x1b[31m\"      yID=",yID, "\"\x1b[0m")
+    		println("\x1b[31m\"      all_df[yID]=",all_df[yID], "\"\x1b[0m")
+		end
     	println(join(["Downsampling the no-lick state => using ", npercat, "=n, the number of first-licks"]))
 	 #    #
 	 #    # Get the number of up/down samples by querying smote -- Jan thinks is no good
