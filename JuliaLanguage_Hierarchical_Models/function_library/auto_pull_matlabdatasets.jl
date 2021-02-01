@@ -782,7 +782,7 @@ function slice_dataframe_into_timebins(df::DataFrame, slice_width_ms::Float64=25
 	                # let's instead return a bool
 	                # println("Number of lick states this trial: ", length(findall(x->x, df[tidx, col])))
 	                cc = length(findall(x->x==true, df[tidx, col])) == 1
-	                println("returning: ," cc)
+	                println("returning: ", cc)
                 elseif typeof(df[!,col][1])<:Bool
                 	if length(unique(df[tidx, col])) !=1 # if there is a 0 and a 1 we better be looking at LickState. I can't get this to handle properly...
 	                	warning(join([" This should be LickState, returning true. Name: ", names(df)[col], " found unique(df[tidx, col])=", unique(df[tidx, col])]))
