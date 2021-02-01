@@ -939,8 +939,6 @@ function plot_th_vs_timeslice(by_slice_composite_ths; savedir=pwd())
 	    else
 	    	mn = -10
 	    	mx = 10
-	    else
-
 	    end
         ylim([mn,mx])
         ylabel("weight")
