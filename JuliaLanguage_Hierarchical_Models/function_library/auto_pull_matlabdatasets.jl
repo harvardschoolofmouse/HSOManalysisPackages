@@ -776,16 +776,16 @@ function slice_dataframe_into_timebins(df::DataFrame, slice_width_ms::Float64=25
 	        coldata = []#[[] for _= 1:ncol(df)]
 	        for col = 1:ncol(df)
 	            if names(df)[col] == "LickState"
-	            	println(join(["SHOULD ALWAYS GET THIS for LickState. names(df)[col] =", names(df)[col], " unique(df[tidx, col])=", unique(df[tidx, col])]))
+	            	# println(join(["SHOULD ALWAYS GET THIS for LickState. names(df)[col] =", names(df)[col], " unique(df[tidx, col])=", unique(df[tidx, col])]))
 	            	# what does this actually do? We want to preseve a bool! What the heck?
 	                # cc = maximum(df[tidx, col])
 	                # let's instead return a bool
 	                # println("Number of lick states this trial: ", length(findall(x->x, df[tidx, col])))
 	                cc = length(findall(x->x==true, df[tidx, col])) == 1
-	                println("returning: ", cc)
+	                # println("returning: ", cc)
                 elseif typeof(df[!,col][1])<:Bool
                 	if length(unique(df[tidx, col])) !=1 # if there is a 0 and a 1 we better be looking at LickState. I can't get this to handle properly...
-	                	warning(join([" This should be LickState, returning true. Name: ", names(df)[col], " found unique(df[tidx, col])=", unique(df[tidx, col])]))
+	                	# warning(join([" This should be LickState, returning true. Name: ", names(df)[col], " found unique(df[tidx, col])=", unique(df[tidx, col])]))
 	                	# println("length:", length(findall(x->x==true, df[tidx, col])), "(should be 1)")
 	                	cc = true
                 	else
