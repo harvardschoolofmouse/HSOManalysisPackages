@@ -747,7 +747,7 @@ function bootlogit_timeslice_postprocessingfunction1(results::DataFrame, composi
 end
 
 function slice_dataframe_into_timebins(df::DataFrame, slice_width_ms::Float64=250.)
-	warning("fixed LS encoding. Should have bools now, yay.")
+	
 	#
 	# We have a dataframe whose :X column is the time in the interval.
 	#   We want to divide this into timebins
@@ -776,11 +776,17 @@ function slice_dataframe_into_timebins(df::DataFrame, slice_width_ms::Float64=25
 	        coldata = []#[[] for _= 1:ncol(df)]
 	        for col = 1:ncol(df)
 	            if names(df)[col] == "LickState"
+	            	warning("SHOULD ALWAYS GET THIS. fixed LS encoding. Should have bools now, yay.")
 	            	# what does this actually do? We want to preseve a bool! What the heck?
 	                # cc = maximum(df[tidx, col])
 	                # let's instead return a bool
 	                # println("Number of lick states this trial: ", length(findall(x->x, df[tidx, col])))
-	                cc = length(findall(x->x, df[tidx, col]))
+	                cc = length(findall(x->x==true, df[tidx, col]))
+                elseif typeof(df[!,col][1])<:Bool
+                	if length(unique(df[tidx, col])) !=1
+	                	warning(join([" Ooops there's a Bool here not being handled properly. Name: ", names(df)[col], " found unique(df[tidx, col])=", unique(df[tidx, col])]))
+                	end
+                	cc = df[tidx[1], col]
 	            elseif typeof(df[!,col][1])<:Number
 	                cc = mean(df[tidx, col])
 	            else 
