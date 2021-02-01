@@ -887,8 +887,13 @@ function plot_th_vs_timeslice(by_slice_composite_ths; savedir=pwd())
             plot_with_CI(thi, CImin_i, CImax_i; dataLabels="", ylab="wt", ax=gca())
             gca().set_xticks(1:nTimeSlices)
             xlabel("Timeslice")
-            mn = maximum([minimum(thi[findall(x->!isnan(x), thi)]), -10])
-            mx = minimum([maximum(thi[findall(x->!isnan(x), thi)]), 10])
+            if !isempty(findall(x->!isnan(x), thi))
+	            mn = maximum([minimum(thi[findall(x->!isnan(x), thi)]), -10])
+	            mx = minimum([maximum(thi[findall(x->!isnan(x), thi)]), 10])
+            else
+            	mn = -10
+            	mx = 10
+            end
             ylim([mn,mx])
             if iTh==1
                 ylabel("weight")
