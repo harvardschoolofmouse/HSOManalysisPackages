@@ -751,7 +751,7 @@ function slice_dataframe_into_timebins(df::DataFrame, slice_width_ms::Float64=25
 	# We have a dataframe whose :X column is the time in the interval.
 	#   We want to divide this into timebins
 	#
-	println("Unique of df LickState:", unique(df[:LickState]))
+	# println("Unique of df LickState:", unique(df[:LickState]))
 	nbins = ceil(Int, 7000. /slice_width_ms)+1
 	#
 	# Now we want to gather the bin edges
@@ -800,7 +800,7 @@ function slice_dataframe_into_timebins(df::DataFrame, slice_width_ms::Float64=25
 	            
 	        end
 	        newData = vcat(newData, __TrialData)
-	        println("Bin No:", i, "Unique of df LickState:", unique(newData[:LickState]))
+	        # println("Bin No:", i, "Unique of df LickState:", unique(newData[:LickState]))
 	    end
 	    push!(binned_dfs, newData)
 	end
