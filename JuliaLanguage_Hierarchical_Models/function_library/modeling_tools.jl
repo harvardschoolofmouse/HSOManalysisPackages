@@ -1599,7 +1599,7 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
     #
     if !isempty(all_df) && sum(all_df[yID])>15
     	try 
-	    	npercat = length(findall(x->x, all_df[yID]))
+	    	npercat = sum(all_df[yID])#length(findall(x->x, all_df[yID]))
     	catch
     		println("\x1b[31m\"!!!!!!!!!!!!!!!! ERROR!\"\x1b[0m")
     		println("\x1b[31m\"      sum(all_df[yID])=",sum(all_df[yID]), "\"\x1b[0m")
