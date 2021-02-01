@@ -774,7 +774,7 @@ function slice_dataframe_into_timebins(df::DataFrame, slice_width_ms::Float64=25
 	        global __TrialData = DataFrame()
 	        coldata = []#[[] for _= 1:ncol(df)]
 	        for col = 1:ncol(df)
-	            if names(df)[col] == :LickState
+	            if names(df)[col] == "LickState"
 	            	# what does this actually do? We want to preseve a bool! What the heck?
 	                # cc = maximum(df[tidx, col])
 	                # let's instead return a bool
