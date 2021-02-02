@@ -787,6 +787,9 @@ function slice_dataframe_into_timebins(df::DataFrame, slice_width_ms::Float64=25
                 	if length(unique(df[tidx, col])) !=1 # if there is a 0 and a 1 we better be looking at LickState. I can't get this to handle properly...
 	                	# warning(join([" This should be LickState, returning true. Name: ", names(df)[col], " found unique(df[tidx, col])=", unique(df[tidx, col])]))
 	                	# println("length:", length(findall(x->x==true, df[tidx, col])), "(should be 1)")
+	                	if names(df)[col] != :LickState
+	                		warning(join([" This should be LickState, returning true. Name: ", names(df)[col], " found unique(df[tidx, col])=", unique(df[tidx, col])]))
+	                	end
 	                	cc = true
                 	else
                 		# warning(join([" Bool is unique, handling: ", names(df)[col], " as entry #1 - unique(df[tidx, col])=", unique(df[tidx, col])]))
