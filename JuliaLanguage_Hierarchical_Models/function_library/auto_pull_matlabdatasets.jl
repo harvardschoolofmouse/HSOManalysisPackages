@@ -844,6 +844,7 @@ function slice_dataframe_into_timebins(df::DataFrame, slice_width_ms::Float64=25
                 	else
                 		# warning(join([" Bool is unique, handling: ", names(df)[col], " as entry #1 - unique(df[tidx, col])=", unique(df[tidx, col])]))
                 		cc = Float64(df[tidx[1], col])
+                		println(typeof(cc))
                 	end
 	            elseif typeof(df[!,col][1])<:Number
 	                cc = mean(df[tidx, col])
