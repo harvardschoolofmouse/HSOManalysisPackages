@@ -671,8 +671,8 @@ function bootlogit_timeslice_modelpackage1(path; sessionID ="", getpackagename=f
 		    @formula(LickState ~ Median_LOI),
 		    @formula(LickState ~ Mean_Baseline + Mean_LOI + Y),
 		    @formula(LickState ~ Median_Baseline + Median_LOI + Y),
-		    @formula(LickState ~ LickTime_1back),
 		    @formula(LickState ~ LickTime_2back),
+		    @formula(LickState ~ LickTime_1back),
 		    @formula(LickState ~ LickTime_2back + LickTime_1back),
 		    @formula(LickState ~ Rxn_2back + Early_2back + Reward_2back + ITI_2back),
 		    @formula(LickState ~ Rxn_1back + Early_1back + Reward_1back + ITI_1back),
@@ -704,27 +704,30 @@ function bootlogit_timeslice_modelpackage1(path; sessionID ="", getpackagename=f
 			]
 
 		modelNames = [
-		    "DA-only",
-		    "μBl-only",
-		    "medBl-only",
-		    "μLOI-only",
-		    "medLOI-only",
+		    "DA",
+		    "μBl",
+		    "medBl",
+		    "μLOI",
+		    "medLOI",
 		    "DA-μBl-μLOI",
 		    "DA-medBl-medLOI",
-		    "Lt1b-only",
-		    "Lt2b-only",
+		    "Lt2b",
+		    "Lt1b",
 		    "Lt1b-Lt2b",
-		    "oc1b-only",
+		    "oc2b",
+		    "oc1b",
 		    "oc1b-oc2b",
 		    "DA-oc1b-oc2b",
 		    "DA-μBlLOI-oc12b",
 		    "DA-mdBlLOI-oc12b",
-		    "DA-Lt_oc12b",
-		    "DA-μBlLO-Lt_oc12b",
-		    "DA-mdBlLO-Lt_oc12b",
+		    "DA-Ltoc12b",
+		    "DA-μBlLO-Ltoc12b",
+		    "DA-mdBlLO-Ltoc12b",
 		]
 
-
+	if length(modelNames) != length(formulas)
+		error("Model names and formulas not matched...")
+	end
 
 	nbins = length(binEdges) - 1
 	results = Vector{DataFrame}()
