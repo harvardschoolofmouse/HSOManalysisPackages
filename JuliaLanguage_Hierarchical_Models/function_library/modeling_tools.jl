@@ -440,7 +440,7 @@ function Rsq(y, yfit)
 end
 
 
-function updownsample(df::DataFrame, refvect::Vector{Bool}, n::Int, downOnly=false)
+function updownsample(df::DataFrame, refvect::Vector{Bool}, n::Int; downOnly=false)
     # refvect is the bool vector of states so we can up/downsample them
     # n is the number of desired resamples with replacement
     
