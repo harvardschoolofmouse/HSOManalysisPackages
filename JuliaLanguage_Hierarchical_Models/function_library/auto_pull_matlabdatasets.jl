@@ -842,7 +842,7 @@ function slice_dataframe_into_timebins(df::DataFrame, slice_width_ms::Float64=25
 	                	end
 	                	cc = true
                 	elseif names(df)[col] == :LickState
-                		cc = true
+                		cc = length(findall(x->x==true, df[tidx, col])) == 1
                 	else
                 		# warning(join([" Bool is unique, handling: ", names(df)[col], " as entry #1 - unique(df[tidx, col])=", unique(df[tidx, col])]))
                 		cc = Float64(df[tidx[1], col])
