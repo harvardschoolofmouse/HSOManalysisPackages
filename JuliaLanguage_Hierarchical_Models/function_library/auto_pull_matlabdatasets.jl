@@ -643,25 +643,89 @@ function bootlogit_timeslice_modelpackage1(path; sessionID ="", getpackagename=f
 	#
 	# next, we want to specify our model formulae, including the nested models
 	#
+	# formulas = [
+	#     @formula(LickState ~ Y),
+	#     @formula(LickState ~ Mean_Baseline),
+	#     @formula(LickState ~ Median_Baseline),
+	#     @formula(LickState ~ Mean_LOI),
+	#     @formula(LickState ~ Median_LOI),
+	#     @formula(LickState ~ Mean_Baseline + Mean_LOI + Y),
+	#     @formula(LickState ~ Median_Baseline + Median_LOI + Y),
+	# 	]
+
+	# modelNames = [
+	#     "DA-only",
+	#     "μBl-only",
+	#     "medBl-only",
+	#     "μLOI-only",
+	#     "medLOI-only",
+	#     "DA-μBl-μLOI",
+	#     "DA-medBl-medLOI",
+	# ]
+
 	formulas = [
-	    @formula(LickState ~ Y),
-	    @formula(LickState ~ Mean_Baseline),
-	    @formula(LickState ~ Median_Baseline),
-	    @formula(LickState ~ Mean_LOI),
-	    @formula(LickState ~ Median_LOI),
-	    @formula(LickState ~ Mean_Baseline + Mean_LOI + Y),
-	    @formula(LickState ~ Median_Baseline + Median_LOI + Y),
+		    @formula(LickState ~ Y),
+		    @formula(LickState ~ Mean_Baseline),
+		    @formula(LickState ~ Median_Baseline),
+		    @formula(LickState ~ Mean_LOI),
+		    @formula(LickState ~ Median_LOI),
+		    @formula(LickState ~ Mean_Baseline + Mean_LOI + Y),
+		    @formula(LickState ~ Median_Baseline + Median_LOI + Y),
+		    @formula(LickState ~ LickTime_1back),
+		    @formula(LickState ~ LickTime_2back),
+		    @formula(LickState ~ LickTime_2back + LickTime_1back),
+		    @formula(LickState ~ Rxn_2back + Early_2back + Reward_2back + ITI_2back),
+		    @formula(LickState ~ Rxn_1back + Early_1back + Reward_1back + ITI_1back),
+		    @formula(LickState ~ Rxn_2back + Early_2back + Reward_2back + ITI_2back + 
+		    	Rxn_1back + Early_1back + Reward_1back + ITI_1back),
+
+		    @formula(LickState ~ Rxn_2back + Early_2back + Reward_2back + ITI_2back + 
+		    	Rxn_1back + Early_1back + Reward_1back + ITI_1back + 
+		    	Y),
+		    @formula(LickState ~ Rxn_2back + Early_2back + Reward_2back + ITI_2back + 
+		    	Rxn_1back + Early_1back + Reward_1back + ITI_1back +
+		        Mean_Baseline + Mean_LOI + Y),
+		    @formula(LickState ~ Rxn_2back + Early_2back + Reward_2back + ITI_2back + 
+		    	Rxn_1back + Early_1back + Reward_1back + ITI_1back + 
+		        Median_Baseline + Median_LOI + Y),
+
+		    @formula(LickState ~ LickTime_2back + LickTime_1back + 
+		    	Rxn_2back + Early_2back + Reward_2back + ITI_2back +
+		    	Rxn_1back + Early_1back + Reward_1back + ITI_1back + 
+		        Y),
+		    @formula(LickState ~ LickTime_2back + LickTime_1back + 
+		    	Rxn_2back + Early_2back + Reward_2back + ITI_2back +
+		    	Rxn_1back + Early_1back + Reward_1back + ITI_1back + 
+		        Mean_Baseline + Mean_LOI + Y),
+		    @formula(LickState ~ LickTime_2back + LickTime_1back + 
+		    	Rxn_2back + Early_2back + Reward_2back + ITI_2back + 
+		    	Rxn_1back + Early_1back + Reward_1back + ITI_1back + 
+		        Median_Baseline + Median_LOI + Y),
+			]
+
+		modelNames = [
+		    "DA-only",
+		    "μBl-only",
+		    "medBl-only",
+		    "μLOI-only",
+		    "medLOI-only",
+		    "DA-μBl-μLOI",
+		    "DA-medBl-medLOI",
+		    "Lt1b-only",
+		    "Lt2b-only",
+		    "Lt1b-Lt2b",
+		    "oc1b-only",
+		    "oc1b-oc2b",
+		    "DA-oc1b-oc2b",
+		    "DA-μBlLOI-oc12b",
+		    "DA-mdBlLOI-oc12b",
+		    "DA-Lt_oc12b",
+		    "DA-μBlLO-Lt_oc12b",
+		    "DA-mdBlLO-Lt_oc12b",
 		]
 
-	modelNames = [
-	    "DA-only",
-	    "μBl-only",
-	    "medBl-only",
-	    "μLOI-only",
-	    "medLOI-only",
-	    "DA-μBl-μLOI",
-	    "DA-medBl-medLOI",
-	]
+
+
 	nbins = length(binEdges) - 1
 	results = Vector{DataFrame}()
 	for slice = 1:nbins-1
