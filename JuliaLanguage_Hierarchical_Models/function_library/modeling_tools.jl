@@ -1633,7 +1633,7 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
 		        try # we might have a bad subsample and not be able to fit the model
 			        if updownsampleYID
 
-			            working_df = updownsample(all_df, all_df[yID], npercat); # I chose this based on the 
+			            working_df = updownsample(all_df, all_df[yID], npercat, downOnly=true); # I chose this based on the 
 			            # sample n that was picked by smote. In the next version for across models, be sure to adjust for the dataset...
 			        else
 			            working_df = all_df
