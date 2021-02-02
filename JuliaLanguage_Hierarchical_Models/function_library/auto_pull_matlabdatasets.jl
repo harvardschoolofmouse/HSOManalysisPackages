@@ -676,31 +676,13 @@ function bootlogit_timeslice_modelpackage1(path; sessionID ="", getpackagename=f
 		    @formula(LickState ~ LickTime_2back + LickTime_1back),
 		    @formula(LickState ~ Rxn_2back + Early_2back + Reward_2back + ITI_2back),
 		    @formula(LickState ~ Rxn_1back + Early_1back + Reward_1back + ITI_1back),
-		    @formula(LickState ~ Rxn_2back + Early_2back + Reward_2back + ITI_2back + 
-		    	Rxn_1back + Early_1back + Reward_1back + ITI_1back),
-
-		    @formula(LickState ~ Rxn_2back + Early_2back + Reward_2back + ITI_2back + 
-		    	Rxn_1back + Early_1back + Reward_1back + ITI_1back + 
-		    	Y),
-		    @formula(LickState ~ Rxn_2back + Early_2back + Reward_2back + ITI_2back + 
-		    	Rxn_1back + Early_1back + Reward_1back + ITI_1back +
-		        Mean_Baseline + Mean_LOI + Y),
-		    @formula(LickState ~ Rxn_2back + Early_2back + Reward_2back + ITI_2back + 
-		    	Rxn_1back + Early_1back + Reward_1back + ITI_1back + 
-		        Median_Baseline + Median_LOI + Y),
-
-		    @formula(LickState ~ LickTime_2back + LickTime_1back + 
-		    	Rxn_2back + Early_2back + Reward_2back + ITI_2back +
-		    	Rxn_1back + Early_1back + Reward_1back + ITI_1back + 
-		        Y),
-		    @formula(LickState ~ LickTime_2back + LickTime_1back + 
-		    	Rxn_2back + Early_2back + Reward_2back + ITI_2back +
-		    	Rxn_1back + Early_1back + Reward_1back + ITI_1back + 
-		        Mean_Baseline + Mean_LOI + Y),
-		    @formula(LickState ~ LickTime_2back + LickTime_1back + 
-		    	Rxn_2back + Early_2back + Reward_2back + ITI_2back + 
-		    	Rxn_1back + Early_1back + Reward_1back + ITI_1back + 
-		        Median_Baseline + Median_LOI + Y),
+		    @formula(LickState ~ Rxn_2back + Early_2back + Reward_2back + ITI_2back + Rxn_1back + Early_1back + Reward_1back + ITI_1back),
+		    @formula(LickState ~ Rxn_2back + Early_2back + Reward_2back + ITI_2back + Rxn_1back + Early_1back + Reward_1back + ITI_1back + Y),
+		    @formula(LickState ~ Rxn_2back + Early_2back + Reward_2back + ITI_2back + Rxn_1back + Early_1back + Reward_1back + ITI_1back +Mean_Baseline + Mean_LOI + Y),
+		    @formula(LickState ~ Rxn_2back + Early_2back + Reward_2back + ITI_2back + Rxn_1back + Early_1back + Reward_1back + ITI_1back + Median_Baseline + Median_LOI + Y),
+		    @formula(LickState ~ LickTime_2back + LickTime_1back + Rxn_2back + Early_2back + Reward_2back + ITI_2back +Rxn_1back + Early_1back + Reward_1back + ITI_1back + Y),
+		    @formula(LickState ~ LickTime_2back + LickTime_1back + Rxn_2back + Early_2back + Reward_2back + ITI_2back +Rxn_1back + Early_1back + Reward_1back + ITI_1back + Mean_Baseline + Mean_LOI + Y),
+		    @formula(LickState ~ LickTime_2back + LickTime_1back + Rxn_2back + Early_2back + Reward_2back + ITI_2back + Rxn_1back + Early_1back + Reward_1back + ITI_1back + Median_Baseline + Median_LOI + Y),
 			]
 
 		modelNames = [
@@ -851,6 +833,7 @@ function slice_dataframe_into_timebins(df::DataFrame, slice_width_ms::Float64=25
 	                cc = length(findall(x->x==true, df[tidx, col])) == 1
 	                # println("returning: ", cc)
                 elseif typeof(df[!,col][1])<:Bool
+                	# need to try to convert to float.......
                 	if length(unique(df[tidx, col])) !=1 # if there is a 0 and a 1 we better be looking at LickState. I can't get this to handle properly...
 	                	# warning(join([" This should be LickState, returning true. Name: ", names(df)[col], " found unique(df[tidx, col])=", unique(df[tidx, col])]))
 	                	# println("length:", length(findall(x->x==true, df[tidx, col])), "(should be 1)")
@@ -860,7 +843,7 @@ function slice_dataframe_into_timebins(df::DataFrame, slice_width_ms::Float64=25
 	                	cc = true
                 	else
                 		# warning(join([" Bool is unique, handling: ", names(df)[col], " as entry #1 - unique(df[tidx, col])=", unique(df[tidx, col])]))
-                		cc = df[tidx[1], col]
+                		cc = Float64(df[tidx[1], col])
                 	end
 	            elseif typeof(df[!,col][1])<:Number
 	                cc = mean(df[tidx, col])
