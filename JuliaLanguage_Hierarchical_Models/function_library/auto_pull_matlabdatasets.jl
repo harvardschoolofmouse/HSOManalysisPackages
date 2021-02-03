@@ -341,7 +341,7 @@ function bootlogit_modelpackage2(path; sessionID ="", getpackagename=false, runI
 	return result#, ndf
 end
 
-function extract_data_with_baselineandLOI(path; normalize=true)
+function extract_data_with_baselineandLOI(path; normalize=true, useHx=false, history_spacing_s=0.1)
 	ret_dir = pwd()
 	cd(path)
 	cd("..")
@@ -361,7 +361,13 @@ function extract_data_with_baselineandLOI(path; normalize=true)
 	# check_imported_data(data_LOI_trial; idx=11)
 	# printFigure(join(["datacheck_loi_",data_LOI_trial.sessionCode,"_"]); fig=gcf(), figurePath=pwd())
 	# println("saved figs to ", pwd())
-	df = makeSessionDataFrame(data_single_trial; normalize=normalize, includeBL_LOI=true, baseline_data=data_baseline_trial, LOI_data=data_LOI_trial)
+	if useHx
+		df = makeSessionDataFrame(data_single_trial; normalize=normalize, includeBL_LOI=true, baseline_data=data_baseline_trial, 
+    		LOI_data=data_LOI_trial, include_history=true, history_spacing_s=history_spacing_s, n_hx_terms = 10)
+	else
+		df = makeSessionDataFrame(data_single_trial; normalize=normalize, includeBL_LOI=true, baseline_data=data_baseline_trial, 
+			LOI_data=data_LOI_trial)
+	end
 	cd(ret_dir)
 	return df
 end
@@ -1026,4 +1032,357 @@ function plot_th_vs_timeslice(by_slice_composite_ths; savedir=pwd())
     set_yaxes_same_scale(ax)
     set_yaxes_same_scale(axs2)
     cd(ret_dir)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+# models that use HISTORY
+function btlogit_100ms_hx_pkg(path; sessionID ="", getpackagename=false, runID=0, suppressFigures=false)
+# name the package and runID
+	packagename = join(["btlogit_100ms_hx_pkg",runID])
+	history_spacing_s = 0.1
+	if getpackagename
+		return packagename
+	end
+	modelNames = [
+	    "DA",
+	    "DA_hx0-100ms",
+	    "DA_hx0-200ms",
+	    "DA_hx0-300ms",
+	    "DA_hx0-400ms",
+	    "DA_hx0-500ms",
+	    "DA_hx0-600ms",
+	    "DA_hx0-700ms",
+	    "DA_hx0-800ms",
+	    "DA_hx0-900ms",
+	    "DA_hx0-1000ms",
+	]
+# Call the runner
+	result = btlogit_hxrunner(path; sessionID =sessionID, getpackagename=getpackagename, 
+		runID=runID, suppressFigures=suppressFigures, history_spacing_s = history_spacing_s, 
+			modelNames=modelNames, packagename=packagename)
+	return result
+end
+function btlogit_200ms_hx_pkg(path; sessionID ="", getpackagename=false, runID=0, suppressFigures=false)
+# name the package and runID
+	packagename = join(["btlogit_200ms_hx_pkg",runID])
+	history_spacing_s = 0.2
+	if getpackagename
+		return packagename
+	end
+	modelNames = [
+	    "DA",
+	    "DA_hx0-200ms",
+	    "DA_hx0-400ms",
+	    "DA_hx0-600ms",
+	    "DA_hx0-800ms",
+	    "DA_hx0-1000ms",
+	    "DA_hx0-1200ms",
+	    "DA_hx0-1400ms",
+	    "DA_hx0-1600ms",
+	    "DA_hx0-1800ms",
+	    "DA_hx0-2000ms",
+	]
+# Call the runner
+	result = btlogit_hxrunner(path; sessionID =sessionID, getpackagename=getpackagename, runID=runID, 
+		suppressFigures=suppressFigures, history_spacing_s = history_spacing_s, 
+			modelNames=modelNames, packagename=packagename)
+	return result
+end
+function btlogit_250ms_hx_pkg(path; sessionID ="", getpackagename=false, runID=0, suppressFigures=false)
+# name the package and runID
+	packagename = join(["btlogit_250ms_hx_pkg",runID])
+	history_spacing_s = 0.25
+	if getpackagename
+		return packagename
+	end
+	modelNames = [
+	    "DA",
+	    "DA_hx0-250ms",
+	    "DA_hx0-500ms",
+	    "DA_hx0-750ms",
+	    "DA_hx0-1000ms",
+	    "DA_hx0-1250ms",
+	    "DA_hx0-1500ms",
+	    "DA_hx0-1750ms",
+	    "DA_hx0-2000ms",
+	    "DA_hx0-2250ms",
+	    "DA_hx0-2500ms",
+	]
+# Call the runner
+	result = btlogit_hxrunner(path; sessionID =sessionID, getpackagename=getpackagename, 
+		runID=runID, suppressFigures=suppressFigures, history_spacing_s = history_spacing_s, 
+			modelNames=modelNames, packagename=packagename)
+	return result
+end
+
+function btlogit_hxrunner(path; sessionID ="", getpackagename=false, runID=0, suppressFigures=false, history_spacing_s=0.0, modelNames=[], packagename="")
+	if history_spacing_s == 0.0
+		error("Improper history_spacing_s! Check the calling fxn, it should specify nonzero")
+	end
+# Try to enter the results folder
+	savepath = joinpath(path, join(["results_", packagename]))
+	figurePath = joinpath(path, join(["figures_", packagename]))
+	try 
+		cd(savepath)
+	catch
+		mkdir(savepath)
+		mkdir(figurePath)
+		cd(savepath)
+	end
+# do the business of the package on this session
+	#
+	# first, we extract the relevant data: the singletrial, baseline and LOI sets and make a df
+	# (expecting singletrial, baseline, and LOI folders for each dataset with CSV files from matlab)
+	#
+	ndf = extract_data_with_baselineandLOI(path; normalize=true, useHx=true, history_spacing_s=history_spacing_s)
+	#
+	# next, we want to specify our model formulae, including the nested models
+	#
+	formulas = [
+	    @formula(LickState ~ Y),
+	    @formula(LickState ~ Y + Hx1),
+	    @formula(LickState ~ Y + Hx1 + Hx2),
+	    @formula(LickState ~ Y + Hx1 + Hx2 + Hx3),
+	    @formula(LickState ~ Y + Hx1 + Hx2 + Hx3 + Hx4),
+	    @formula(LickState ~ Y + Hx1 + Hx2 + Hx3 + Hx4 + Hx5),
+	    @formula(LickState ~ Y + Hx1 + Hx2 + Hx3 + Hx4 + Hx5 + Hx6),
+	    @formula(LickState ~ Y + Hx1 + Hx2 + Hx3 + Hx4 + Hx5 + Hx6 + Hx7),
+	  	@formula(LickState ~ Y + Hx1 + Hx2 + Hx3 + Hx4 + Hx5 + Hx6 + Hx7 + Hx8),
+	  	@formula(LickState ~ Y + Hx1 + Hx2 + Hx3 + Hx4 + Hx5 + Hx6 + Hx7 + Hx8 + Hx9),
+	  	@formula(LickState ~ Y + Hx1 + Hx2 + Hx3 + Hx4 + Hx5 + Hx6 + Hx7 + Hx8 + Hx9 + Hx10),
+
+		]
+
+	
+
+	
+	results = modelSelectionByAICBICxval(ndf, :LickState, formulas, modelNames, "logit"; 
+    		n_iters=100,updownsampleYID=true, figurePath=figurePath, savePath = savepath, suppressFigures=suppressFigures)
+# Save each variable to our results folder
+	# this is already handled by the modelSelectionByAICBICxval function
+
+# make a working result df with all the results to keep in workspace
+	result = results
+	return result#, ndf
+end
+
+
+
+function btlogit_noHx1_hxrunner(path; sessionID ="", getpackagename=false, runID=0, suppressFigures=false, history_spacing_s=0.0, modelNames=[], packagename="")
+	if history_spacing_s == 0.0
+		error("Improper history_spacing_s! Check the calling fxn, it should specify nonzero")
+	end
+# Try to enter the results folder
+	savepath = joinpath(path, join(["results_", packagename]))
+	figurePath = joinpath(path, join(["figures_", packagename]))
+	try 
+		cd(savepath)
+	catch
+		mkdir(savepath)
+		mkdir(figurePath)
+		cd(savepath)
+	end
+# do the business of the package on this session
+	#
+	# first, we extract the relevant data: the singletrial, baseline and LOI sets and make a df
+	# (expecting singletrial, baseline, and LOI folders for each dataset with CSV files from matlab)
+	#
+	ndf = extract_data_with_baselineandLOI(path; normalize=true, useHx=true, history_spacing_s=history_spacing_s)
+	#
+	# next, we want to specify our model formulae, including the nested models
+	#
+	formulas = [
+	    @formula(LickState ~ Y),
+	    @formula(LickState ~ Y + Hx2),
+	    @formula(LickState ~ Y + Hx2 + Hx3),
+	    @formula(LickState ~ Y + Hx2 + Hx3 + Hx4),
+	    @formula(LickState ~ Y + Hx2 + Hx3 + Hx4 + Hx5),
+	    @formula(LickState ~ Y + Hx2 + Hx3 + Hx4 + Hx5 + Hx6),
+	    @formula(LickState ~ Y + Hx2 + Hx3 + Hx4 + Hx5 + Hx6 + Hx7),
+	  	@formula(LickState ~ Y + Hx2 + Hx3 + Hx4 + Hx5 + Hx6 + Hx7 + Hx8),
+	  	@formula(LickState ~ Y + Hx2 + Hx3 + Hx4 + Hx5 + Hx6 + Hx7 + Hx8 + Hx9),
+	  	@formula(LickState ~ Y + Hx2 + Hx3 + Hx4 + Hx5 + Hx6 + Hx7 + Hx8 + Hx9 + Hx10),
+
+		]
+
+	
+
+	
+	results = modelSelectionByAICBICxval(ndf, :LickState, formulas, modelNames, "logit"; 
+    		n_iters=100,updownsampleYID=true, figurePath=figurePath, savePath = savepath, suppressFigures=suppressFigures)
+# Save each variable to our results folder
+	# this is already handled by the modelSelectionByAICBICxval function
+
+# make a working result df with all the results to keep in workspace
+	result = results
+	return result#, ndf
+end
+
+
+function btlogit_50ms_hx_noHx1_pkg(path; sessionID ="", getpackagename=false, runID=0, suppressFigures=false)
+# name the package and runID
+	packagename = join(["btlogit_50ms_hx_noHx1",runID])
+	history_spacing_s = 0.05
+	if getpackagename
+		return packagename
+	end
+	modelNames = [
+	    "DA",
+	    "DA_hx50-100ms",
+	    "DA_hx50-150ms",
+	    "DA_hx50-200ms",
+	    "DA_hx50-250ms",
+	    "DA_hx50-300ms",
+	    "DA_hx50-350ms",
+	    "DA_hx50-400ms",
+	    "DA_hx50-450ms",
+	    "DA_hx50-500ms",
+	]
+# Call the runner
+	result = btlogit_noHx1_hxrunner(path; sessionID =sessionID, getpackagename=getpackagename, 
+		runID=runID, suppressFigures=suppressFigures, history_spacing_s = history_spacing_s, 
+			modelNames=modelNames, packagename=packagename)
+	return result
+end
+function btlogit_100ms_hx_noHx1_pkg(path; sessionID ="", getpackagename=false, runID=0, suppressFigures=false)
+# name the package and runID
+	packagename = join(["btlogit_100ms_hx_noHx1",runID])
+	history_spacing_s = 0.1
+	if getpackagename
+		return packagename
+	end
+	modelNames = [
+	    "DA",
+	    "DA_hx100-200ms",
+	    "DA_hx100-300ms",
+	    "DA_hx100-400ms",
+	    "DA_hx100-5000ms",
+	    "DA_hx100-600ms",
+	    "DA_hx100-700ms",
+	    "DA_hx100-800ms",
+	    "DA_hx100-900ms",
+	    "DA_hx100-1000ms",
+	]
+# Call the runner
+	result = btlogit_noHx1_hxrunner(path; sessionID =sessionID, getpackagename=getpackagename, runID=runID, 
+		suppressFigures=suppressFigures, history_spacing_s = history_spacing_s, 
+			modelNames=modelNames, packagename=packagename)
+	return result
+end
+function btlogit_200ms_hx_noHx1_pkg(path; sessionID ="", getpackagename=false, runID=0, suppressFigures=false)
+# name the package and runID
+	packagename = join(["btlogit_200ms_hx_noHx1",runID])
+	history_spacing_s = 0.2
+	if getpackagename
+		return packagename
+	end
+	modelNames = [
+	    "DA",
+	    "DA_hx200-400ms",
+	    "DA_hx200-600ms",
+	    "DA_hx200-800ms",
+	    "DA_hx200-1000ms",
+	    "DA_hx200-1200ms",
+	    "DA_hx200-1400ms",
+	    "DA_hx200-1600ms",
+	    "DA_hx200-1800ms",
+	    "DA_hx200-2000ms",
+	]
+# Call the runner
+	result = btlogit_noHx1_hxrunner(path; sessionID =sessionID, getpackagename=getpackagename, 
+		runID=runID, suppressFigures=suppressFigures, history_spacing_s = history_spacing_s, 
+			modelNames=modelNames, packagename=packagename)
+	return result
+end
+
+
+
+
+
+
+
+
+
+# nested history models....
+function nestlogit_200hx_pkg(path; sessionID ="", getpackagename=false, runID=0, suppressFigures=false)
+# name the package and runID
+	packagename = join(["nestlogit_200hx",runID])
+	history_spacing_s = 0.2
+	if getpackagename
+		return packagename
+	end
+	modelNames = [
+	    "Hx2s",
+	    "Hx2s_1-6s",
+	    "Hx2s_1-4s",
+	    "Hx2s_1-2s",
+	    "Hx2s_1s",
+	    "Hx2s_-8s",
+	    "Hx2s_-6s",
+	    "Hx2s_-4s",
+	    "Hx2s_-2s",
+	    "Hx2s_-2s_DA",
+	]
+	formulas = [
+	    @formula(LickState ~ Hx10),
+	    @formula(LickState ~ Hx10 + Hx9),
+	    @formula(LickState ~ Hx10 + Hx9 + Hx8),
+	    @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7),
+	    @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6),
+	    @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5),
+	  	@formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4),
+	  	@formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3),
+	  	@formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2),
+	  	@formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
+		]
+
+# Call the runner
+	result = nestlogitrunner(path; sessionID =sessionID, getpackagename=getpackagename, 
+		runID=runID, suppressFigures=suppressFigures, history_spacing_s = history_spacing_s, 
+			modelNames=modelNames, packagename=packagename, formulas=formulas)
+	return result
+end
+
+
+
+function nestlogitrunner(path; sessionID ="", getpackagename=false, runID=0, suppressFigures=false, 
+	history_spacing_s=0.0, modelNames=[], packagename="", formulas=[])
+	if history_spacing_s == 0.0
+		error("Improper history_spacing_s! Check the calling fxn, it should specify nonzero")
+	end
+# Try to enter the results folder
+	savepath = joinpath(path, join(["results_", packagename]))
+	figurePath = joinpath(path, join(["figures_", packagename]))
+	try 
+		cd(savepath)
+	catch
+		mkdir(savepath)
+		mkdir(figurePath)
+		cd(savepath)
+	end
+# do the business of the package on this session
+	#
+	# first, we extract the relevant data: the singletrial, baseline and LOI sets and make a df
+	# (expecting singletrial, baseline, and LOI folders for each dataset with CSV files from matlab)
+	#
+	ndf = extract_data_with_baselineandLOI(path; normalize=true, useHx=true, history_spacing_s=history_spacing_s)	
+	
+	results = modelSelectionByAICBICxval(ndf, :LickState, formulas, modelNames, "logit"; 
+    		n_iters=100,updownsampleYID=true, figurePath=figurePath, savePath = savepath, suppressFigures=suppressFigures)
+# Save each variable to our results folder
+	# this is already handled by the modelSelectionByAICBICxval function
+
+# make a working result df with all the results to keep in workspace
+	result = results
+	return result#, ndf
 end

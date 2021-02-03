@@ -188,20 +188,114 @@ function check_imported_data(data::TrialData; idx=nothing)
     return idx
 end;
 
-function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=false, baseline_data=[], LOI_data=[])
-    # useful data from the TrialData struct to add to dataframe
+function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=false, baseline_data=[], LOI_data=[], include_history=false, history_spacing_s=0.25, n_hx_terms = 10)
+	if n_hx_terms != 10
+		error("not yet implemented for other than 10 blocks of hx... We have to define variables for each col in the table, so to make easier I am hard coding 10 for now")
+	end
+	# We will always keep 10 hx terms to make things easier...
+
+	# useful data from the TrialData struct to add to dataframe
     xs = data.xdata
     ys = data.ydata
+
+    bl_xs = baseline_data.xdata
+    bl_ys = baseline_data.ydata
+
+    loi_xs = LOI_data.xdata
+    loi_ys = LOI_data.ydata
+
     tNo = data.trialNo
     lt = data.lickTime_s
     path = data.path
     seshcode = data.sessionCode
     if includeBL_LOI
-    	meanbl = [mean(x) for x in baseline_data.ydata]
-    	medianbl = [median(x) for x in baseline_data.ydata]
-    	meanloi = [mean(x) for x in LOI_data.ydata]
-    	medianloi = [median(x) for x in LOI_data.ydata]
+    	meanbl = [mean(x) for x in bl_ys]
+    	medianbl = [median(x) for x in bl_ys]
+    	meanloi = [mean(x) for x in loi_ys]
+    	medianloi = [median(x) for x in loi_ys]
 	end
+
+	# We would also like to include history
+	#   The tricky thing will be having history before the cue...will need to draw on the LOI and baseline data for this...
+	#.  NB we are assuming no trimming of the cue in the dataset!
+	if include_history && !includeBL_LOI
+		# we must have LOI and baseline to do full history... so throw error
+		error("Must include baseline and LOI to do history analysis")
+	elseif include_history
+		# we need to concatenate and keep track of our time vector...
+		xs_hx = [Vector{Float64}(undef,0) for _=1:length(xs)]
+		ys_hx = [Vector{Float64}(undef,0) for _=1:length(xs)]
+
+		for i = 1:length(ys)
+			if xs[i][1] != 0.00
+				warning(join(["Expected trial start at 0.00, but got at ", xs[i][1], " on iter ", i]))
+			end
+			# concatenate the baseline, LOI and ys...
+			# check to see if the edges exactly equal, if so warn bc we have redundant timepoint
+			if i==1
+				if bl_ys[i][end]==loi_ys[i][1]#baseline_data.ydata[i][end] == LOI_data.ydata[i][1]
+					warning(join(["The end of baseline is same as begin of LOI on tNo ", tNo[i], " iter=", i]))
+					println(bl_ys[i][end])#baseline_data.ydata[i][end])
+					println(loi_ys[i][1])#LOI_data.ydata[i][1])
+				elseif loi_ys[i][end] == ys[i][1]#LOI_data.ydata[i][end] == ys[i][1]
+					warning(join(["The end of LOI is same as begin of trial on tNo ", tNo[i], " iter=", i]))
+					println(loi_ys[i][end])#LOI_data.ydata[i][end])
+					println(ys[i][1])
+				end
+			end
+
+			
+			# println("	")
+			# println("size of xbaseline=", length(baseline_data.xdata[i]))
+			# println("size of ybaseline=", length(baseline_data.ydata[i]))
+
+			yyy = bl_ys[i]#baseline_data.ydata[i]
+			append!(ys_hx[i], yyy)
+			# println("with baseline, ylen=", length(ys_hx[i]))
+			yyy = loi_ys[i]#LOI_data.ydata[i]
+			append!(ys_hx[i], yyy)
+			# println("with LOI, ylen=", length(ys_hx[i]))
+			yyy = ys[i]
+			append!(ys_hx[i], yyy)
+			# println("with trial, ylen=", length(ys_hx[i]))
+
+
+			# handle the LOI etc. timestamps
+			xxxx=loi_xs[i]#LOI_data.xdata[i]
+			loistamps = -1 .*reverse(xxxx) .- 0.01
+			
+			xxxx=bl_xs[i]#baseline_data.xdata[i]
+			blstamps = minimum(loistamps) .+ xxxx .- 0.01
+			# println("bl_xs: [", blstamps[1], ",", blstamps[end], "]")
+			# println("loi_xs: [", loistamps[1], ",", loistamps[end], "]")
+			# println("cue_xs: [", xs[i][1], ",", xs[i][end], "]")
+			append!(xs_hx[i], blstamps)
+			# println("with baseline, xlen=", length(xs_hx[i]))
+			xxxx=loistamps
+			append!(xs_hx[i], xxxx)
+			# println("with loi, xlen=", length(xs_hx[i]))
+			xxxx=xs[i]
+			append!(xs_hx[i], xxxx)
+			# println("with trial, xlen=", length(xs_hx[i]))
+			# println("nunique diffs=", length(unique(round.(xs_hx[i][2:end], digits=3) .- round.(xs_hx[i][1:end-1], digits=3) )), ", ntimes=", length(xs_hx[i]))
+			# println(unique(xs_hx[i][2:end] .- xs_hx[i][1:end-1]))
+
+			# Now, for purposes of normalization, we only want to include the times that could be in the history...
+			# Thus, trim back from the left side by the maximum time that could be considered...
+			
+			# println(length(xs_hx[i]))
+			# println(length(ys_hx[i]))
+			mintime = -1. * history_spacing_s*n_hx_terms -0.01 # a little edge buffer...
+			minidx = findall(x->x==mintime, xs_hx[i])[1]
+			xs_hx[i] = xs_hx[i][minidx:end]#filter(e->e>mintime,xs_hx[i])
+			ys_hx[i] = ys_hx[i][minidx:end]
+			# println(length(xs_hx[i]))
+			# println(length(ys_hx[i]))
+			# println(xs_hx[i][1])
+		end
+	end
+
+    
     
     # start by sorting the trial numbers so we can get prev trial info...
     sorted_trial_idxs = sortperm(tNo)
@@ -210,6 +304,11 @@ function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=fa
     xs_sorted = xs[sorted_trial_idxs]
     
     if normalize
+    	if include_history
+    		warning("NB that we are normalizing history separate from in-trial dopamine...")
+			v = reduce(vcat, ys_hx)
+        	ys_hx = [normalize_vector_0_1(x, mx=maximum(v), mn=minimum(v)) for x in ys_hx]
+		end
         v = reduce(vcat, ys)
         ys = [normalize_vector_0_1(x, mx=maximum(v), mn=minimum(v)) for x in ys]
         v = reduce(vcat, lt)
@@ -228,6 +327,10 @@ function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=fa
 
     lt_sorted = lt[sorted_trial_idxs]
     ys_sorted = ys[sorted_trial_idxs]
+    if include_history
+    	xs_hx_sorted = xs_hx[sorted_trial_idxs]
+    	ys_hx_sorted = ys_hx[sorted_trial_idxs]
+    end
     if includeBL_LOI
 		meanbl_sorted = meanbl[sorted_trial_idxs]
 		medianbl_sorted = medianbl[sorted_trial_idxs]
@@ -248,6 +351,19 @@ function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=fa
     	medianbls = Array{Float64}(undef, 0)
     	meanLOIs = Array{Float64}(undef, 0)
     	medianLOIs = Array{Float64}(undef, 0)
+
+    if include_history
+    	hx1 = Array{Float64}(undef, 0)
+    	hx2 = Array{Float64}(undef, 0)
+    	hx3 = Array{Float64}(undef, 0)
+    	hx4 = Array{Float64}(undef, 0)
+    	hx5 = Array{Float64}(undef, 0)
+    	hx6 = Array{Float64}(undef, 0)
+    	hx7 = Array{Float64}(undef, 0)
+    	hx8 = Array{Float64}(undef, 0)
+    	hx9 = Array{Float64}(undef, 0)
+    	hx10 = Array{Float64}(undef, 0)
+    end
     # end
     #previous trial info
     ltm1s = Array{Float64}(undef, 0)
@@ -418,6 +534,74 @@ function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=fa
 		    	push!(meanLOIs, NaN)
 		    	push!(medianLOIs, NaN)
 	    	end
+
+	    	if include_history
+	    		debugg = false
+	    		# here we need to take a mean over the history vector at a timepoint hx_n*history_spacing_s back in time...
+	    		#
+	    		# 	Gather the mean hx terms...
+	    		#
+	    		current_x = xs_sorted[i][j]
+	    		if debugg && i==1 && j==1
+	    			println("trialNo: ", tNo_sorted[i])
+	    			println("current_x=",current_x)
+	    			println("current_idx=",findfirst(x->x>=current_x, xs_hx_sorted[i]))
+	    			println("current_y=",ys_sorted[i][j])
+	    			println("current_y_hxnormd=",ys_hx_sorted[i][findfirst(x->x>=current_x, xs_hx_sorted[i])])
+    			end
+	    		hx_vect = []
+	    		for k=1:n_hx_terms
+	    			left_x = current_x - k*history_spacing_s
+
+	    			# find center idx
+	    			left_idx = findfirst(x->x>=left_x, xs_hx_sorted[i])
+	    			nsampsdiff = floor(Int,history_spacing_s/(xs_sorted[1][2]-xs_sorted[1][1]) - (xs_sorted[1][2]-xs_sorted[1][1]))
+	    			range_idx = collect(left_idx:left_idx+nsampsdiff)
+					if debugg && i==1 && j==1
+	    				println("size of ys_hx[i]", size(ys_hx_sorted[i]))
+    				end
+    				try 
+		    			hxterm = mean(ys_hx_sorted[i][range_idx])
+	    			catch
+	    				warning("got error calculating hxterm!!!!!!")
+	    				println("trialNo: ", tNo_sorted[i])
+		    			println("current_x=",current_x)
+		    			println("current_idx=",findfirst(x->x>=current_x, xs_hx_sorted[i]))
+		    			println("current_y=",ys_sorted[i][j])
+		    			println("current_y_hxnormd=",ys_hx_sorted[i][findfirst(x->x>=current_x, xs_hx_sorted[i])])
+		    			println("left_x", k,"=",left_x)
+		    			println("	left_idx=", left_idx)
+		    			println("	range_idxs=[", range_idx[1], ":", range_idx[end],"]")
+		    			# println("	hxterm_min=", minimum(ys_hx[i][range_idx]))
+		    			# println("	hxterm_max=", maximum(ys_hx[i][range_idx]))
+		    			rethrow()
+		    			# println("	hxterm=", mean(ys_hx[i][range_idx]))
+	    			end
+	    			hxterm = mean(ys_hx_sorted[i][range_idx])
+	    			push!(hx_vect, hxterm)
+					if debugg && i==1 && j==1
+		    			println("left_x", k,"=",left_x)
+		    			println("	left_idx=", left_idx)
+		    			println("	range_idxs=[", range_idx[1], ":", range_idx[end],"]")
+		    			println("	hxterm_min=", minimum(ys_hx_sorted[i][range_idx]))
+		    			println("	hxterm_max=", maximum(ys_hx_sorted[i][range_idx]))
+		    			println("	hxterm=", mean(ys_hx_sorted[i][range_idx]))
+	    			end
+	    		end
+	    		if debugg && i==1 && j==1
+	    			println("hx_vect=", round.(hx_vect, digits=2))
+	    		end
+	    		push!(hx1, hx_vect[1])
+	    		push!(hx2, hx_vect[2])
+	    		push!(hx3, hx_vect[3])
+	    		push!(hx4, hx_vect[4])
+	    		push!(hx5, hx_vect[5])
+	    		push!(hx6, hx_vect[6])
+	    		push!(hx7, hx_vect[7])
+	    		push!(hx8, hx_vect[8])
+	    		push!(hx9, hx_vect[9])
+	    		push!(hx10, hx_vect[10])
+	    	end
             
             push!(ltm1s, ltm1)
             push!(rxnm1s, outcomes[1])
@@ -446,31 +630,70 @@ function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=fa
 
     y_shuffle = Random.shuffle(yss)
     
-    df = DataFrame(DataID=1:length(xss), 
-        TrialNo = tNos,
-        X=xss, 
-        Y=yss, 
-        LickTime=lts,
-        Time2Lick=time2lick,
-        PcInterval=pcInterval,
-        LickTime_1back=ltm1s, 
-        LickTime_2back=ltm2s, 
-        Mean_Baseline = meanbls,
-		Median_Baseline = medianbls,
-		Mean_LOI = meanLOIs,
-		Median_LOI = medianLOIs,
-        Rxn_1back=rxnm1s,
-        Early_1back=earlym1s,
-        Reward_1back=rewm1s,
-        ITI_1back=itim1s,
-        Rxn_2back=rxnm2s,
-        Early_2back=earlym2s,
-        Reward_2back=rewm2s,
-        ITI_2back=itim2s,
-        LickState = lickstate,
-        Yshuffle = y_shuffle,
-        SessionCode=sessioncodes, 
-        Path=paths)
+    if include_history
+    	df = DataFrame(DataID=1:length(xss), 
+	        TrialNo = tNos,
+	        X=xss, 
+	        Y=yss, 
+	        LickTime=lts,
+	        Time2Lick=time2lick,
+	        PcInterval=pcInterval,
+	        LickTime_1back=ltm1s, 
+	        LickTime_2back=ltm2s, 
+	        Mean_Baseline = meanbls,
+			Median_Baseline = medianbls,
+			Mean_LOI = meanLOIs,
+			Median_LOI = medianLOIs,
+	        Rxn_1back=rxnm1s,
+	        Early_1back=earlym1s,
+	        Reward_1back=rewm1s,
+	        ITI_1back=itim1s,
+	        Rxn_2back=rxnm2s,
+	        Early_2back=earlym2s,
+	        Reward_2back=rewm2s,
+	        ITI_2back=itim2s,
+	        LickState = lickstate,
+	        Yshuffle = y_shuffle,
+	        Hx1 = hx1,
+	        Hx2 = hx2,
+	        Hx3 = hx3,
+	        Hx4 = hx4,
+	        Hx5 = hx5,
+	        Hx6 = hx6,
+	        Hx7 = hx7,
+	        Hx8 = hx8,
+	        Hx9 = hx9,
+	        Hx10 = hx10,
+	        history_spacing_s = [history_spacing_s for _=1:length(hx1)],
+	        SessionCode=sessioncodes, 
+	        Path=paths)
+    else
+	    df = DataFrame(DataID=1:length(xss), 
+	        TrialNo = tNos,
+	        X=xss, 
+	        Y=yss, 
+	        LickTime=lts,
+	        Time2Lick=time2lick,
+	        PcInterval=pcInterval,
+	        LickTime_1back=ltm1s, 
+	        LickTime_2back=ltm2s, 
+	        Mean_Baseline = meanbls,
+			Median_Baseline = medianbls,
+			Mean_LOI = meanLOIs,
+			Median_LOI = medianLOIs,
+	        Rxn_1back=rxnm1s,
+	        Early_1back=earlym1s,
+	        Reward_1back=rewm1s,
+	        ITI_1back=itim1s,
+	        Rxn_2back=rxnm2s,
+	        Early_2back=earlym2s,
+	        Reward_2back=rewm2s,
+	        ITI_2back=itim2s,
+	        LickState = lickstate,
+	        Yshuffle = y_shuffle,
+	        SessionCode=sessioncodes, 
+	        Path=paths)
+    end
     return df
 end;
 
