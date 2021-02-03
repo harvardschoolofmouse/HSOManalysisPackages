@@ -287,7 +287,7 @@ function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=fa
 			# println(length(ys_hx[i]))
 			mintime = -1. * history_spacing_s*n_hx_terms -0.01 # a little edge buffer...
 			minidx = findfirst(x->x>=mintime, xs_hx[i])
-			if xs_hx[i][minidx] != mintime
+			if xs_hx[i][minidx] != mintime && abs(xs_hx[i][minidx] - mintime) > 0.01
 				warning(join(["Expected mintime=", mintime, " but got xs_hx[i][minidx]=", xs_hx[i][minidx]]))
 			end
 			xs_hx[i] = xs_hx[i][minidx:end]#filter(e->e>mintime,xs_hx[i])
