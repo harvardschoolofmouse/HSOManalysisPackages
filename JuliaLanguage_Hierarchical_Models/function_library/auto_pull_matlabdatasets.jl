@@ -341,7 +341,7 @@ function bootlogit_modelpackage2(path; sessionID ="", getpackagename=false, runI
 	return result#, ndf
 end
 
-function extract_data_with_baselineandLOI(path; normalize=true, useHx=false, history_spacing_s=0.1)
+function extract_data_with_baselineandLOI(path; normalize=true, useHx=false, history_spacing_s=0.1, omit_cue=false)
 	ret_dir = pwd()
 	cd(path)
 	cd("..")
@@ -363,10 +363,10 @@ function extract_data_with_baselineandLOI(path; normalize=true, useHx=false, his
 	# println("saved figs to ", pwd())
 	if useHx
 		df = makeSessionDataFrame(data_single_trial; normalize=normalize, includeBL_LOI=true, baseline_data=data_baseline_trial, 
-    		LOI_data=data_LOI_trial, include_history=true, history_spacing_s=history_spacing_s, n_hx_terms = 10)
+    		LOI_data=data_LOI_trial, include_history=true, history_spacing_s=history_spacing_s, n_hx_terms = 10, cut_out_cue=omit_cue)
 	else
 		df = makeSessionDataFrame(data_single_trial; normalize=normalize, includeBL_LOI=true, baseline_data=data_baseline_trial, 
-			LOI_data=data_LOI_trial)
+			LOI_data=data_LOI_trial, cut_out_cue=omit_cue)
 	end
 	cd(ret_dir)
 	return df
@@ -1355,8 +1355,10 @@ end
 
 
 
+
+
 function nestlogitrunner(path; sessionID ="", getpackagename=false, runID=0, suppressFigures=false, 
-	history_spacing_s=0.0, modelNames=[], packagename="", formulas=[])
+	history_spacing_s=0.0, modelNames=[], packagename="", formulas=[], omit_cue=false)	
 	if history_spacing_s == 0.0
 		error("Improper history_spacing_s! Check the calling fxn, it should specify nonzero")
 	end
@@ -1375,12 +1377,315 @@ function nestlogitrunner(path; sessionID ="", getpackagename=false, runID=0, sup
 	# first, we extract the relevant data: the singletrial, baseline and LOI sets and make a df
 	# (expecting singletrial, baseline, and LOI folders for each dataset with CSV files from matlab)
 	#
-	ndf = extract_data_with_baselineandLOI(path; normalize=true, useHx=true, history_spacing_s=history_spacing_s)	
+	ndf = extract_data_with_baselineandLOI(path; normalize=true, useHx=true, history_spacing_s=history_spacing_s,omit_cue=omit_cue)	
 	
 	results = modelSelectionByAICBICxval(ndf, :LickState, formulas, modelNames, "logit"; 
     		n_iters=100,updownsampleYID=true, figurePath=figurePath, savePath = savepath, suppressFigures=suppressFigures)
 # Save each variable to our results folder
 	# this is already handled by the modelSelectionByAICBICxval function
+
+# make a working result df with all the results to keep in workspace
+	result = results
+	return result#, ndf
+end
+
+
+
+function fullmodel_logit_200hx_pkg(path; sessionID ="", getpackagename=false, runID=0, suppressFigures=false)
+	#
+	#. This model runs just one model type and returns the df and model data so we can sim data from it.
+	#
+# name the package and runID
+	packagename = join(["fullmodel_logit_200hx",runID])
+	history_spacing_s = 0.2
+	if getpackagename
+		return packagename
+	end
+	modelNames = [
+	    "Hx2s_-2s_DA",
+	]
+	yID = :LickState
+	predictors = [:Hx10,
+					:Hx9,
+					:Hx8, 
+					:Hx7, 
+					:Hx6,
+					:Hx5,
+					:Hx4, 
+					:Hx3,
+					:Hx2,
+					:Y,
+					]
+	formulas = [
+	  	@formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
+		]
+
+	if history_spacing_s == 0.0
+		error("Improper history_spacing_s! Check the calling fxn, it should specify nonzero")
+	end
+# Try to enter the results folder
+	savepath = joinpath(path, join(["results_", packagename]))
+	figurePath = joinpath(path, join(["figures_", packagename]))
+	try 
+		cd(savepath)
+	catch
+		mkdir(savepath)
+		mkdir(figurePath)
+		cd(savepath)
+	end
+	# do the business of the package on this session
+	#
+	# first, we extract the relevant data: the singletrial, baseline and LOI sets and make a df
+	# (expecting singletrial, baseline, and LOI folders for each dataset with CSV files from matlab)
+	#
+	ndf = extract_data_with_baselineandLOI(path; normalize=true, useHx=true, history_spacing_s=history_spacing_s)	
+	
+	results = modelSelectionByAICBICxval(ndf, yID, formulas, modelNames, "logit"; 
+    		n_iters=100,updownsampleYID=true, figurePath=figurePath, savePath = savepath, suppressFigures=suppressFigures)
+# Save each variable to our results folder
+	# Now let's gather up the coefficients of our model and the formulas
+	println(typeof(results))
+	modelData = DataFrame(yID = [yID], predictors=[predictors], th_means=[results.th_summary[1].composite_th], df=[ndf])	
+	modelData_result = [DataFrame() for _=1:nrow(results)]
+	modelData_result[1] = modelData
+	results[:modelData] = modelData_result
+
+# make a working result df with all the results to keep in workspace
+	result = results
+	return result#, ndf
+end
+
+
+function fullmodel_cue700_logit_200hx_pkg(path; sessionID ="", getpackagename=false, runID=0, suppressFigures=false)
+	#
+	#. This model runs just one model type and returns the df and model data so we can sim data from it.
+	#
+# name the package and runID
+	packagename = join(["fullmodel_c0-7_logit_200hx",runID])
+	history_spacing_s = 0.2
+	if getpackagename
+		return packagename
+	end
+	modelNames = [
+	    "Hx2s_-2s_DA",
+	]
+	yID = :LickState
+	predictors = [:Hx10,
+					:Hx9,
+					:Hx8, 
+					:Hx7, 
+					:Hx6,
+					:Hx5,
+					:Hx4, 
+					:Hx3,
+					:Hx2,
+					:Y,
+					]
+	formulas = [
+	  	@formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
+		]
+
+	if history_spacing_s == 0.0
+		error("Improper history_spacing_s! Check the calling fxn, it should specify nonzero")
+	end
+# Try to enter the results folder
+	savepath = joinpath(path, join(["results_", packagename]))
+	figurePath = joinpath(path, join(["figures_", packagename]))
+	try 
+		cd(savepath)
+	catch
+		mkdir(savepath)
+		mkdir(figurePath)
+		cd(savepath)
+	end
+	# do the business of the package on this session
+	#
+	# first, we extract the relevant data: the singletrial, baseline and LOI sets and make a df
+	# (expecting singletrial, baseline, and LOI folders for each dataset with CSV files from matlab)
+	#
+	ndf = extract_data_with_baselineandLOI(path; normalize=true, useHx=true, history_spacing_s=history_spacing_s, omit_cue=true)	
+	
+	results = modelSelectionByAICBICxval(ndf, yID, formulas, modelNames, "logit"; 
+    		n_iters=100,updownsampleYID=true, figurePath=figurePath, savePath = savepath, suppressFigures=suppressFigures)
+# Save each variable to our results folder
+	# Now let's gather up the coefficients of our model and the formulas
+	println(typeof(results))
+	modelData = DataFrame(yID = [yID], predictors=[predictors], th_means=[results.th_summary[1].composite_th], df=[ndf])	
+	modelData_result = [DataFrame() for _=1:nrow(results)]
+	modelData_result[1] = modelData
+	results[:modelData] = modelData_result
+
+# make a working result df with all the results to keep in workspace
+	result = results
+	return result#, ndf
+end
+
+
+
+function nestlogit_cue700_200hx_pkg(path; sessionID ="", getpackagename=false, runID=0, suppressFigures=false)
+# name the package and runID
+	packagename = join(["nestlogit_c0-7_200hx",runID])
+	history_spacing_s = 0.2
+	if getpackagename
+		return packagename
+	end
+	modelNames = [
+	    "Hx2s",
+	    "Hx2s_1-6s",
+	    "Hx2s_1-4s",
+	    "Hx2s_1-2s",
+	    "Hx2s_1s",
+	    "Hx2s_-8s",
+	    "Hx2s_-6s",
+	    "Hx2s_-4s",
+	    "Hx2s_-2s",
+	    "Hx2s_-2s_DA",
+	]
+	formulas = [
+	    @formula(LickState ~ Hx10),
+	    @formula(LickState ~ Hx10 + Hx9),
+	    @formula(LickState ~ Hx10 + Hx9 + Hx8),
+	    @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7),
+	    @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6),
+	    @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5),
+	  	@formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4),
+	  	@formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3),
+	  	@formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2),
+	  	@formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
+		]
+
+# Call the runner
+	result = nestlogitrunner(path; sessionID =sessionID, getpackagename=getpackagename, 
+		runID=runID, suppressFigures=suppressFigures, history_spacing_s = history_spacing_s, 
+			modelNames=modelNames, packagename=packagename, formulas=formulas, omit_cue=true)	
+	return result
+end
+
+
+function fullmodel_cue700_timeinsesh_logit_200hx_pkg(path; sessionID ="", getpackagename=false, runID=0, suppressFigures=false)
+	#
+	#. This model runs just one model type and returns the df and model data so we can sim data from it.
+	#
+# name the package and runID
+	packagename = join(["fullmodel_cue700_timeinsesh_logit_200hx",runID])
+	history_spacing_s = 0.2
+	if getpackagename
+		return packagename
+	end
+	modelNames = [
+	    "TinSesh_Hx2s_-2s_DA",
+	]
+	yID = :LickState
+	predictors = [:DataID,
+					:Hx10,
+					:Hx9,
+					:Hx8, 
+					:Hx7, 
+					:Hx6,
+					:Hx5,
+					:Hx4, 
+					:Hx3,
+					:Hx2,
+					:Y,
+					]
+	formulas = [
+	  	@formula(LickState ~ DataID + Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
+		]
+
+	if history_spacing_s == 0.0
+		error("Improper history_spacing_s! Check the calling fxn, it should specify nonzero")
+	end
+# Try to enter the results folder
+	savepath = joinpath(path, join(["results_", packagename]))
+	figurePath = joinpath(path, join(["figures_", packagename]))
+	try 
+		cd(savepath)
+	catch
+		mkdir(savepath)
+		mkdir(figurePath)
+		cd(savepath)
+	end
+	# do the business of the package on this session
+	#
+	# first, we extract the relevant data: the singletrial, baseline and LOI sets and make a df
+	# (expecting singletrial, baseline, and LOI folders for each dataset with CSV files from matlab)
+	#
+	ndf = extract_data_with_baselineandLOI(path; normalize=true, useHx=true, history_spacing_s=history_spacing_s, omit_cue=true)	
+	
+	results = modelSelectionByAICBICxval(ndf, yID, formulas, modelNames, "logit"; 
+    		n_iters=100,updownsampleYID=true, figurePath=figurePath, savePath = savepath, suppressFigures=suppressFigures)
+# Save each variable to our results folder
+	# Now let's gather up the coefficients of our model and the formulas
+	println(typeof(results))
+	modelData = DataFrame(yID = [yID], predictors=[predictors], th_means=[results.th_summary[1].composite_th], df=[ndf])	
+	modelData_result = [DataFrame() for _=1:nrow(results)]
+	modelData_result[1] = modelData
+	results[:modelData] = modelData_result
+
+# make a working result df with all the results to keep in workspace
+	result = results
+	return result#, ndf
+end
+
+function fullmodel_timeinsesh_logit_200hx_pkg(path; sessionID ="", getpackagename=false, runID=0, suppressFigures=false)
+	#
+	#. This model runs just one model type and returns the df and model data so we can sim data from it.
+	#
+# name the package and runID
+	packagename = join(["fullmodel_timeinsesh_logit_200hx",runID])
+	history_spacing_s = 0.2
+	if getpackagename
+		return packagename
+	end
+	modelNames = [
+	    "TinSesh_Hx2s_-2s_DA",
+	]
+	yID = :LickState
+	predictors = [:DataID,
+					:Hx10,
+					:Hx9,
+					:Hx8, 
+					:Hx7, 
+					:Hx6,
+					:Hx5,
+					:Hx4, 
+					:Hx3,
+					:Hx2,
+					:Y,
+					]
+	formulas = [
+	  	@formula(LickState ~ DataID + Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
+		]
+
+	if history_spacing_s == 0.0
+		error("Improper history_spacing_s! Check the calling fxn, it should specify nonzero")
+	end
+# Try to enter the results folder
+	savepath = joinpath(path, join(["results_", packagename]))
+	figurePath = joinpath(path, join(["figures_", packagename]))
+	try 
+		cd(savepath)
+	catch
+		mkdir(savepath)
+		mkdir(figurePath)
+		cd(savepath)
+	end
+	# do the business of the package on this session
+	#
+	# first, we extract the relevant data: the singletrial, baseline and LOI sets and make a df
+	# (expecting singletrial, baseline, and LOI folders for each dataset with CSV files from matlab)
+	#
+	ndf = extract_data_with_baselineandLOI(path; normalize=true, useHx=true, history_spacing_s=history_spacing_s, omit_cue=false)	
+	
+	results = modelSelectionByAICBICxval(ndf, yID, formulas, modelNames, "logit"; 
+    		n_iters=100,updownsampleYID=true, figurePath=figurePath, savePath = savepath, suppressFigures=suppressFigures)
+# Save each variable to our results folder
+	# Now let's gather up the coefficients of our model and the formulas
+	println(typeof(results))
+	modelData = DataFrame(yID = [yID], predictors=[predictors], th_means=[results.th_summary[1].composite_th], df=[ndf])	
+	modelData_result = [DataFrame() for _=1:nrow(results)]
+	modelData_result[1] = modelData
+	results[:modelData] = modelData_result
 
 # make a working result df with all the results to keep in workspace
 	result = results

@@ -188,7 +188,8 @@ function check_imported_data(data::TrialData; idx=nothing)
     return idx
 end;
 
-function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=false, baseline_data=[], LOI_data=[], include_history=false, history_spacing_s=0.25, n_hx_terms = 10)
+function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=false, baseline_data=[], LOI_data=[], include_history=false, history_spacing_s=0.25, n_hx_terms = 10, cut_out_cue=false)
+	cue_interval_s = 0.7
 	if n_hx_terms != 10
 		error("not yet implemented for other than 10 blocks of hx... We have to define variables for each col in the table, so to make easier I am hard coding 10 for now")
 	end
@@ -502,6 +503,16 @@ function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=fa
         end
 
         for j = 1:length(ys_sorted[i])
+        	if cut_out_cue && xs_sorted[i][j] < cue_interval_s
+        		if i==1 && j==1
+        			warning(join(["	Cutting out the cue at ", cue_interval_s]))
+    			end
+				# warning(join(["On trial #", tNo_sorted[i],"..."]))
+				# warning(join(["		LickTime=", lt_sorted_nonorm[i],"..."]))
+    #     		warning(join(["		Sample=", j, " Time=", xs_sorted[i][j], "s is less than the cue_interval_s=", cue_interval_s]))
+    #     		warning("	Omitting...")
+        		continue
+			end
             # extract each timepoint and signal value and relevant data
             push!(yss, ys_sorted[i][j])
             push!(xss, xs_sorted[i][j])
