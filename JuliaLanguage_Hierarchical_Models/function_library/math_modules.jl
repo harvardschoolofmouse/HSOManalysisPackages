@@ -14,6 +14,23 @@
 
 using StatsBase
 
+function nanmean_mat(x::Array{Float64}, dim=1)
+    if dim == 1
+        iter = 2
+    else
+        iter = 1
+    end
+    nanmm = nanmat(size(x)[iter],1)
+    for i = 1:size(x)[iter]
+        if dim == 1
+            v = nanmean(x[:,i])
+        else
+            v = nanmean(x[i,:])
+        end    
+        nanmm[i] = v
+    end
+    return nanmm
+end
 function nanmean(x::Vector{Float64})
     xx = filter(!isnan, x)
     sum(xx)/length(xx)

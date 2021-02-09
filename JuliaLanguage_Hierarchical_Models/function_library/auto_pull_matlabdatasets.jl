@@ -1691,3 +1691,88 @@ function fullmodel_timeinsesh_logit_200hx_pkg(path; sessionID ="", getpackagenam
 	result = results
 	return result#, ndf
 end
+
+
+function fullmodel_ocs_logit_200hx_pkg(path; sessionID ="", getpackagename=false, runID=0, suppressFigures=false)
+	#
+	#. This model runs just one model type and returns the df and model data so we can sim data from it.
+	#
+# name the package and runID
+	packagename = join(["fm_ocs_logit_200hx",runID])
+	history_spacing_s = 0.2
+	if getpackagename
+		return packagename
+	end
+	modelNames = [
+	    "TinSesh_Hx2s_-2s_DA",
+	]
+	yID = :LickState
+	predictors = [:LickTime_2back,
+					:Rxn_2back,
+					:Early_2back,
+					:Reward_2back,
+					:ITI_2back,
+					:LickTime_1back,
+					:Rxn_1back,
+					:Early_1back,
+					:Reward_1back,
+					:ITI_1back,
+					:Hx10,
+					:Hx9,
+					:Hx8, 
+					:Hx7, 
+					:Hx6,
+					:Hx5,
+					:Hx4, 
+					:Hx3,
+					:Hx2,
+					:Y,
+					]
+	formulas = [
+	  	@formula(LickState ~ LickTime_2back + 
+					Rxn_2back + 
+					Early_2back +
+					Reward_2back +
+					ITI_2back +
+					LickTime_1back +
+					Rxn_1back +
+					Early_1back +
+					Reward_1back +
+					ITI_1back + 
+					Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
+		]
+
+	if history_spacing_s == 0.0
+		error("Improper history_spacing_s! Check the calling fxn, it should specify nonzero")
+	end
+# Try to enter the results folder
+	savepath = joinpath(path, join(["results_", packagename]))
+	figurePath = joinpath(path, join(["figures_", packagename]))
+	try 
+		cd(savepath)
+	catch
+		mkdir(savepath)
+		mkdir(figurePath)
+		cd(savepath)
+	end
+	# do the business of the package on this session
+	#
+	# first, we extract the relevant data: the singletrial, baseline and LOI sets and make a df
+	# (expecting singletrial, baseline, and LOI folders for each dataset with CSV files from matlab)
+	#
+	ndf = extract_data_with_baselineandLOI(path; normalize=true, useHx=true, history_spacing_s=history_spacing_s, omit_cue=false)	
+	
+	results = modelSelectionByAICBICxval(ndf, yID, formulas, modelNames, "logit"; 
+    		n_iters=100,updownsampleYID=true, figurePath=figurePath, savePath = savepath, suppressFigures=suppressFigures)
+# Save each variable to our results folder
+	# Now let's gather up the coefficients of our model and the formulas
+	println(typeof(results))
+	modelData = DataFrame(yID = [yID], predictors=[predictors], th_means=[results.th_summary[1].composite_th], df=[ndf])	
+	modelData_result = [DataFrame() for _=1:nrow(results)]
+	modelData_result[1] = modelData
+	results[:modelData] = modelData_result
+
+# make a working result df with all the results to keep in workspace
+	result = results
+	return result#, ndf
+end
