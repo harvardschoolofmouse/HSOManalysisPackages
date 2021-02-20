@@ -58,17 +58,43 @@ function render_distribution(data, xl; bins=nothing, t="data", condition="", ax=
 end;
 
 
-function extract_behavior_distribution(og_df::DataFrame)
-    trialIDs = unique(og_df.TrialNo)
-    lick_times = []
-    for i in trialIDs
-        # get the datapoints corresponding to this trial
-        dp = findfirst(x->x==i, og_df.TrialNo)
-        push!(lick_times, og_df.LickTime[dp])
-    end
-    render_distribution(lick_times, [0,1], t="true normalized distribution", bins=50)
-    return lick_times
-end
+# function extract_behavior_distribution(og_df::DataFrame)
+#     trialIDs = unique(og_df.TrialNo)
+#     lick_times = []
+#     for i in trialIDs
+#         # get the datapoints corresponding to this trial
+#         dp = findfirst(x->x==i, og_df.TrialNo)
+#         push!(lick_times, og_df.LickTime[dp])
+#     end
+#     render_distribution(lick_times, [0,1], t="true normalized distribution", bins=50)
+#     return lick_times
+# end
+# function extract_behavior_distribution(og_df::DataFrame)
+# 	# NOW IN HAZARD MODULES
+#     #
+#     # If the licktime was normalized, need to correct this back to time in sec...
+#     #
+    
+#     trialIDs = unique(og_df.TrialNo)
+    
+#     lick_times = []
+#     dps = []
+#     for i in trialIDs
+#         # get the datapoints corresponding to this trial
+#         dp = findfirst(x->x==i, og_df.TrialNo)
+#         push!(dps, dp)
+#         push!(lick_times, og_df.LickTime[dp])
+#     end
+#     min_time = minimum(og_df[dps[2:end].-1, :X])
+#     max_time = maximum(og_df[dps[2:end].-1, :X])
+#     lick_times = (lick_times .* max_time) .+ min_time
+#     println("min licktime=", min_time, " max licktime=", max_time)
+#     figure(figsize=(3,3))
+#     render_distribution(lick_times, "lick time (s)", t="true normalized distribution", bins=50, ax=gca())
+#     xticks(0:17)
+#     xlim([0,17])
+#     return lick_times
+# end
 
 function set_xaxes_same_scale(axs)
     M=[axs[1].get_xlim()[1] , axs[1].get_xlim()[2]]
