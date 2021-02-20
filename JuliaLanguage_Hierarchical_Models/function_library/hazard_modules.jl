@@ -27,7 +27,7 @@ function get_prior(collated_results, seshNo, yID)
     f = countmap(df[yID])[false]
     prior = t / (t+f)
 end
-function extract_behavior_distribution(og_df::DataFrame)
+function extract_behavior_distribution(og_df::DataFrame; verbose=true)
     #
     # If the licktime was normalized, need to correct this back to time in sec...
     #
@@ -45,11 +45,13 @@ function extract_behavior_distribution(og_df::DataFrame)
     min_time = minimum(og_df[dps[2:end].-1, :X])
     max_time = maximum(og_df[dps[2:end].-1, :X])
     lick_times = (lick_times .* max_time) .+ min_time
-    println("min licktime=", min_time, " max licktime=", max_time)
-    figure(figsize=(3,3))
-    render_distribution(lick_times, "lick time (s)", t="true normalized distribution", bins=50, ax=gca())
-    xticks(0:17)
-    xlim([0,17])
+    if verbose
+        println("min licktime=", min_time, " max licktime=", max_time)
+        figure(figsize=(3,3))
+        render_distribution(lick_times, "lick time (s)", t="true normalized distribution", bins=50, ax=gca())
+        xticks(0:17)
+        xlim([0,17])
+    end
     return lick_times
 end
 function IRT_byOpportunity(d; edges=0:0.25:17)
