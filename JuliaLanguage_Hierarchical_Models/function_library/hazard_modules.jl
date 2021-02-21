@@ -214,3 +214,161 @@ function haz_results(haz, lt, ndp_per_sample; normalize=false)
     
     return haz
 end
+
+function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normalize=true)
+    fig=figure(figsize=(12,3))
+    axIRT = subplot(1,3,1)
+    axHaz = subplot(1,3,2)
+    axOverlay = subplot(1,3,3)
+    meanIRT = []
+    meanHaz = []
+    goodidx = findall(x->!isnan(x[1]), hazs)
+    failidx = findall(x->isnan(x[1]), hazs)
+    for i=1:length(goodidx)
+        
+        ii = goodidx[i]
+        sesh=seshCodes[ii]
+        # get the nanmean of the vectors
+        IRTbyOP = IRT_byOpportunity(lts[ii], edges=0:0.01*ndp_per_sample:17, verbose=false)   
+        xs = range(0.01, step=0.01*ndp_per_sample, stop=7)
+        haz=hazs[ii]
+        if normalize
+            IRTbyOP = (IRTbyOP .- minimum(IRTbyOP[1:length(xs)])) ./ maximum((IRTbyOP .- minimum(IRTbyOP[1:length(xs)]))[1:length(xs)])
+            haz = (haz .- minimum(haz[1:length(xs)])) ./ maximum((haz .- minimum(haz[1:length(xs)]))[1:length(xs)])
+        end
+
+        println(join([seshCodes[ii], " Rsq=", round(Rsq(IRTbyOP[1:length(xs)], haz[1:length(xs)]), digits=3)]))
+        xs = range(0.01, step=0.01*ndp_per_sample, stop=7)
+
+        edges=0:0.01*ndp_per_sample:17
+        axIRT.plot(edges[1:length(xs)], IRTbyOP[1:length(xs)], linewidth=0.5, "k-", label=sesh)
+        axHaz.plot(xs, haz[1:length(xs)], "r-", linewidth=0.5,label=sesh)
+        axOverlay.plot(edges[1:length(xs)], IRTbyOP[1:length(xs)], linewidth=0.5, "k-", label=sesh)
+        axOverlay.plot(xs, haz[1:length(xs)], "r-",linewidth=0.5, label=sesh)
+        
+        if i==1
+            meanIRT = IRTbyOP
+            meanHaz = haz
+        else
+            meanIRT = hcat(meanIRT, IRTbyOP)
+            meanHaz = hcat(meanHaz, haz)
+    
+        end
+    end
+    # get means:
+    xs = range(0.01, step=0.01*ndp_per_sample, stop=7)
+    edges=0:0.01*ndp_per_sample:17
+    meanIRT = nanmean_mat(meanIRT, 2)
+    meanHaz = nanmean_mat(meanHaz, 2)
+    
+    fig.suptitle(join(["Mean Rsq=", round(Rsq(meanIRT[1:length(xs)], meanHaz[1:length(xs)]), digits=3)]), y=1.15)
+    axIRT.plot(edges[1:length(xs)], meanIRT[1:length(xs)], "k-", linewidth=3, label="MEAN")
+    axHaz.plot(xs, meanHaz[1:length(xs)], "r-", linewidth=3, label="MEAN")
+    axOverlay.plot(edges[1:length(xs)], meanIRT[1:length(xs)], "k-", linewidth=3, label="MEAN")
+    axOverlay.plot(xs, meanHaz[1:length(xs)], "r-", linewidth=3, label="MEAN")
+    
+    
+    axIRT.set_title("True Hazard")
+    axHaz.set_title("Fit Hazard")
+    axOverlay.set_title("Overlay")
+    
+    
+#     axIRT.legend(loc="bottom", bbox_to_anchor=(0, 1.3))
+#     axHaz.legend(loc="bottom", bbox_to_anchor=(0, 1.3))
+#     axOverlay.legend(loc="bottom", bbox_to_anchor=(0, 1.3))
+    axIRT.set_xticks(0:1:7)
+    axHaz.set_xticks(0:1:7)
+    axOverlay.set_xticks(0:1:7)
+    axIRT.set_xlim([0,7])
+    axHaz.set_xlim([0,7])
+    axOverlay.set_xlim([0,7])
+    axIRT.set_xlabel("time (s)") 
+    axHaz.set_xlabel("time (s)") 
+    axOverlay.set_xlabel("time (s)") 
+    axIRT.set_ylabel("normalized hazard") 
+    
+    # diagnostics:
+    println("Good fits included: ")
+    print("     ")
+    pretty_print_list(seshCodes[goodidx], orient="horizontal")
+    println(" ")
+    println("Bad fits excluded: ")
+    print("     ")
+    pretty_print_list(seshCodes[failidx], orient="horizontal")
+    println(" ")
+     
+end
+function composite_fit_hazard(collated_results; seshNos=[], p_prior=0.00386*2, ndp_per_sample=50, pre_normalize_p=false, normalize=true)
+    
+    
+    hazs = []
+    lts = []
+    seshCodes = []
+    for i = 1:length(seshNos)
+        seshNo = seshNos[i]
+        progressbar(i,length(seshNos))
+        pprior_star = get_prior(collated_results, seshNo, :LickState)
+#         println("pprior_star=", pprior_star)
+        yID = collated_results.results[seshNo].modelData[1].yID[1]
+        th = collated_results.results[seshNo].modelData[1].th_means[1]
+        df = collated_results.results[seshNo].modelData[1].df[1]
+        push!(seshCodes, df.SessionCode[1])
+        X = df.X
+        predictors = collated_results.results[seshNo].modelData[1].predictors # must be a vector
+#         println(predictors)
+        # Let's get the range of probabilities the model can do on the whole dataset...
+        all_p,_ = predict_logit(yID, predictors, th, df,plotOn=false)
+        min_p = minimum(all_p)
+        max_p = maximum(all_p)
+#         println("min p_fit=", min_p)
+#         println("max p_fit=", max_p)
+
+
+        trialIDs = unique(df.TrialNo)
+        p_by_trial = nanmat(length(trialIDs), 1701)
+        for ii =1:length(trialIDs)
+            i = trialIDs[ii]
+            # get the datapoints corresponding to this trial
+            dps = findall(x->x==i, df.TrialNo)
+            nj = ceil(Int,length(dps)/ndp_per_sample) 
+
+            foundlick=false;
+            for j = 1:nj
+                mn = ndp_per_sample*(j-1)+1
+                mx = round(Int,minimum([ndp_per_sample*(j), length(dps)]))
+                # Average the signals within this time window...
+                dpsrange = dps[mn:mx]
+
+                # make an average dataframe of this set
+                avedf = average_df(predictors[1], dpsrange, df, yID)
+
+                # look at the DA signal and predictors at that time
+                # calculate its p(move | dopamine, factors) from the model 
+                prediction_p,_ = predict_logit(yID, predictors, th, avedf,plotOn=false)
+                p = prediction_p[1]
+
+                # Let's correct this p for our uncertainty. 
+                #. If it's close to min prediction on our dataset, let's set to zero. 
+                #. If it's close to max set close to 1
+                if pre_normalize_p
+                    p_corrected = (p-min_p)/max_p
+                else 
+                    p_corrected = p
+                end
+                #
+                # Scale everything by the prior... (p_prior)
+                #
+                p_corrected = p_corrected*p_prior
+
+                p_by_trial[ii,j] = p_corrected
+            end
+        end
+        haz = nanmean_mat(p_by_trial)
+        lt = extract_behavior_distribution(df, verbose=false)
+        push!(hazs, haz)
+        push!(lts, lt)
+    end
+    print("Finished:   ")
+    pretty_print_list(seshCodes, orient="horizontal")
+    return (hazs,lts,seshCodes)
+end
