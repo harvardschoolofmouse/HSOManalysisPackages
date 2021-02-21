@@ -374,7 +374,7 @@ function composite_fit_hazard(collated_results; seshNos=[], p_prior=0., ndp_per_
     pretty_print_list(seshCodes, orient="horizontal")
     cc=pwd()
     cd(savepath)
-    println("saving... \n", file)
+    println("saving... \n")
     CSV.write(join([filename, "_hazs"]), hazs)
     CSV.write(join([filename, "_lts"]), lts)
     CSV.write(join([filename, "_seshCodes"]), seshCodes)
