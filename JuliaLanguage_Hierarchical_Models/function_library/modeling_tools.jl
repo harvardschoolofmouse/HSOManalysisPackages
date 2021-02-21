@@ -434,8 +434,8 @@ end;
 
 
 function Rsq(y, yfit)
-	ESS = sum((yfit .- mean(y)).^2);
-	RSS = sum((yfit .- y).^2);
+	ESS = nansum((yfit .- nanmean(y)).^2);
+	RSS = nansum((yfit .- y).^2);
 	return Rsq = ESS/(RSS+ESS)
 end
 
