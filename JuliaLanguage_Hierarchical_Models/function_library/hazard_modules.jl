@@ -300,7 +300,7 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     printFigure(join(["haz_results_composite_", figname]); fig=fig,figurePath=figurePath, suptitle=true, h_suptitle=h)
     
 end
-function composite_fit_hazard(collated_results; seshNos=[], p_prior=0., ndp_per_sample=50, pre_normalize_p=false, normalize=true)
+function composite_fit_hazard(collated_results; seshNos=[], p_prior=0., ndp_per_sample=50, pre_normalize_p=false, normalize=true, filename="", savepath="")
     
     
     hazs = []
@@ -372,5 +372,12 @@ function composite_fit_hazard(collated_results; seshNos=[], p_prior=0., ndp_per_
     end
     print("Finished:   ")
     pretty_print_list(seshCodes, orient="horizontal")
+    cc=pwd()
+    cd(savepath)
+    println("saving... \n", file)
+    CSV.write(join([filename, "_hazs"]), hazs)
+    CSV.write(join([filename, "_lts"]), lts)
+    CSV.write(join([filename, "_seshCodes"]), seshCodes)
+    cd(cc)
     return (hazs,lts,seshCodes)
 end
