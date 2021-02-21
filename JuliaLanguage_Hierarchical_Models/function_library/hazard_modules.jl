@@ -215,7 +215,7 @@ function haz_results(haz, lt, ndp_per_sample; normalize=false)
     return haz
 end
 
-function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normalize=true, figname="")
+function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normalize=true, figname="", figurePath="")
     fig=figure(figsize=(12,3))
     axIRT = subplot(1,3,1)
     axHaz = subplot(1,3,2)
@@ -297,7 +297,7 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     pretty_print_list(seshCodes[failidx], orient="horizontal")
     println(" ")
      
-    printFigure(join(["haz_results_composite_", figname]); fig=fig,figurePath=collatedPath)
+    printFigure(join(["haz_results_composite_", figname]); fig=fig,figurePath=figurePath)
 end
 function composite_fit_hazard(collated_results; seshNos=[], p_prior=0., ndp_per_sample=50, pre_normalize_p=false, normalize=true)
     
