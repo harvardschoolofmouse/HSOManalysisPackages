@@ -233,8 +233,8 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
         xs = range(0.01, step=0.01*ndp_per_sample, stop=7)
         haz=hazs[ii]
         if normalize
-            IRTbyOP = (IRTbyOP .- minimum(IRTbyOP[1:length(xs)])) ./ maximum((IRTbyOP .- minimum(IRTbyOP[1:length(xs)]))[1:length(xs)])
-            haz = (haz .- minimum(haz[1:length(xs)])) ./ maximum((haz .- minimum(haz[1:length(xs)]))[1:length(xs)])
+            IRTbyOP = (IRTbyOP .- nanmin(IRTbyOP[1:length(xs)])) ./ nanmax((IRTbyOP .- nanmin(IRTbyOP[1:length(xs)]))[1:length(xs)])
+            haz = (haz .- nanmin(haz[1:length(xs)])) ./ nanmax((haz .- nanmin(haz[1:length(xs)]))[1:length(xs)])
         end
 
         println(join([seshCodes[ii], " Rsq=", round(Rsq(IRTbyOP[1:length(xs)], haz[1:length(xs)]), digits=3)]))
