@@ -151,7 +151,7 @@ function printFigure(name; fig=gcf(), figurePath=figurePath, verbose=false, supt
     end
     # println("here3")
     if suptitle
-    	fig.savefig(figname, transparent=true, format="eps", bbox_inches='tight',bbox_extra_artists=[h_suptitle])
+    	fig.savefig(figname, transparent=true, format="eps", bbox_inches="tight",bbox_extra_artists=[h_suptitle])
     else
 	    fig.savefig(figname, transparent=true, format="eps")
     end
