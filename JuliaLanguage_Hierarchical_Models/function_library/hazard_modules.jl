@@ -261,7 +261,7 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     meanIRT = nanmean_mat(meanIRT, 2)
     meanHaz = nanmean_mat(meanHaz, 2)
     
-    fig.suptitle(join(["Mean Rsq=", round(Rsq(meanIRT[1:length(xs)], meanHaz[1:length(xs)]), digits=3)]), y=1.15)
+    h = fig.suptitle(join(["Mean Rsq=", round(Rsq(meanIRT[1:length(xs)], meanHaz[1:length(xs)]), digits=3)]), y=1.15)
     axIRT.plot(edges[1:length(xs)], meanIRT[1:length(xs)], "k-", linewidth=3, label="MEAN")
     axHaz.plot(xs, meanHaz[1:length(xs)], "r-", linewidth=3, label="MEAN")
     axOverlay.plot(edges[1:length(xs)], meanIRT[1:length(xs)], "k-", linewidth=3, label="MEAN")
@@ -297,7 +297,8 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     pretty_print_list(seshCodes[failidx], orient="horizontal")
     println(" ")
      
-    printFigure(join(["haz_results_composite_", figname]); fig=fig,figurePath=figurePath)
+    printFigure(join(["haz_results_composite_", figname]); fig=fig,figurePath=figurePath, suptitle=true, h_suptitle=h)
+    
 end
 function composite_fit_hazard(collated_results; seshNos=[], p_prior=0., ndp_per_sample=50, pre_normalize_p=false, normalize=true)
     

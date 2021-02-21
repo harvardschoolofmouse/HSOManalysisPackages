@@ -128,7 +128,7 @@ function timestamp_now()
     return Dates.format(now(), dform)
 end
 
-function printFigure(name; fig=gcf(), figurePath=figurePath, verbose=false)
+function printFigure(name; fig=gcf(), figurePath=figurePath, verbose=false, suptitle=false, h_suptitle=[])
 	timestamp = timestamp_now()
 	ret_dir = pwd()
 	if Sys.iswindows()
@@ -150,7 +150,11 @@ function printFigure(name; fig=gcf(), figurePath=figurePath, verbose=false)
 	    println(figname)
     end
     # println("here3")
-    fig.savefig(figname, transparent=true, format="eps")
+    if suptitle
+    	fig.savefig(figname, transparent=true, format="eps", bbox_inches='tight',bbox_extra_artists=[h_suptitle])
+    else
+	    fig.savefig(figname, transparent=true, format="eps")
+    end
     # println("here4")
     cd(ret_dir)
 end
