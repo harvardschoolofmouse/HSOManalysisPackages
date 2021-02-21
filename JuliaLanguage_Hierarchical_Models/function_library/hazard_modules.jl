@@ -54,7 +54,7 @@ function extract_behavior_distribution(og_df::DataFrame; verbose=true)
     end
     return lick_times
 end
-function IRT_byOpportunity(d; edges=0:0.25:17)
+function IRT_byOpportunity(d; edges=0:0.25:17, verbose=true)
     #
     # Given a distribution, calculate a hazard fxn
     #
@@ -64,19 +64,21 @@ function IRT_byOpportunity(d; edges=0:0.25:17)
     for nn = 1:length(IRTbyOP)
         IRTbyOP[nn] = N[nn]/(sum(N[nn:end]));
     end
-    figure(figsize=(8,3))
-    suptitle("IRT by Opportunity")
-    subplot(1,2,1)
-    plot(edges[1:end-1], IRTbyOP, "k-")
-    ylabel("Hazard Rate")
-    xlabel("Time relative to cue (s)")
-    
-    subplot(1,2,2)
-    plot(edges[1:end-1-round(Int,length(edges)/2)], IRTbyOP[1:end-round(Int,length(edges)/2)], "k-")
-    xticks(0:7)
-    xlim([0,7])
+    if verbose
+        figure(figsize=(8,3))
+        suptitle("IRT by Opportunity")
+        subplot(1,2,1)
+        plot(edges[1:end-1], IRTbyOP, "k-")
+        ylabel("Hazard Rate")
+        xlabel("Time relative to cue (s)")
+        
+        subplot(1,2,2)
+        plot(edges[1:end-1-round(Int,length(edges)/2)], IRTbyOP[1:end-round(Int,length(edges)/2)], "k-")
+        xticks(0:7)
+        xlim([0,7])
 
-    xlabel("Time relative to cue (s)")
+        xlabel("Time relative to cue (s)")
+    end
     return IRTbyOP
 end
 function predict_logit(yID, predictors, th, df; plotOn=true)
