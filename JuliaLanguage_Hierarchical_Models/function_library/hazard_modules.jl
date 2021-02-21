@@ -298,7 +298,7 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     println(" ")
      
 end
-function composite_fit_hazard(collated_results; seshNos=[], p_prior=0.00386*2, ndp_per_sample=50, pre_normalize_p=false, normalize=true)
+function composite_fit_hazard(collated_results; seshNos=[], p_prior=0., ndp_per_sample=50, pre_normalize_p=false, normalize=true)
     
     
     hazs = []
@@ -358,7 +358,7 @@ function composite_fit_hazard(collated_results; seshNos=[], p_prior=0.00386*2, n
                 #
                 # Scale everything by the prior... (p_prior)
                 #
-                p_corrected = p_corrected*p_prior
+                p_corrected = p_corrected*pprior_star
 
                 p_by_trial[ii,j] = p_corrected
             end
