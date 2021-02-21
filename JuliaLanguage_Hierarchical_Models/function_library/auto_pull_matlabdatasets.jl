@@ -1705,7 +1705,7 @@ function fullmodel_ocs_logit_200hx_pkg(path; sessionID ="", getpackagename=false
 		return packagename
 	end
 	modelNames = [
-	    "TinSesh_Hx2s_-2s_DA",
+	    "OCS_Hx2s_-2s_DA",
 	]
 	yID = :LickState
 	predictors = [:LickTime_2back,
