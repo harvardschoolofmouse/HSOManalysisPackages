@@ -276,6 +276,9 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
 
     idxx_min = round(Int,0.025*size(allIRT)[2])
     idxx_max = round(Int,0.975*size(allIRT)[2])
+    if idxx_min < 1
+        idxx_min = 1
+    end
     println(idxx_min, idxx_max)
     println(size(allIRT))
     ax2IRT.plot(edges[1:length(xs)], allIRT[1:length(xs), idxx_min], linewidth=0.5, "k-", label=sesh)
