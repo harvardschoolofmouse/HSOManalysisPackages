@@ -93,10 +93,11 @@ function predict_logit(yID, predictors, th, df; plotOn=true)
         push!(yfit, yfiti[1])
     end
     
-    sortedidx = sortperm(df[:Y])
+    
     
     yactual = df[yID]
     if plotOn
+        sortedidx = sortperm(df[:Y])
         figure(figsize=(3,3))
         plot(vec(df[sortedidx,:Y]), vec(yactual[sortedidx]), "k.")
         plot(vec(df[sortedidx,:Y]), vec(yfit[sortedidx]), "r.")
