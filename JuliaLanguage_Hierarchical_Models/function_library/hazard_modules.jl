@@ -221,6 +221,10 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     axIRT = subplot(1,3,1)
     axHaz = subplot(1,3,2)
     axOverlay = subplot(1,3,3)
+    fig=figure(figsize=(12,3))
+    ax2IRT = subplot(1,3,1)
+    ax2Haz = subplot(1,3,2)
+    ax2Overlay = subplot(1,3,3)
     meanIRT = []
     meanHaz = []
     goodidx = findall(x->!isnan(x[1]), hazs)
@@ -256,11 +260,33 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     
         end
     end
+    allIRT = meanIRT
+    allHaz = meanHaz
+    # sort these out to get 95% CI
+    for i = 1:size(meanIRT)[1] # for each timepoint
+        allIRT[i,:] = sort(allIRT[i,:])
+        allHaz[i,:] = sort(allHaz[i,:])
+    end
     # get means:
     xs = range(0.01, step=0.01*ndp_per_sample, stop=7)
     edges=0:0.01*ndp_per_sample:17
     meanIRT = nanmean_mat(meanIRT, 2)
     meanHaz = nanmean_mat(meanHaz, 2)
+
+
+    idxx_min = round(Int,0.025*size(allIRT)[2])
+    idxx_max = round(Int,0.975*size(allIRT)[2])
+    ax2IRT.plot(edges[1:length(xs)], allIRT[1:length(xs), idxx_min], linewidth=0.5, "k-", label=sesh)
+    ax2Haz.plot(xs, allHaz[[1:length(xs), idxx_min], "r-", linewidth=0.5,label=sesh)
+    ax2Overlay.plot(edges[1:length(xs)], allIRT[1:length(xs), idxx_min], linewidth=0.5, "k-", label=sesh)
+    ax2Overlay.plot(xs, allHaz[1:length(xs), idxx_min], "r-",linewidth=0.5, label=sesh)
+    ax2IRT.plot(edges[1:length(xs)], allIRT[1:length(xs), idxx_max], linewidth=0.5, "k-", label=sesh)
+    ax2Haz.plot(xs, allHaz[[1:length(xs), idxx_max], "r-", linewidth=0.5,label=sesh)
+    ax2Overlay.plot(edges[1:length(xs)], allIRT[1:length(xs), idxx_max], linewidth=0.5, "k-", label=sesh)
+    ax2Overlay.plot(xs, allHaz[1:length(xs), idxx_max], "r-",linewidth=0.5, label=sesh)
+
+
+    
     
     h = fig.suptitle(join(["Mean Rsq=", round(Rsq(meanIRT[1:length(xs)], meanHaz[1:length(xs)]), digits=3)]), y=1.15)
     axIRT.plot(edges[1:length(xs)], meanIRT[1:length(xs)], "k-", linewidth=3, label="MEAN")
@@ -272,6 +298,10 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     axIRT.set_title("True Hazard")
     axHaz.set_title("Fit Hazard")
     axOverlay.set_title("Overlay")
+
+    ax2IRT.set_title("True Hazard")
+    ax2Haz.set_title("Fit Hazard")
+    ax2Overlay.set_title("Overlay")
     
     
 #     axIRT.legend(loc="bottom", bbox_to_anchor=(0, 1.3))
@@ -287,6 +317,17 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     axHaz.set_xlabel("time (s)") 
     axOverlay.set_xlabel("time (s)") 
     axIRT.set_ylabel("normalized hazard") 
+
+    ax2IRT.set_xticks(0:1:7)
+    ax2Haz.set_xticks(0:1:7)
+    ax2Overlay.set_xticks(0:1:7)
+    ax2IRT.set_xlim([0,7])
+    ax2Haz.set_xlim([0,7])
+    ax2Overlay.set_xlim([0,7])
+    ax2IRT.set_xlabel("time (s)") 
+    ax2Haz.set_xlabel("time (s)") 
+    ax2Overlay.set_xlabel("time (s)") 
+    ax2IRT.set_ylabel("normalized hazard") 
     
     # diagnostics:
     println("Good fits included: ")
