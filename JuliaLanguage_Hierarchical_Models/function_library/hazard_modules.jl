@@ -279,7 +279,7 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     if idxx_min < 1
         idxx_min = 1
     end
-    println(idxx_min, idxx_max)
+    println("CIlower index: ",idxx_min, " | CIupper index: ", idxx_max)
     println(size(allIRT))
     ax2IRT.plot(edges[1:length(xs)], allIRT[1:length(xs), idxx_min], linewidth=0.5, "k-", label="CI95-lower")
     ax2Haz.plot(xs, allHaz[1:length(xs), idxx_min], "r-", linewidth=0.5,label="CI95-lower")
@@ -289,6 +289,10 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     ax2Haz.plot(xs, allHaz[1:length(xs), idxx_max], "r-", linewidth=0.5,label="CI95-upper")
     ax2Overlay.plot(edges[1:length(xs)], allIRT[1:length(xs), idxx_max], linewidth=0.5, "k-", label="CI95-upper")
     ax2Overlay.plot(xs, allHaz[1:length(xs), idxx_max], "r-",linewidth=0.5, label="CI95-upper")
+    ax2IRT.plot(edges[1:length(xs)], meanIRT[1:length(xs)], "k-", linewidth=3, label="MEAN")
+    ax2Haz.plot(xs, meanHaz[1:length(xs)], "r-", linewidth=3, label="MEAN")
+    ax2Overlay.plot(edges[1:length(xs)], meanIRT[1:length(xs)], "k-", linewidth=3, label="MEAN")
+    ax2Overlay.plot(xs, meanHaz[1:length(xs)], "r-", linewidth=3, label="MEAN")
 
 
     
