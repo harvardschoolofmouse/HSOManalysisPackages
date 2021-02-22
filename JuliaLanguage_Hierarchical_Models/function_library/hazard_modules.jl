@@ -274,8 +274,10 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     meanHaz = nanmean_mat(meanHaz, 2)
 
 
-    idxx_min = round(Int,0.05*size(allIRT)[2])
-    idxx_max = round(Int,0.95*size(allIRT)[2])
+    idxx_min = round(Int,0.025*size(allIRT)[2])
+    idxx_max = round(Int,0.975*size(allIRT)[2])
+    println(idxx_min, idxx_max)
+    println(size(allIRT))
     ax2IRT.plot(edges[1:length(xs)], allIRT[1:length(xs), idxx_min], linewidth=0.5, "k-", label=sesh)
     ax2Haz.plot(xs, allHaz[1:length(xs), idxx_min], "r-", linewidth=0.5,label=sesh)
     ax2Overlay.plot(edges[1:length(xs)], allIRT[1:length(xs), idxx_min], linewidth=0.5, "k-", label=sesh)
