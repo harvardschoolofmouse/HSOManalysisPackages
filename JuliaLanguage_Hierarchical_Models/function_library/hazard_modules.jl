@@ -221,7 +221,7 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     axIRT = subplot(1,3,1)
     axHaz = subplot(1,3,2)
     axOverlay = subplot(1,3,3)
-    fig=figure(figsize=(12,3))
+    fig2=figure(figsize=(12,3))
     ax2IRT = subplot(1,3,1)
     ax2Haz = subplot(1,3,2)
     ax2Overlay = subplot(1,3,3)
@@ -289,6 +289,7 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     
     
     h = fig.suptitle(join(["Mean Rsq=", round(Rsq(meanIRT[1:length(xs)], meanHaz[1:length(xs)]), digits=3)]), y=1.15)
+    h2 = fig2.suptitle(join(["Mean Rsq=", round(Rsq(meanIRT[1:length(xs)], meanHaz[1:length(xs)]), digits=3)]), y=1.15)
     axIRT.plot(edges[1:length(xs)], meanIRT[1:length(xs)], "k-", linewidth=3, label="MEAN")
     axHaz.plot(xs, meanHaz[1:length(xs)], "r-", linewidth=3, label="MEAN")
     axOverlay.plot(edges[1:length(xs)], meanIRT[1:length(xs)], "k-", linewidth=3, label="MEAN")
@@ -340,6 +341,7 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     println(" ")
      
     printFigure(join(["haz_results_composite_", figname]); fig=fig,figurePath=figurePath, suptitle=true, h_suptitle=h)
+    printFigure(join(["haz_results_CI_composite_", figname]); fig=fig2,figurePath=figurePath, suptitle=true, h_suptitle=h)
 end
 function composite_fit_hazard(collated_results; seshNos=[], p_prior=0., ndp_per_sample=50, pre_normalize_p=false, normalize=true, filename="", savepath="")
     
