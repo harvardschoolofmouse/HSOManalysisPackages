@@ -318,6 +318,8 @@ function composite_fit_hazard(collated_results; seshNos=[], p_prior=0., ndp_per_
         predictors = collated_results.results[seshNo].modelData[1].predictors # must be a vector
 #         println(predictors)
         # Let's get the range of probabilities the model can do on the whole dataset...
+        println(yID)
+        println(predictors)
         all_p,_ = predict_logit(yID, predictors, th, df,plotOn=false)
         min_p = minimum(all_p)
         max_p = maximum(all_p)
