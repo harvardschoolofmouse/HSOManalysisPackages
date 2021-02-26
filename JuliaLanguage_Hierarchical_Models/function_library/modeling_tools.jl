@@ -167,15 +167,41 @@ end
 #     println(logit_model_test)
 #     return (logit_model, logit_model_test, model_results)
 # end
+function loglik(y, p_hat)
+    yt = y .* 1.0
+    pt_sat = yt;
+    pt_hat = p_hat#exp(Xb)./(1+exp(Xb));
+    pt_0 = sum(yt)./length(yt).*ones(size(yt));
+    
+    # ll_hat = sum(yt.*log.(pt_hat) .+ (1. .-yt).*log.(1. .-pt_hat))
+    ll_hat = sum(log.(pt_hat.^yt .* (1. .-pt_hat).^(1. .-yt)))
+    # ll_sat = sum(yt.*log.(pt_sat) .+ (1. .-yt).*log.(1. .-pt_sat))
+    ll_sat = sum(log.(pt_sat.^yt .* (1. .-pt_sat).^(1. .-yt)))
+    ll_0 = sum(yt.*log.(pt_0) .+ (1. .-yt).*log.(1. .-pt_0))
+
+    return (ll_hat, ll_sat, ll_0)
+end
+function deviance_explained(y,p_hat)
+    (ll_hat, ll_sat, ll_0) = loglik(y,p_hat);
+    D = -2*ll_hat;
+    Dsat = -2*ll_sat;
+    D0 = -2*ll_0;
+    Rsq = 1 - (D-Dsat)/(D0-Dsat);
+    Rsq_nosat = 1 - (D)/(D0);
+    return (D,D0,Dsat,Rsq)
+end
 function build_and_report_logit_model(Formula, train, test; modelName="model", modelClass="logit", verbose=true, figurePath=".")
     # use @formula(Y_name ~ X_1, X_2...) to make the formula
     # train the model
     if modelClass == "logit"
-        logit_model = glm(Formula, train, Binomial(), ProbitLink())
+        logit_model = glm(Formula, train, Binomial(), LogitLink())
+    elseif modelClass == "probit"
+    	logit_model = glm(Formula, train, Binomial(), ProbitLink())
     elseif modelClass == "normal"
         logit_model = glm(Formula, train, Normal())
     end
     
+
    
     # Predict the target variable on training data 
     prediction_Sn = StatsBase.predict(logit_model,train)
@@ -205,6 +231,23 @@ function build_and_report_logit_model(Formula, train, test; modelName="model", m
     	println("Accuracy of the test model is : ",accuracy)
 	end
 
+	function deviance_explained(y,p_hat)
+	    (ll_hat, ll_sat, ll_0) = loglik(y,p_hat);
+	    D = -2*ll_hat;
+	    Dsat = -2*ll_sat;
+	    D0 = -2*ll_0;
+	    Rsq = 1 - (D-Dsat)/(D0-Dsat);
+	    Rsq_nosat = 1 - (D)/(D0);
+	    return (D,D0,Dsat,Rsq)
+	end
+	(D_Sn,D0_Sn,Dsat_Sn,deviance_explained_Sn) = deviance_explained(train.LickState,prediction_Sn)
+	(D,D0,Dsat,deviance_explained) = deviance_explained(test.LickState,prediction)
+
+	if verbose
+		println("deviance_explained of the train model is : ",deviance_explained_Sn)
+    	println("deviance_explained of the test model is : ",deviance_explained)
+	end
+
     # Confusion Matrix
     confusion_matrix = MLBase.roc(prediction_df.y_actual, prediction_df.y_predicted)
     if verbose
@@ -216,12 +259,18 @@ function build_and_report_logit_model(Formula, train, test; modelName="model", m
         formula = [formula, formula],
         prediction = [prediction_Sn, prediction], 
         prediction_df = [prediction_df_Sn, prediction_df],
+        D = [D_Sn, D],
+        D0 = [D0_Sn, D0],
+        Dsat = [Dsat_Sn, Dsat],
+        deviance_explained = [deviance_explained_Sn, deviance_explained],
         accuracy = [accuracy_Sn, accuracy],
         confusion_matrix = [confusion_matrix_Sn, confusion_matrix])
     
 
     if modelClass == "logit"
-        logit_model_test = glm(Formula, test, Binomial(), ProbitLink()) 
+        logit_model_test = glm(Formula, test, Binomial(), LogitLink()) 
+    elseif modelClass == "probit"
+    	logit_model_test = glm(Formula, test, Binomial(), ProbitLink()) 
     elseif modelClass == "normal"
         logit_model_test = glm(Formula, test, Normal()) 
     end
@@ -241,7 +290,7 @@ function build_and_report_logit_model(Formula, train, test; modelName="model", m
 	        Accuracy = accuracy_Sn
 	        subplot(1,2,1)
 	        plot_fit_results(X,Y,Yfit,correct=correct)
-	        title(join(["training fit, accuracy=", round(Accuracy, digits=2)]))
+	        title(join(["train, acc=", round(Accuracy, digits=2), " DevRsq=", round(deviance_explained_Sn, digits=2)]))
 	        ax=gca()
 	        ax.set_xlabel(predictorname)
 	        ax.set_ylabel(outputname)
@@ -254,7 +303,7 @@ function build_and_report_logit_model(Formula, train, test; modelName="model", m
 	        Accuracy = accuracy
 	        subplot(1,2,2)
 	        plot_fit_results(X,Y,Yfit,correct=correct)
-	        title(join(["test fit, accuracy=", round(Accuracy, digits=2)]))
+	        title(join(["test, acc=", round(Accuracy, digits=2), " DevRsq=", round(deviance_explained, digits=2)]))
 	        ax=gca()
 	        ax.set_xlabel(predictorname)
 	        printFigure(join([modelName, "Results_", i-1]); fig=gcf(), figurePath=figurePath)
@@ -266,8 +315,10 @@ function build_and_report_logit_model(Formula, train, test; modelName="model", m
 	    println("TEST")
 	    println(logit_model_test)
     end
-    return (logit_model, logit_model_test, accuracy_Sn, accuracy)
+    return (logit_model, logit_model_test, accuracy_Sn, accuracy, model_results)
 end
+
+
 
 
 function build_and_report_linear_model(Formula, train, test; modelName="model", verbose=true)
@@ -438,6 +489,8 @@ function Rsq(y, yfit)
 	RSS = nansum((yfit .- y).^2);
 	return Rsq = ESS/(RSS+ESS)
 end
+
+
 
 
 function updownsample(df::DataFrame, refvect::Vector{Bool}, n::Int; downOnly=false)
@@ -1588,6 +1641,8 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
     testloss = [[] for _=1:length(modelNames)]
     Sn_accuracy = [[] for _=1:length(modelNames)]
     test_accuracy = [[] for _=1:length(modelNames)]
+    Sn_deviance_explained = [[] for _=1:length(modelNames)]
+    deviance_explained = [[] for _=1:length(modelNames)]
     th_names = [[] for _=1:length(modelNames)]
     ths = [[] for _=1:length(modelNames)]
     se_ths = [[] for _=1:length(modelNames)]
@@ -1643,10 +1698,12 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
 			            if modelClass == "logit"
 			                # get AIC, BIC with the original model and an average coefficient with propagated se
 			                if length(AICs[model]) != n_iters
-				                (logit_model, _, accuracy_Sn, accuracy_test) = build_and_report_logit_model(formulas[model], train, test; modelName=modelNames[model], modelClass="logit", verbose=false)
+				                (logit_model, _, accuracy_Sn, accuracy_test, model_results) = build_and_report_logit_model(formulas[model], train, test; modelName=modelNames[model], modelClass="logit", verbose=false)
 				                push!(AICs[model], aic(logit_model))
 				                push!(AICcs[model], aicc(logit_model))
 				                push!(BICs[model], bic(logit_model))
+				                push!(Sn_deviance_explained[model], model_results.deviance_explained[1])
+								push!(deviance_explained[model], model_results.deviance_explained[2])
 				                push!(Sn_accuracy[model], accuracy_Sn)
 				                push!(test_accuracy[model], accuracy_test)
 				                stats_df = get_model_stats(logit_model)
@@ -1695,6 +1752,8 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
     meanBIC = []
     meanAccuracy_Sn = []
     meanAccuracy_test = []
+    mean_deviance_explained_Sn = []
+    mean_deviance_explained = []
     axs = []
     fs = []
     if nomodelfits
@@ -1753,6 +1812,8 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
 	        push!(meanBIC,NaN)
 	        push!(meanAccuracy_Sn,NaN)
 	        push!(meanAccuracy_test,NaN)
+	        push!(mean_deviance_explained_Sn, NaN)
+			push!(mean_deviance_explained, NaN)
 	        AICs[model] = vec(nanmat(n_iters,1))
 			AICcs[model] = vec(nanmat(n_iters,1))
 			BICs[model] = vec(nanmat(n_iters,1))
@@ -1790,6 +1851,8 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
 	        push!(meanAIC,mean(AICs[model]))
 	        push!(meanAICc,mean(AICcs[model]))
 	        push!(meanBIC,mean(BICs[model]))
+	        push!(mean_deviance_explained_Sn, mean(deviance_explained_Sn[model]))
+			push!(mean_deviance_explained, mean(deviance_explained[model]))
 	        push!(meanAccuracy_Sn,mean(Sn_accuracy[model]))
 	        push!(meanAccuracy_test,mean(test_accuracy[model]))
 	        
@@ -1830,6 +1893,19 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
     if suppressFigures
     	close()
 	end
+
+
+	f = figure(figsize=(20,3))
+    ax1=subplot(1,3,1)
+    compare_AICBIC(mean_deviance_explained_Sn, deviance_explained_Sn; yl="Train Rsq-dev", iters=n_iters, ax=ax1, minmax="max")
+    ax1.set_ylim([0., 1.])
+    ax2=subplot(1,3,2)
+    compare_AICBIC(mean_deviance_explained, deviance_explained; yl="Test Rsq-dev", iters=n_iters, ax=ax2, minmax="max")
+    ax2.set_ylim([0., 1.])
+    printFigure(join(["Rsqdevexplained_summary_nboot", n_iters, "_npercat", npercat, slice]); fig=f, figurePath=figurePath)
+    if suppressFigures
+    	close()
+	end
         
     results = DataFrame(
         AICs = AICs,
@@ -1843,6 +1919,10 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
         meanAccuracy_Sn = meanAccuracy_Sn,
         test_accuracy = test_accuracy,
         meanAccuracy_test = meanAccuracy_test,
+        deviance_explained_Sn = deviance_explained_Sn,
+        mean_deviance_explained_Sn = mean_deviance_explained_Sn,
+        deviance_explained = deviance_explained,
+        mean_deviance_explained = mean_deviance_explained,
         th_names = th_names,
         ths = ths,
         se_ths = se_ths,
@@ -1863,6 +1943,10 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
         CSV.write(join(["meanAccuracy_Sn_", slice, ".csv"]),DataFrame(meanAccuracy_Sn = meanAccuracy_Sn))
         CSV.write(join(["test_accuracy_", slice, ".csv"]),DataFrame(test_accuracy = test_accuracy))
         CSV.write(join(["meanAccuracy_test_", slice, ".csv"]),DataFrame(meanAccuracy_test = meanAccuracy_test))
+        CSV.write(join(["deviance_explained_Sn_", slice, ".csv"]),DataFrame(deviance_explained_Sn = deviance_explained_Sn))
+        CSV.write(join(["mean_deviance_explained_Sn_", slice, ".csv"]),DataFrame(mean_deviance_explained_Sn = mean_deviance_explained_Sn))
+        CSV.write(join(["deviance_explained_", slice, ".csv"]),DataFrame(deviance_explained = deviance_explained))
+        CSV.write(join(["mean_deviance_explained_", slice, ".csv"]),DataFrame(mean_deviance_explained = mean_deviance_explained))
         CSV.write(join(["th_names_", slice, ".csv"]),DataFrame(th_names = th_names))
         CSV.write(join(["ths_", slice, ".csv"]),DataFrame(ths = ths))
         CSV.write(join(["se_ths_", slice, ".csv"]),DataFrame(se_ths = se_ths))
