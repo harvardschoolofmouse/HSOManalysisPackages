@@ -1057,6 +1057,125 @@ function bootlogit_timeslice_modelpackage1(path; sessionID ="", getpackagename=f
 # make a working result list of dfs with all the results to keep in workspace
 	return results#, ndf
 end
+
+
+function bootlogit_timeslice_modelpackage2(path; sessionID ="", getpackagename=false, runID=0, suppressFigures=false)
+	warning("timeslice model updated 3-3-2021 for new Hx predictors and updates to error prop...")
+# name the package and runID
+	packagename = join(["bootlogit_timeslice_modelpackage2_",runID])
+	if getpackagename
+		return packagename
+	end
+# Try to enter the results folder
+	savepath = joinpath(path, join(["results_", packagename]))
+	figurePath = joinpath(path, join(["figures_", packagename]))
+	try 
+		cd(savepath)
+	catch
+		mkdir(savepath)
+		mkdir(figurePath)
+		cd(savepath)
+	end
+# do the business of the package on this session
+	#
+	# first, we extract the relevant data: the singletrial, baseline and LOI sets and make a df
+	# (expecting singletrial, baseline, and LOI folders for each dataset with CSV files from matlab)
+	#
+	ndf = extract_data_with_baselineandLOI(path; normalize=true)
+	#
+	# next, we need to specify binning for our timeslices
+	#. as a start to match the hazard analysis, I'll use 250 ms bins
+	#
+	slice_width_ms = 250.#3000.#250.
+	println("slice_width_ms: ", slice_width_ms)
+	(binned_ndfs, binEdges) = slice_dataframe_into_timebins(ndf, slice_width_ms)
+	# name the timeslices
+	timeslice_names = []
+	for i = 1:length(binned_ndfs)
+		push!(timeslice_names, join(["_", round(Int,1000*binEdges[i]), "-", round(Int,1000*binEdges[i+1])]))
+	end
+	
+
+
+	formulas = [
+			@formula(LickState ~ LickTime_2back),
+		    @formula(LickState ~ LickTime_1back),
+		    @formula(LickState ~ LickTime_2back + LickTime_1back),
+		    @formula(LickState ~ LickTime_2back + LickTime_1back + Y),
+		    @formula(LickState ~ LickTime_2back + LickTime_1back + Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
+		    @formula(LickState ~ Rxn_2back + Early_2back + Reward_2back + ITI_2back),
+		    @formula(LickState ~ Rxn_1back + Early_1back + Reward_1back + ITI_1back),
+		    @formula(LickState ~ Rxn_2back + Early_2back + Reward_2back + ITI_2back + Rxn_1back + Early_1back + Reward_1back + ITI_1back),
+		    @formula(LickState ~ LickTime_2back + LickTime_1back + Rxn_2back + Early_2back + Reward_2back + ITI_2back + Rxn_1back + Early_1back + Reward_1back + ITI_1back),
+		    @formula(LickState ~ Rxn_2back + Early_2back + Reward_2back + ITI_2back + Rxn_1back + Early_1back + Reward_1back + ITI_1back + Y),
+		    @formula(LickState ~ Rxn_2back + Early_2back + Reward_2back + ITI_2back + Rxn_1back + Early_1back + Reward_1back + ITI_1back + Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
+		    @formula(LickState ~ LickTime_2back + LickTime_1back + Rxn_2back + Early_2back + Reward_2back + ITI_2back +Rxn_1back + Early_1back + Reward_1back + ITI_1back + Y),
+		    @formula(LickState ~ LickTime_2back + LickTime_1back + Rxn_2back + Early_2back + Reward_2back + ITI_2back +Rxn_1back + Early_1back + Reward_1back + Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
+		    @formula(LickState ~ Y),
+		    @formula(LickState ~ Hx10),
+		    @formula(LickState ~ Hx10 + Hx9),
+		    @formula(LickState ~ Hx10 + Hx9 + Hx8),
+		    @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7),
+		    @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6),
+		    @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5),
+		  	@formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4),
+		  	@formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3),
+		  	@formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2),
+		  	@formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
+			]
+
+		modelNames = [
+			"Lt2b",
+		    "Lt1b",
+		    "Lt1b-Lt2b",
+		    "Lt1b-Lt2b-DA",
+		    "Lt12b-Hx0-2-DA",
+		    "oc2b",
+		    "oc1b",
+		    "oc1b-oc2b",
+		    "Lt12b-oc12b",
+		    "oc1b-oc2b-DA",
+		    "oc12b-Hx0-2-DA",
+		    "Lt12b-oc12b-DA",
+		    "Lt12b-oc12b-Hx0-2-DA",
+		    "DA",
+		    "Hx2s",
+		    "Hx2s_1-6s",
+		    "Hx2s_1-4s",
+		    "Hx2s_1-2s",
+		    "Hx2s_1s",
+		    "Hx2s_-8s",
+		    "Hx2s_-6s",
+		    "Hx2s_-4s",
+		    "Hx2s_-2s",
+		    "Hx2s_-2s_DA",
+		]
+
+	if length(modelNames) != length(formulas)
+		error("Model names and formulas not matched...")
+	end
+
+	nbins = length(binEdges) - 1
+	results = Vector{DataFrame}()
+	for slice = 1:nbins-1
+		progressbar(slice,nbins)
+		println("----------slice: ", timeslice_names[slice])
+		#
+		# Specify the timeslice
+		#
+		modelNames_slice = [join(hcat(modelNames[x], timeslice_names[slice])) for x=1:length(modelNames)]
+		result = modelSelectionByAICBICxval(binned_ndfs[slice], :LickState, formulas, modelNames_slice, "logit"; 
+	    		n_iters=100,updownsampleYID=true, figurePath=figurePath, savePath = savepath, suppressFigures=suppressFigures, slice=timeslice_names[slice])
+		result[:TimeSlice] = [timeslice_names[slice] for _ = 1:nrow(result)]
+		push!(results, result)
+	end
+
+	
+
+# make a working result list of dfs with all the results to keep in workspace
+	return results#, ndf
+end
+
 function bootlogit_timeslice_postprocessingfunction1(results::DataFrame, compositesavepath, modelpackagefunction; runID=0)
 	#
 	# Use this to compile the analysis when we have a LIST of result dfs
@@ -1672,6 +1791,81 @@ function nestlogit_200hx_pkg(path; sessionID ="", getpackagename=false, runID=0,
 			modelNames=modelNames, packagename=packagename, formulas=formulas)
 	return result
 end
+function nestlogit_allpred_200hx_pkg(path; sessionID ="", getpackagename=false, runID=0, suppressFigures=false)
+	warning("package version 3-3-2021 for use with updated error prop and hazard type analyses")
+# name the package and runID
+	packagename = join(["nestlogit_allpred_200hx",runID])
+	history_spacing_s = 0.2
+	if getpackagename
+		return packagename
+	end
+	
+
+	formulas = [
+			@formula(LickState ~ LickTime_2back),
+		    @formula(LickState ~ LickTime_1back),
+		    @formula(LickState ~ LickTime_2back + LickTime_1back),
+		    @formula(LickState ~ LickTime_2back + LickTime_1back + Y),
+		    @formula(LickState ~ LickTime_2back + LickTime_1back + Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
+		    @formula(LickState ~ Rxn_2back + Early_2back + Reward_2back + ITI_2back),
+		    @formula(LickState ~ Rxn_1back + Early_1back + Reward_1back + ITI_1back),
+		    @formula(LickState ~ Rxn_2back + Early_2back + Reward_2back + ITI_2back + Rxn_1back + Early_1back + Reward_1back + ITI_1back),
+		    @formula(LickState ~ LickTime_2back + LickTime_1back + Rxn_2back + Early_2back + Reward_2back + ITI_2back + Rxn_1back + Early_1back + Reward_1back + ITI_1back),
+		    @formula(LickState ~ Rxn_2back + Early_2back + Reward_2back + ITI_2back + Rxn_1back + Early_1back + Reward_1back + ITI_1back + Y),
+		    @formula(LickState ~ Rxn_2back + Early_2back + Reward_2back + ITI_2back + Rxn_1back + Early_1back + Reward_1back + ITI_1back + Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
+		    @formula(LickState ~ LickTime_2back + LickTime_1back + Rxn_2back + Early_2back + Reward_2back + ITI_2back +Rxn_1back + Early_1back + Reward_1back + ITI_1back + Y),
+		    @formula(LickState ~ LickTime_2back + LickTime_1back + Rxn_2back + Early_2back + Reward_2back + ITI_2back +Rxn_1back + Early_1back + Reward_1back + Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
+		    @formula(LickState ~ Y),
+		    @formula(LickState ~ Hx10),
+		    @formula(LickState ~ Hx10 + Hx9),
+		    @formula(LickState ~ Hx10 + Hx9 + Hx8),
+		    @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7),
+		    @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6),
+		    @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5),
+		  	@formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4),
+		  	@formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3),
+		  	@formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2),
+		  	@formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
+			]
+
+		modelNames = [
+			"Lt2b",
+		    "Lt1b",
+		    "Lt1b-Lt2b",
+		    "Lt1b-Lt2b-DA",
+		    "Lt12b-Hx0-2-DA",
+		    "oc2b",
+		    "oc1b",
+		    "oc1b-oc2b",
+		    "Lt12b-oc12b",
+		    "oc1b-oc2b-DA",
+		    "oc12b-Hx0-2-DA",
+		    "Lt12b-oc12b-DA",
+		    "Lt12b-oc12b-Hx0-2-DA",
+		    "DA",
+		    "Hx2s",
+		    "Hx2s_1-6s",
+		    "Hx2s_1-4s",
+		    "Hx2s_1-2s",
+		    "Hx2s_1s",
+		    "Hx2s_-8s",
+		    "Hx2s_-6s",
+		    "Hx2s_-4s",
+		    "Hx2s_-2s",
+		    "Hx2s_-2s_DA",
+		]
+
+
+# Call the runner
+	result = nestlogitrunner(path; sessionID =sessionID, getpackagename=getpackagename, 
+		runID=runID, suppressFigures=suppressFigures, history_spacing_s = history_spacing_s, 
+			modelNames=modelNames, packagename=packagename, formulas=formulas)
+	return result
+end
+
+
+
+
 
 
 
