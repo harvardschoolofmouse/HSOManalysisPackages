@@ -93,6 +93,8 @@ function extract_data(path; blmode=false, LOImode=false)
         if blmode # if baseline, we have extra baseline text on the filename
         	tNo = parse(Int, tt[3][2:end])
 	        lt = parse(Float64, tt[4][3:end-1])
+	        xx = xx[1:end-1] # trim the last timestamp off because is redundant with LOI, 3/2/2021
+			yy = yy[1:end-1]
         elseif LOImode
         	tNo = parse(Int, tt[2][2:end])
 	        lt = parse(Float64, tt[3][3:end-1])
@@ -242,6 +244,13 @@ function makeSessionDataFrame(data::TrialData; normalize=false, includeBL_LOI=fa
 					warning(join(["The end of baseline is same as begin of LOI on tNo ", tNo[i], " iter=", i]))
 					println(bl_ys[i][end])#baseline_data.ydata[i][end])
 					println(loi_ys[i][1])#LOI_data.ydata[i][1])
+					# bl_xs = bl_xs[1:end-1]
+					# bl_ys = bl_ys[1:end-1]
+					# if bl_ys[i][end]==loi_ys[i][1]
+					# 	warning(join(["The end of baseline is same as begin of LOI AFTER CORRECTION on tNo ", tNo[i], " iter=", i]))
+					# else
+					# 	println("** corrected.")
+					# end
 				elseif loi_ys[i][end] == ys[i][1]#LOI_data.ydata[i][end] == ys[i][1]
 					warning(join(["The end of LOI is same as begin of trial on tNo ", tNo[i], " iter=", i]))
 					println(loi_ys[i][end])#LOI_data.ydata[i][end])

@@ -407,6 +407,8 @@ end
 # 	Collation
 #
 function combine_th_across_sessions(results, compositesavepath, runID,packagename)
+# 	pwd()
+	warning("Using new combine_th_across_sessions 3/2/2021")
     ret_dir = pwd()
     cd(compositesavepath)
     modelNames = unique(results.results[1].th_summary[1].modelName)
@@ -421,33 +423,50 @@ function combine_th_across_sessions(results, compositesavepath, runID,packagenam
     fs = []
     th_summary = DataFrame(modelName=[], composite_th=[], composite_se=[], composite_CImin=[], composite_CImax=[], composite_mdof = [])
     for model = 1:n_models
+        model_indicies = findall(x->x==modelNames[model], results.results[1].th_summary[1].modelName)
+        d = length(model_indicies)
+        ths_this_model = [Vector{Float64}(undef, 0) for i=1:length(model_indicies)]
+        se_ths_this_model = [Vector{Float64}(undef, 0) for i=1:length(model_indicies)]
+        mdofs_this_model = [Vector{Float64}(undef, 0) for i=1:length(model_indicies)]
+        
 
-        result_df = DataFrame(train_dof = [results.results[1].dofs[model][1]], train_ths = [[results.results[1].ths[model][1]]], train_se_ths=[[results.results[1].se_ths[model][1]]])
+        # only propagate error ACROSS sessions, not within a session... 3/2/2021
+        # start by pulling out the composite ths for the model for sesh 1
         for i_sesh = 1:n_sesh
-        	n_iters = length(results.results[i_sesh].AICs[model])
-      #   	println("	model:", model, " session: ", i_sesh)
-	    	# println("n_iters=", n_iters)
-		    # println("size BIC=", length(results.results[i_sesh].BICs[model]))
-		    # println("size dofs=", length(results.results[i_sesh].dofs[model]))
-		    # println("size ths=", length(results.results[i_sesh].ths[model]))
-		    # println("size se_ths=", length(results.results[i_sesh].se_ths[model]))
-            if i_sesh==1
-                iterstart=2
-            else
-                iterstart=1
-            end
-
-            for i=iterstart:n_iters
-                append!(result_df, 
-                DataFrame(train_dof = [results.results[i_sesh].dofs[model][i]], 
-                        train_ths = [[results.results[i_sesh].ths[model][i]]], 
-                        train_se_ths=[[results.results[i_sesh].se_ths[model][i]]],
-                    ))   
+            th_summary_this_sesh = results.results[i_sesh].th_summary[1][model_indicies, :]
+            for i_th = 1:d
+                push!(ths_this_model[i_th], th_summary_this_sesh.composite_th[i_th])
+                push!(se_ths_this_model[i_th], th_summary_this_sesh.composite_se[i_th])
+                push!(mdofs_this_model[i_th], th_summary_this_sesh.composite_mdof[i_th])
             end
         end
+        # now, get the composite ths for each theta
+        composite_th = Vector{Float64}(undef, 0)
+        composite_se = Vector{Float64}(undef, 0)
+        composite_CImin = Vector{Float64}(undef, 0)
+        composite_CImax = Vector{Float64}(undef, 0)
+        composite_mdof = Vector{Float64}(undef, 0)
+        for i_th = 1:length(model_indicies)
+            result_df_this_theta = DataFrame(train_dof = [mdofs_this_model[i_th]], 
+                        train_ths = [[ths_this_model[i_th]]], 
+                        train_se_ths = [[se_ths_this_model[i_th]]])
+            
+            
+            (meanTh, propagated_se_th, CImin, CImax,mdf) = getCompositeTheta(ths_this_model[i_th], se_ths_this_model[i_th], mdofs_this_model[i_th], propagate=true)
         
-        (composite_th, composite_se, composite_CImin, composite_CImax, ax, f, composite_mdof) = theta_summary(result_df; Mode = "sparseFit", result_df=result_df)
-        title(modelNames[model])
+            push!(composite_th, meanTh)
+            push!(composite_se, propagated_se_th)
+            push!(composite_CImin, CImin)
+            push!(composite_CImax, CImax)
+            push!(composite_mdof, mdf)
+        end
+        
+        f = figure(figsize=(5,3))
+	    ax = subplot(1,1,1)
+	    plot_with_CI(composite_th, composite_CImin, composite_CImax, ax=ax)
+	    ax.set_title(modelNames[model])
+	    ax.set_xticks(collect(1:d))
+        
         push!(axs, ax)
         push!(fs, f)
 
@@ -461,153 +480,454 @@ function combine_th_across_sessions(results, compositesavepath, runID,packagenam
                 composite_mdof = composite_mdof,
                 ))
         
-        #
-        # Save the composite variables
-        #
-        # CSV.write(join(["MODELno",model, "_composite_ths_nboot", n_iters, "_nsesh", n_sesh, 
-        #             "_", packagename, ".csv"]),DataFrame(train_ths = result_df.train_ths))
-        # CSV.write(join(["MODELno",model, "_composite_se_ths_nboot", n_iters, "_nsesh", n_sesh, 
-        #             "_", packagename, ".csv"]),DataFrame(train_se_ths = result_df.train_se_ths))
-        # CSV.write(join(["MODELno",model, "_composite_dofs_nboot", n_iters, "_nsesh", n_sesh, 
-        #             "_", packagename, ".csv"]),DataFrame(train_dof = result_df.train_dof))
-        # CSV.write(join(["MODELno",model, "_composite_th_summary_nboot", n_iters, "_nsesh", n_sesh, 
-        #             "_", packagename, ".csv"]),DataFrame(th_summary = th_summary))
-        # println(pwd())
-        # CSV.write("test.csv",DataFrame(train_ths = result_df.train_ths))
-
         CSV.write(join([modelNames[model], "_composite_ths_nboot", n_iters, "_nsesh", n_sesh, 
-                    ".csv"]),DataFrame(train_ths = result_df.train_ths))
+                    ".csv"]),DataFrame(composite_th = composite_th))
         CSV.write(join([modelNames[model], "_composite_se_ths_nboot", n_iters, "_nsesh", n_sesh, 
-                    ".csv"]),DataFrame(train_se_ths = result_df.train_se_ths))
+                    ".csv"]),DataFrame(composite_se = composite_se))
         CSV.write(join([modelNames[model], "_composite_dofs_nboot", n_iters, "_nsesh", n_sesh, 
-                    ".csv"]),DataFrame(train_dof = result_df.train_dof))
+                    ".csv"]),DataFrame(composite_mdof = composite_mdof))
         CSV.write(join([modelNames[model], "_composite_th_summary_nboot", n_iters, "_nsesh", n_sesh, 
                     ".csv"]),DataFrame(th_summary = th_summary))
     end
-
     set_xaxes_same_scale(axs)
     set_yaxes_same_scale(axs)
-    println("Figs saved to:", compositesavepath)
+
     cd(compositesavepath)
     for i=1:length(fs)
-        # println(i)
-        # printFigure(join(["composite_", modelNames[i], "_theta_summary_nboot", n_iters, "_nsesh", n_sesh, "_", packagename]); fig=fs[i],figurePath=compositesavepath)
-
+        println(modelNames[i])
         printFigure(join(["composite_", modelNames[i], "_theta_summary_nboot", n_iters, "_nsesh", n_sesh]); fig=fs[i],figurePath=compositesavepath)
     end
+    println("Figs saved to:", compositesavepath)
     cd(ret_dir)  
-    return th_summary  
-end
+    return Nothing
+end;
+
+# function combine_th_across_sessions(results, compositesavepath, runID,packagename)
+# 	pwd()
+#     ret_dir = pwd()
+#     cd(compositesavepath)
+#     modelNames = unique(results.results[1].th_summary[1].modelName)
+#     n_sesh = length(results.results)
+#     i_sesh=1
+#     i_model=1
+#     i_iter=1
+#     n_models = length(results.results[i_sesh].AICs)
+#     n_iters = length(results.results[i_sesh].AICs[i_model])
+    
+#     axs = []
+#     fs = []
+#     th_summary = DataFrame(modelName=[], composite_th=[], composite_se=[], composite_CImin=[], composite_CImax=[], composite_mdof = [])
+#     for model = 1:n_models
+
+#         # result_df = DataFrame(train_dof = [results.results[1].dofs[model][1]], train_ths = [[results.results[1].ths[model][1]]], train_se_ths=[[results.results[1].se_ths[model][1]]])
+# 		# only propagate error ACROSS sessions, not within a session... 3/2/2021
+# 		result_df_thissesh = 
+# 				DataFrame(train_dof = [results.results[1].dofs[model][1]], 
+# 					train_ths = [[results.results[1].ths[model][1]]], 
+# 					train_se_ths=[[results.results[1].se_ths[model][1]]])
+# 		(composite_th, composite_se, composite_CImin, composite_CImax, ax, f, composite_mdof) = 
+# 					theta_summary(result_df_thissesh; Mode = "sparseFit", result_df=result_df_thissesh, propagate=false) 
+# 		result_df_acrosssesh = 
+# 				DataFrame(train_dof = [composite_mdof], 
+# 					train_ths = [[composite_th]], 
+# 					train_se_ths=[[composite_se]])
 
 
+#         for i_sesh = 1:n_sesh
+#         	n_iters = length(results.results[i_sesh].AICs[model])
+#       #   	println("	model:", model, " session: ", i_sesh)
+# 	    	# println("n_iters=", n_iters)
+# 		    # println("size BIC=", length(results.results[i_sesh].BICs[model]))
+# 		    # println("size dofs=", length(results.results[i_sesh].dofs[model]))
+# 		    # println("size ths=", length(results.results[i_sesh].ths[model]))
+# 		    # println("size se_ths=", length(results.results[i_sesh].se_ths[model]))
+#             if i_sesh==1
+#                 iterstart=2
+#             else
+#                 iterstart=1
+#             end
+
+#             for i=iterstart:n_iters
+#             	# append!(result_df, 
+#              #    	DataFrame(train_dof = [results.results[i_sesh].dofs[model][i]], 
+#              #            train_ths = [[results.results[i_sesh].ths[model][i]]], 
+#              #            train_se_ths=[[results.results[i_sesh].se_ths[model][i]]],
+#              #        ))  
+
+#             	# only propagate error ACROSS sessions, not within a session... 3/2/2021
+#             	result_df_thissesh = 
+# 					DataFrame(train_dof = [results.results[i_sesh].dofs[model][i]], 
+#                         train_ths = [[results.results[i_sesh].ths[model][i]]], 
+#                         train_se_ths=[[results.results[i_sesh].se_ths[model][i]]],
+#                     )
+# 				(composite_th, composite_se, composite_CImin, composite_CImax, ax, f, composite_mdof) = 
+# 						theta_summary(result_df_thissesh; Mode = "sparseFit", result_df=result_df_thissesh, propagate=false) 
+#             	append!(result_df_acrosssesh, 
+#                 	DataFrame(train_dof = [composite_mdof], 
+#                         train_ths = [[composite_th]], 
+#                         train_se_ths=[[composite_se]],
+#                     ))  
+                 
+#             end
+#         end
+#         result_df = result_df_acrosssesh
+        
+#         (composite_th, composite_se, composite_CImin, composite_CImax, ax, f, composite_mdof) = theta_summary(result_df; Mode = "sparseFit", result_df=result_df, propagate=true)
+#         title(modelNames[model])
+#         push!(axs, ax)
+#         push!(fs, f)
+
+#         append!(th_summary, 
+#             DataFrame(
+#                 modelName = modelNames[model],
+#                 composite_th=composite_th, 
+#                 composite_se=composite_se, 
+#                 composite_CImin=composite_CImin, 
+#                 composite_CImax=composite_CImax,
+#                 composite_mdof = composite_mdof,
+#                 ))
+        
+#         #
+#         # Save the composite variables
+#         #
+#         # CSV.write(join(["MODELno",model, "_composite_ths_nboot", n_iters, "_nsesh", n_sesh, 
+#         #             "_", packagename, ".csv"]),DataFrame(train_ths = result_df.train_ths))
+#         # CSV.write(join(["MODELno",model, "_composite_se_ths_nboot", n_iters, "_nsesh", n_sesh, 
+#         #             "_", packagename, ".csv"]),DataFrame(train_se_ths = result_df.train_se_ths))
+#         # CSV.write(join(["MODELno",model, "_composite_dofs_nboot", n_iters, "_nsesh", n_sesh, 
+#         #             "_", packagename, ".csv"]),DataFrame(train_dof = result_df.train_dof))
+#         # CSV.write(join(["MODELno",model, "_composite_th_summary_nboot", n_iters, "_nsesh", n_sesh, 
+#         #             "_", packagename, ".csv"]),DataFrame(th_summary = th_summary))
+#         # println(pwd())
+#         # CSV.write("test.csv",DataFrame(train_ths = result_df.train_ths))
+
+#         CSV.write(join([modelNames[model], "_composite_ths_nboot", n_iters, "_nsesh", n_sesh, 
+#                     ".csv"]),DataFrame(train_ths = result_df.train_ths))
+#         CSV.write(join([modelNames[model], "_composite_se_ths_nboot", n_iters, "_nsesh", n_sesh, 
+#                     ".csv"]),DataFrame(train_se_ths = result_df.train_se_ths))
+#         CSV.write(join([modelNames[model], "_composite_dofs_nboot", n_iters, "_nsesh", n_sesh, 
+#                     ".csv"]),DataFrame(train_dof = result_df.train_dof))
+#         CSV.write(join([modelNames[model], "_composite_th_summary_nboot", n_iters, "_nsesh", n_sesh, 
+#                     ".csv"]),DataFrame(th_summary = th_summary))
+#     end
+
+#     set_xaxes_same_scale(axs)
+#     set_yaxes_same_scale(axs)
+#     println("Figs saved to:", compositesavepath)
+#     cd(compositesavepath)
+#     for i=1:length(fs)
+#         # println(i)
+#         # printFigure(join(["composite_", modelNames[i], "_theta_summary_nboot", n_iters, "_nsesh", n_sesh, "_", packagename]); fig=fs[i],figurePath=compositesavepath)
+
+#         printFigure(join(["composite_", modelNames[i], "_theta_summary_nboot", n_iters, "_nsesh", n_sesh]); fig=fs[i],figurePath=compositesavepath)
+#     end
+#     cd(ret_dir)  
+#     return th_summary  
+# end
+
+
+# function combine_AICBIC_across_sessions(results, compositesavepath, runID, packagename)
+#     n_sesh = length(results.results)
+#     i_sesh=1
+#     i_model=1
+#     i_iter=1
+#     n_models = length(results.results[i_sesh].AICs)
+#     n_iters = length(results.results[i_sesh].AICs[i_model])
+#     allAICs = [[] for _=1:n_models]
+#     allAICcs = [[] for _=1:n_models]
+#     allBICs = [[] for _=1:n_models]
+#     all_Sn_accuracy = [[] for _=1:n_models]
+#     all_test_accuracy = [[] for _=1:n_models]
+    
+#     for i_sesh = 1:n_sesh
+#         for i_model = 1:n_models
+#         	n_iters = length(results.results[i_sesh].AICs[i_model])
+#       #   	println("	model:", i_model, " session: ", i_sesh)
+# 	    	# println("n_iters=", n_iters)
+# 		    # println("size BIC=", length(results.results[i_sesh].BICs[i_model]))
+# 		    # println("size dofs=", length(results.results[i_sesh].dofs[i_model]))
+# 		    # println("size ths=", length(results.results[i_sesh].ths[i_model]))
+# 		    # println("size se_ths=", length(results.results[i_sesh].se_ths[i_model]))
+#             AICs = [results.results[i_sesh].AICs[i_model][i_iter] for i_iter = 1:n_iters]
+#             append!(allAICs[i_model], AICs)
+#             AICcs = [results.results[i_sesh].AICcs[i_model][i_iter] for i_iter = 1:n_iters]
+#             append!(allAICcs[i_model], AICcs)
+#             BICs = [results.results[i_sesh].BICs[i_model][i_iter] for i_iter = 1:n_iters]
+#             append!(allBICs[i_model], BICs)
+#             Sn_accuracies = [results.results[i_sesh].Sn_accuracy[i_model][i_iter] for i_iter = 1:n_iters]
+#             append!(all_Sn_accuracy[i_model], Sn_accuracies)
+#             test_accuracies = [results.results[i_sesh].test_accuracy[i_model][i_iter] for i_iter = 1:n_iters]
+#             append!(all_test_accuracy[i_model], test_accuracies)
+#         end
+#     end
+#     mean_all_AICs = [mean(allAICs[i]) for i=1:n_models]
+#     mean_all_AICcs = [mean(allAICcs[i]) for i=1:n_models]
+#     mean_all_BICs = [mean(allBICs[i]) for i=1:n_models]
+#     mean_all_Sn_accuracy = [mean(all_Sn_accuracy[i]) for i=1:n_models]
+#     mean_all_test_accuracy = [mean(all_test_accuracy[i]) for i=1:n_models]
+#     f = figure(figsize=(20,3))
+#     ax1=subplot(1,3,1)
+#     compare_AICBIC(mean_all_AICs, allAICs; yl=join(["AIC nsesh=",n_sesh]), iters=n_iters, ax=ax1, minmax="min")
+#     ax2=subplot(1,3,2)
+#     compare_AICBIC(mean_all_AICcs, allAICcs; yl=join(["AICc nsesh=",n_sesh]), iters=n_iters, ax=ax2, minmax="min")
+#     ax3=subplot(1,3,3)
+#     compare_AICBIC(mean_all_BICs, allBICs; yl=join(["BIC nsesh=",n_sesh]), iters=n_iters, ax=ax3, minmax="min")
+#     # printFigure(join(["compositeAICBIC_summary_nboot", n_iters, "_nsesh", n_sesh, "_", packagename]); fig=f, figurePath=compositesavepath)
+#     printFigure(join(["compositeAICBIC_summary_nboot", n_iters, "_nsesh", n_sesh]); fig=f, figurePath=compositesavepath)
+    
+#     f = figure(figsize=(20,3))
+#     ax1=subplot(1,3,1)
+#     compare_AICBIC(mean_all_Sn_accuracy, all_Sn_accuracy; yl=join(["Train Accuracy nsesh=",n_sesh]), iters=n_iters, ax=ax1, minmax="max")
+#     ax1.set_ylim([0., 1.])
+#     ax2=subplot(1,3,2)
+#     compare_AICBIC(mean_all_test_accuracy, all_test_accuracy; yl=join(["Test Accuracy nsesh=",n_sesh]), iters=n_iters, ax=ax2, minmax="max")
+#     ax2.set_ylim([0., 1.])
+#     ax3=subplot(1,3,3)
+#     # printFigure(join(["composite_Accuracy_summary_nboot", n_iters, "_nsesh", n_sesh, "_", packagename]); fig=f, figurePath=compositesavepath)
+#     printFigure(join(["composite_Accuracy_summary_nboot", n_iters, "_nsesh", n_sesh]); fig=f, figurePath=compositesavepath)
+#     #
+#     # Save the variables to the composite folder
+#     #
+#     ret_dir = pwd()
+#     cd(compositesavepath)
+
+#     # CSV.write(join(["composite_AICs_nboot", n_iters, "_nsesh", n_sesh, 
+#     #             "_", packagename, ".csv"]),DataFrame(allAICs = allAICs))
+#     # CSV.write(join(["composite_meanAIC_nboot", n_iters, "_nsesh", n_sesh, 
+#     #             "_", packagename, ".csv"]),DataFrame(mean_all_AICs = mean_all_AICs))
+#     # CSV.write(join(["composite_AICcs_nboot", n_iters, "_nsesh", n_sesh, 
+#     #             "_", packagename, ".csv"]),DataFrame(allAICcs = allAICcs))
+#     # CSV.write(join(["composite_meanAICc_nboot", n_iters, "_nsesh", n_sesh, 
+#     #             "_", packagename, ".csv"]),DataFrame(mean_all_AICcs = mean_all_AICcs))
+#     # CSV.write(join(["composite_BICs_nboot", n_iters, "_nsesh", n_sesh, 
+#     #             "_", packagename, ".csv"]),DataFrame(allBICs = allBICs))
+#     # CSV.write(join(["composite_meanBIC_nboot", n_iters, "_nsesh", n_sesh, 
+#     #             "_", packagename, ".csv"]),DataFrame(mean_all_BICs = mean_all_BICs))
+    
+#     # CSV.write(join(["composite_Sn_accuracy_nboot", n_iters, "_nsesh", n_sesh, 
+#     #             "_", packagename, ".csv"]),DataFrame(all_Sn_accuracy = all_Sn_accuracy))
+#     # CSV.write(join(["composite_meanSn_accuracy_nboot", n_iters, "_nsesh", n_sesh, 
+#     #             "_", packagename, ".csv"]),DataFrame(mean_all_Sn_accuracy = mean_all_Sn_accuracy))
+#     # CSV.write(join(["composite_test_accuracy_nboot", n_iters, "_nsesh", n_sesh, 
+#     #             "_", packagename, ".csv"]),DataFrame(all_test_accuracy = all_test_accuracy))
+#     # CSV.write(join(["composite_meantest_accuracy_nboot", n_iters, "_nsesh", n_sesh, 
+#     #             "_", packagename, ".csv"]),DataFrame(mean_all_test_accuracy = mean_all_test_accuracy))
+#     CSV.write(join(["composite_AICs_nboot", n_iters, "_nsesh", n_sesh, 
+#                 ".csv"]),DataFrame(allAICs = allAICs))
+#     CSV.write(join(["composite_meanAIC_nboot", n_iters, "_nsesh", n_sesh, 
+#                 ".csv"]),DataFrame(mean_all_AICs = mean_all_AICs))
+#     CSV.write(join(["composite_AICcs_nboot", n_iters, "_nsesh", n_sesh, 
+#                 ".csv"]),DataFrame(allAICcs = allAICcs))
+#     CSV.write(join(["composite_meanAICc_nboot", n_iters, "_nsesh", n_sesh, 
+#                 ".csv"]),DataFrame(mean_all_AICcs = mean_all_AICcs))
+#     CSV.write(join(["composite_BICs_nboot", n_iters, "_nsesh", n_sesh, 
+#                 ".csv"]),DataFrame(allBICs = allBICs))
+#     CSV.write(join(["composite_meanBIC_nboot", n_iters, "_nsesh", n_sesh, 
+#                 ".csv"]),DataFrame(mean_all_BICs = mean_all_BICs))
+    
+#     CSV.write(join(["composite_Sn_accuracy_nboot", n_iters, "_nsesh", n_sesh, 
+#                 ".csv"]),DataFrame(all_Sn_accuracy = all_Sn_accuracy))
+#     CSV.write(join(["composite_meanSn_accuracy_nboot", n_iters, "_nsesh", n_sesh, 
+#                 ".csv"]),DataFrame(mean_all_Sn_accuracy = mean_all_Sn_accuracy))
+#     CSV.write(join(["composite_test_accuracy_nboot", n_iters, "_nsesh", n_sesh, 
+#                 ".csv"]),DataFrame(all_test_accuracy = all_test_accuracy))
+#     CSV.write(join(["composite_meantest_accuracy_nboot", n_iters, "_nsesh", n_sesh, 
+#                 ".csv"]),DataFrame(mean_all_test_accuracy = mean_all_test_accuracy))
+    
+#     cd(ret_dir)
+# end
 function combine_AICBIC_across_sessions(results, compositesavepath, runID, packagename)
+    # this new version will propagate error across sessions rather than using the range on all sesh...
+    warning("using new combine_AICBIC_across_sessions2 that propagates error across sessions")
     n_sesh = length(results.results)
     i_sesh=1
     i_model=1
     i_iter=1
     n_models = length(results.results[i_sesh].AICs)
     n_iters = length(results.results[i_sesh].AICs[i_model])
-    allAICs = [[] for _=1:n_models]
-    allAICcs = [[] for _=1:n_models]
-    allBICs = [[] for _=1:n_models]
-    all_Sn_accuracy = [[] for _=1:n_models]
-    all_test_accuracy = [[] for _=1:n_models]
     
-    for i_sesh = 1:n_sesh
-        for i_model = 1:n_models
-        	n_iters = length(results.results[i_sesh].AICs[i_model])
-      #   	println("	model:", i_model, " session: ", i_sesh)
-	    	# println("n_iters=", n_iters)
-		    # println("size BIC=", length(results.results[i_sesh].BICs[i_model]))
-		    # println("size dofs=", length(results.results[i_sesh].dofs[i_model]))
-		    # println("size ths=", length(results.results[i_sesh].ths[i_model]))
-		    # println("size se_ths=", length(results.results[i_sesh].se_ths[i_model]))
-            AICs = [results.results[i_sesh].AICs[i_model][i_iter] for i_iter = 1:n_iters]
-            append!(allAICs[i_model], AICs)
-            AICcs = [results.results[i_sesh].AICcs[i_model][i_iter] for i_iter = 1:n_iters]
-            append!(allAICcs[i_model], AICcs)
-            BICs = [results.results[i_sesh].BICs[i_model][i_iter] for i_iter = 1:n_iters]
-            append!(allBICs[i_model], BICs)
-            Sn_accuracies = [results.results[i_sesh].Sn_accuracy[i_model][i_iter] for i_iter = 1:n_iters]
-            append!(all_Sn_accuracy[i_model], Sn_accuracies)
-            test_accuracies = [results.results[i_sesh].test_accuracy[i_model][i_iter] for i_iter = 1:n_iters]
-            append!(all_test_accuracy[i_model], test_accuracies)
+    compositeAICs = nanmat(n_models, 1)
+    composite_stdAICs = nanmat(n_models, 1)
+    compositeAICcs = nanmat(n_models, 1)
+    composite_stdAICcs = nanmat(n_models, 1)
+    compositeBICs = nanmat(n_models, 1)
+    composite_stdBICs = nanmat(n_models, 1)
+    composite_Sn_accuracys = nanmat(n_models, 1)
+    composite_std_Sn_accuracys = nanmat(n_models, 1)
+    composite_accuracys_test = nanmat(n_models, 1)
+    composite_std_accuracys_test = nanmat(n_models, 1)
+    composite_Sn_dev_explained = nanmat(n_models, 1)
+    composite_std_Sn_dev_explained = nanmat(n_models, 1)
+    composite_dev_explained = nanmat(n_models, 1)
+    composite_std_dev_explained = nanmat(n_models, 1)
+    
+    CImin_stdAICs = nanmat(n_models, 1)
+    CImin_stdAICcs = nanmat(n_models, 1)
+    CImin_stdBICs = nanmat(n_models, 1)
+    CImin_std_Sn_accuracys = nanmat(n_models, 1)
+    CImin_std_accuracys_test = nanmat(n_models, 1)
+    CImin_std_Sn_dev_explained = nanmat(n_models, 1)
+    CImin_std_dev_explained = nanmat(n_models, 1)
+    
+    CImax_stdAICs = nanmat(n_models, 1)
+    CImax_stdAICcs = nanmat(n_models, 1)
+    CImax_stdBICs = nanmat(n_models, 1)
+    CImax_std_Sn_accuracys = nanmat(n_models, 1)
+    CImax_std_accuracys_test = nanmat(n_models, 1)
+    CImax_std_Sn_dev_explained = nanmat(n_models, 1)
+    CImax_std_dev_explained = nanmat(n_models, 1)
+
+    
+    for i_model = 1:n_models
+        model_indicies = findall(x->x==modelNames[i_model], results.results[1].th_summary[1].modelName)
+        meanAICs = Vector{Float64}(undef, 0)
+        stdAICs = Vector{Float64}(undef, 0)
+        meanAICcs = Vector{Float64}(undef, 0)
+        stdAICcs = Vector{Float64}(undef, 0)
+        meanBICs = Vector{Float64}(undef, 0)
+        stdBICs = Vector{Float64}(undef, 0)
+        mean_Sn_accuracys = Vector{Float64}(undef, 0)
+        std_Sn_accuracys = Vector{Float64}(undef, 0)
+        mean_accuracys_test = Vector{Float64}(undef, 0)
+        std_accuracys_test = Vector{Float64}(undef, 0)
+        mean_Sn_dev_explained = Vector{Float64}(undef, 0)
+        std_Sn_dev_explained = Vector{Float64}(undef, 0)
+        mean_dev_explained = Vector{Float64}(undef, 0)
+        std_dev_explained = Vector{Float64}(undef, 0)
+
+        dof = []
+        for i_sesh = 1:n_sesh
+            th_summary_this_sesh = results.results[i_sesh].th_summary[1][model_indicies, :]
+            push!(dof, th_summary_this_sesh.composite_mdof[1])
+            mdofs_this_model = [Vector{Float64}(undef, 0) for i=1:length(model_indicies)]
+            
+            push!(meanAICs, results.results[i_sesh].meanAIC[i_model])
+            push!(meanAICcs, results.results[i_sesh].meanAICc[i_model])
+            push!(meanBICs, results.results[i_sesh].meanBIC[i_model])
+            push!(mean_Sn_accuracys, results.results[i_sesh].meanAccuracy_Sn[i_model])
+            push!(mean_accuracys_test, results.results[i_sesh].meanAccuracy_test[i_model])
+            push!(mean_Sn_dev_explained, results.results[i_sesh].mean_deviance_explained_Sn[i_model])
+            push!(mean_dev_explained, results.results[i_sesh].mean_deviance_explained[i_model])
+            
+            push!(stdAICs, results.results[i_sesh].stdAIC[i_model])
+            push!(stdAICcs, results.results[i_sesh].stdAICc[i_model])
+            push!(stdBICs, results.results[i_sesh].stdBIC[i_model])
+            push!(std_Sn_accuracys, results.results[i_sesh].std_Sn_accuracy[i_model])
+            push!(std_accuracys_test, results.results[i_sesh].std_accuracy_test[i_model])
+            push!(std_Sn_dev_explained, results.results[i_sesh].std_Sn_dev_explained[i_model])
+            push!(std_dev_explained, results.results[i_sesh].std_dev_explained[i_model])            
+
         end
+        # We can now propagate the std across sessions using the error propagation method, same as th...
+        (compositeAICs[i_model], composite_stdAICs[i_model], CImin_stdAICs[i_model], CImax_stdAICs[i_model],mdf) = getCompositeTheta(meanAICs, stdAICs, dof, propagate=true)
+        (compositeAICcs[i_model], composite_stdAICcs[i_model], CImin_stdAICcs[i_model], CImax_stdAICcs[i_model],mdf) = getCompositeTheta(meanAICcs, stdAICcs, dof, propagate=true)
+        (compositeBICs[i_model], composite_stdBICs[i_model], CImin_stdBICs[i_model], CImax_stdBICs[i_model],mdf) = getCompositeTheta(meanBICs, stdBICs, dof, propagate=true)
+        (composite_Sn_accuracys[i_model], composite_std_Sn_accuracys[i_model], CImin_std_Sn_accuracys[i_model], CImax_std_Sn_accuracys[i_model],mdf) = getCompositeTheta(mean_Sn_accuracys, std_Sn_accuracys, dof, propagate=true)
+        (composite_accuracys_test[i_model], composite_std_accuracys_test[i_model], CImin_std_accuracys_test[i_model], CImax_std_accuracys_test[i_model],mdf) = getCompositeTheta(mean_accuracys_test, std_accuracys_test, dof, propagate=true)
+        (composite_Sn_dev_explained[i_model], composite_std_Sn_dev_explained[i_model], CImin_std_Sn_dev_explained[i_model], CImax_std_Sn_dev_explained[i_model],mdf) = getCompositeTheta(mean_Sn_dev_explained, std_Sn_dev_explained, dof, propagate=true)
+        (composite_dev_explained[i_model], composite_std_dev_explained[i_model], CImin_std_dev_explained[i_model], CImax_std_dev_explained[i_model],mdf) = getCompositeTheta(mean_dev_explained, std_dev_explained, dof, propagate=true)
+        
     end
-    mean_all_AICs = [mean(allAICs[i]) for i=1:n_models]
-    mean_all_AICcs = [mean(allAICcs[i]) for i=1:n_models]
-    mean_all_BICs = [mean(allBICs[i]) for i=1:n_models]
-    mean_all_Sn_accuracy = [mean(all_Sn_accuracy[i]) for i=1:n_models]
-    mean_all_test_accuracy = [mean(all_test_accuracy[i]) for i=1:n_models]
+    
+    
+    compositeAICs = vec(compositeAICs)
+    compositeAICcs = vec(compositeAICcs)
+    compositeBICs = vec(compositeBICs)
+    composite_Sn_accuracys = vec(composite_Sn_accuracys)
+    composite_accuracys_test = vec(composite_accuracys_test)
+    composite_Sn_dev_explained = vec(composite_Sn_dev_explained)
+    composite_dev_explained = vec(composite_dev_explained)
+    
+    CImin_stdAICs = vec(CImin_stdAICs)
+    CImin_stdAICcs = vec(CImin_stdAICcs)
+    CImin_stdBICs = vec(CImin_stdBICs)
+    CImin_std_Sn_accuracys = vec(CImin_std_Sn_accuracys)
+    CImin_std_accuracys_test = vec(CImin_std_accuracys_test)
+    CImin_std_Sn_dev_explained = vec(CImin_std_Sn_dev_explained)
+    CImin_std_dev_explained = vec(CImin_std_dev_explained)
+    
+    CImax_stdAICs =vec(CImax_stdAICs)
+    CImax_stdAICcs =vec(CImax_stdAICcs)
+    CImax_stdBICs =vec(CImax_stdBICs)
+    CImax_std_Sn_accuracys =vec(CImax_std_Sn_accuracys)
+    CImax_std_accuracys_test =vec(CImax_std_accuracys_test)
+    CImax_std_Sn_dev_explained =vec(CImax_std_Sn_dev_explained)
+    CImax_std_dev_explained =vec(CImax_std_dev_explained)
+    
+    
+
     f = figure(figsize=(20,3))
     ax1=subplot(1,3,1)
-    compare_AICBIC(mean_all_AICs, allAICs; yl=join(["AIC nsesh=",n_sesh]), iters=n_iters, ax=ax1, minmax="min")
+    plot_with_CI_min(compositeAICs, CImin_stdAICs, CImax_stdAICs; 
+        ax=ax1, ylab=join(["AIC"]), tit=join(["meanAIC nsesh=",n_sesh, " iters=", n_iters]), xl="Model #")
     ax2=subplot(1,3,2)
-    compare_AICBIC(mean_all_AICcs, allAICcs; yl=join(["AICc nsesh=",n_sesh]), iters=n_iters, ax=ax2, minmax="min")
+    plot_with_CI_min(compositeAICcs, CImin_stdAICcs, CImax_stdAICcs; 
+        ax=ax2, ylab=join(["AICc"]), tit=join(["meanAICc nsesh=",n_sesh, " iters=", n_iters]), xl="Model #")
     ax3=subplot(1,3,3)
-    compare_AICBIC(mean_all_BICs, allBICs; yl=join(["BIC nsesh=",n_sesh]), iters=n_iters, ax=ax3, minmax="min")
-    # printFigure(join(["compositeAICBIC_summary_nboot", n_iters, "_nsesh", n_sesh, "_", packagename]); fig=f, figurePath=compositesavepath)
+    plot_with_CI_min(compositeBICs, CImin_stdBICs, CImax_stdBICs; 
+        ax=ax3, ylab=join(["BIC"]), tit=join(["meanBIC nsesh=",n_sesh, " iters=", n_iters]), xl="Model #")
     printFigure(join(["compositeAICBIC_summary_nboot", n_iters, "_nsesh", n_sesh]); fig=f, figurePath=compositesavepath)
     
     f = figure(figsize=(20,3))
     ax1=subplot(1,3,1)
-    compare_AICBIC(mean_all_Sn_accuracy, all_Sn_accuracy; yl=join(["Train Accuracy nsesh=",n_sesh]), iters=n_iters, ax=ax1, minmax="max")
+    plot_with_CI_max(composite_Sn_accuracys, CImin_std_Sn_accuracys, CImax_std_Sn_accuracys; 
+        ax=ax1, ylab=join(["% correct"]), tit=join(["Train Accuracy nsesh=",n_sesh, " iters=", n_iters]), xl="Model #")
     ax1.set_ylim([0., 1.])
     ax2=subplot(1,3,2)
-    compare_AICBIC(mean_all_test_accuracy, all_test_accuracy; yl=join(["Test Accuracy nsesh=",n_sesh]), iters=n_iters, ax=ax2, minmax="max")
+    plot_with_CI_max(composite_accuracys_test, CImin_std_accuracys_test, CImax_std_accuracys_test; 
+        ax=ax2, ylab=join(["% correct"]), tit=join(["Test Accuracy nsesh=",n_sesh, " iters=", n_iters]), xl="Model #")
     ax2.set_ylim([0., 1.])
     ax3=subplot(1,3,3)
-    # printFigure(join(["composite_Accuracy_summary_nboot", n_iters, "_nsesh", n_sesh, "_", packagename]); fig=f, figurePath=compositesavepath)
     printFigure(join(["composite_Accuracy_summary_nboot", n_iters, "_nsesh", n_sesh]); fig=f, figurePath=compositesavepath)
+    
+    f = figure(figsize=(20,3))
+    ax1=subplot(1,3,1)
+    plot_with_CI_max(composite_Sn_dev_explained, CImin_std_Sn_dev_explained, CImax_std_Sn_dev_explained; 
+        ax=ax1, ylab=join(["R^2"]), tit=join(["Train Dev Explained nsesh=",n_sesh, " iters=", n_iters]), xl="Model #")
+    ax1.set_ylim([-0.1, 0.2])
+    ax2=subplot(1,3,2)
+    plot_with_CI_max(composite_dev_explained, CImin_std_dev_explained, CImax_std_dev_explained; 
+        ax=ax2, ylab=join(["R^2"]), tit=join(["Test Dev Explained nsesh=",n_sesh, " iters=", n_iters]), xl="Model #")
+    ax2.set_ylim([-0.1, 0.2])
+    ax3=subplot(1,3,3)
+    printFigure(join(["composite_DevExpl_summary_nboot", n_iters, "_nsesh", n_sesh]); fig=f, figurePath=compositesavepath)
     #
     # Save the variables to the composite folder
     #
     ret_dir = pwd()
     cd(compositesavepath)
+    CSV.write(join(["compositeAICs_nboot", n_iters, "_nsesh", n_sesh, 
+                ".csv"]),DataFrame(compositeAICs = compositeAICs))
+    CSV.write(join(["compositeAICcs_nboot", compositeAICcs, "_nsesh", n_sesh, 
+                ".csv"]),DataFrame(compositeAICcs = compositeAICcs))
+    CSV.write(join(["compositeBICs_nboot", compositeAICcs, "_nsesh", n_sesh, 
+                ".csv"]),DataFrame(compositeBICs = compositeBICs))
+    CSV.write(join(["composite_Sn_accuracys_nboot", n_iters, "_nsesh", n_sesh, 
+                ".csv"]),DataFrame(composite_Sn_accuracys = composite_Sn_accuracys))
+    CSV.write(join(["composite_accuracys_test_nboot", n_iters, "_nsesh", n_sesh, 
+                ".csv"]),DataFrame(composite_accuracys_test = composite_accuracys_test))
+    CSV.write(join(["composite_Sn_dev_explained_nboot", n_iters, "_nsesh", n_sesh, 
+                ".csv"]),DataFrame(composite_Sn_dev_explained = composite_Sn_dev_explained))
+    CSV.write(join(["composite_dev_explained_nboot", n_iters, "_nsesh", n_sesh, 
+                ".csv"]),DataFrame(composite_dev_explained = composite_dev_explained))
+    
+    
+    CSV.write(join(["CI_AICs_nboot", n_iters, "_nsesh", n_sesh, 
+                ".csv"]),DataFrame(CImin_stdAICs = CImin_stdAICs, CImax_stdAICs = CImax_stdAICs))
+    CSV.write(join(["CI_AICcs_nboot", compositeAICcs, "_nsesh", n_sesh, 
+                ".csv"]),DataFrame(CImin_stdAICcs = CImin_stdAICcs, CImax_stdAICcs = CImax_stdAICcs))
+    CSV.write(join(["CI_BICs_nboot", compositeAICcs, "_nsesh", n_sesh, 
+                ".csv"]),DataFrame(CImin_stdBICs = CImin_stdBICs, CImax_stdBICs = CImax_stdBICs))
+    CSV.write(join(["CI_Sn_accuracys_nboot", n_iters, "_nsesh", n_sesh, 
+                ".csv"]),DataFrame(CImin_std_Sn_accuracys = CImin_std_Sn_accuracys, CImax_std_Sn_accuracys = CImax_std_Sn_accuracys))
+    CSV.write(join(["CI_accuracys_test_nboot", n_iters, "_nsesh", n_sesh, 
+                ".csv"]),DataFrame(CImin_std_accuracys_test = CImin_std_accuracys_test, CImax_std_accuracys_test = CImax_std_accuracys_test))
+    CSV.write(join(["CI_Sn_dev_explained_nboot", n_iters, "_nsesh", n_sesh, 
+                ".csv"]),DataFrame(CImin_std_Sn_dev_explained = CImin_std_Sn_dev_explained, CImax_std_Sn_dev_explained = CImax_std_Sn_dev_explained))
+    CSV.write(join(["CI_dev_explained_nboot", n_iters, "_nsesh", n_sesh, 
+                ".csv"]),DataFrame(CImin_std_dev_explained = CImin_std_dev_explained, CImax_std_dev_explained = CImax_std_dev_explained))
+    
 
-    # CSV.write(join(["composite_AICs_nboot", n_iters, "_nsesh", n_sesh, 
-    #             "_", packagename, ".csv"]),DataFrame(allAICs = allAICs))
-    # CSV.write(join(["composite_meanAIC_nboot", n_iters, "_nsesh", n_sesh, 
-    #             "_", packagename, ".csv"]),DataFrame(mean_all_AICs = mean_all_AICs))
-    # CSV.write(join(["composite_AICcs_nboot", n_iters, "_nsesh", n_sesh, 
-    #             "_", packagename, ".csv"]),DataFrame(allAICcs = allAICcs))
-    # CSV.write(join(["composite_meanAICc_nboot", n_iters, "_nsesh", n_sesh, 
-    #             "_", packagename, ".csv"]),DataFrame(mean_all_AICcs = mean_all_AICcs))
-    # CSV.write(join(["composite_BICs_nboot", n_iters, "_nsesh", n_sesh, 
-    #             "_", packagename, ".csv"]),DataFrame(allBICs = allBICs))
-    # CSV.write(join(["composite_meanBIC_nboot", n_iters, "_nsesh", n_sesh, 
-    #             "_", packagename, ".csv"]),DataFrame(mean_all_BICs = mean_all_BICs))
-    
-    # CSV.write(join(["composite_Sn_accuracy_nboot", n_iters, "_nsesh", n_sesh, 
-    #             "_", packagename, ".csv"]),DataFrame(all_Sn_accuracy = all_Sn_accuracy))
-    # CSV.write(join(["composite_meanSn_accuracy_nboot", n_iters, "_nsesh", n_sesh, 
-    #             "_", packagename, ".csv"]),DataFrame(mean_all_Sn_accuracy = mean_all_Sn_accuracy))
-    # CSV.write(join(["composite_test_accuracy_nboot", n_iters, "_nsesh", n_sesh, 
-    #             "_", packagename, ".csv"]),DataFrame(all_test_accuracy = all_test_accuracy))
-    # CSV.write(join(["composite_meantest_accuracy_nboot", n_iters, "_nsesh", n_sesh, 
-    #             "_", packagename, ".csv"]),DataFrame(mean_all_test_accuracy = mean_all_test_accuracy))
-    CSV.write(join(["composite_AICs_nboot", n_iters, "_nsesh", n_sesh, 
-                ".csv"]),DataFrame(allAICs = allAICs))
-    CSV.write(join(["composite_meanAIC_nboot", n_iters, "_nsesh", n_sesh, 
-                ".csv"]),DataFrame(mean_all_AICs = mean_all_AICs))
-    CSV.write(join(["composite_AICcs_nboot", n_iters, "_nsesh", n_sesh, 
-                ".csv"]),DataFrame(allAICcs = allAICcs))
-    CSV.write(join(["composite_meanAICc_nboot", n_iters, "_nsesh", n_sesh, 
-                ".csv"]),DataFrame(mean_all_AICcs = mean_all_AICcs))
-    CSV.write(join(["composite_BICs_nboot", n_iters, "_nsesh", n_sesh, 
-                ".csv"]),DataFrame(allBICs = allBICs))
-    CSV.write(join(["composite_meanBIC_nboot", n_iters, "_nsesh", n_sesh, 
-                ".csv"]),DataFrame(mean_all_BICs = mean_all_BICs))
-    
-    CSV.write(join(["composite_Sn_accuracy_nboot", n_iters, "_nsesh", n_sesh, 
-                ".csv"]),DataFrame(all_Sn_accuracy = all_Sn_accuracy))
-    CSV.write(join(["composite_meanSn_accuracy_nboot", n_iters, "_nsesh", n_sesh, 
-                ".csv"]),DataFrame(mean_all_Sn_accuracy = mean_all_Sn_accuracy))
-    CSV.write(join(["composite_test_accuracy_nboot", n_iters, "_nsesh", n_sesh, 
-                ".csv"]),DataFrame(all_test_accuracy = all_test_accuracy))
-    CSV.write(join(["composite_meantest_accuracy_nboot", n_iters, "_nsesh", n_sesh, 
-                ".csv"]),DataFrame(mean_all_test_accuracy = mean_all_test_accuracy))
-    
     cd(ret_dir)
 end
 

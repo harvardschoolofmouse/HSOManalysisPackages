@@ -147,6 +147,26 @@ function plot_with_CI(data, CImin, CImax; dataLabels="", ylab="wt", ax=gca())
 #     ax.set_xticklabels(dataLabels)
 #     ax.set_ylabel(ylab)
 end
+function plot_with_CI_min(Vec, CIl, CIu; ax=gca(), ylab="", tit="", xl="")
+    plot_with_CI(Vec, CIl, CIu; ax=ax, ylab=ylab)
+    bestix = findall(x->minimum(Vec)==x, Vec)  
+    plot(bestix, Vec[bestix], "g*", markersize=20)
+    ax.set_xlabel(xl)
+    ax.set_xticks(collect(1:length(Vec)))
+    ax.set_title(tit) 
+    ax.set_ylabel(ylab)
+    println(tit, " best=", Vec[bestix])
+end
+function plot_with_CI_max(Vec, CIl, CIu; ax=gca(), ylab="", tit="", xl="")
+    plot_with_CI(Vec, CIl, CIu; ax=ax, ylab=ylab)
+    bestix = findall(x->maximum(Vec)==x, Vec)  
+    plot(bestix, Vec[bestix], "g*", markersize=20)
+    ax.set_xlabel(xl)
+    ax.set_ylabel(ylab)
+    ax.set_xticks(collect(1:length(Vec)))
+    ax.set_title(tit) 
+    println(tit, " best=", Vec[bestix])
+end
 function drawLine(xx,yy;style="k-",ax=gca())
     # p1 = [x1, y1], p2=[x2,y2]
 #     xx = [p1[1], p2[1]]

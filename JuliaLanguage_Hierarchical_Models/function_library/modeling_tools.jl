@@ -240,11 +240,11 @@ function build_and_report_logit_model(Formula, train, test; modelName="model", m
 	    Rsq_nosat = 1 - (D)/(D0);
 	    return (D,D0,Dsat,Rsq)
 	end
-	(D_Sn,D0_Sn,Dsat_Sn,deviance_explained_Sn) = deviance_explained(train.LickState,prediction_Sn)
+	(D_Sn,D0_Sn,Dsat_Sn,Sn_deviance_explained) = deviance_explained(train.LickState,prediction_Sn)
 	(D,D0,Dsat,deviance_explained) = deviance_explained(test.LickState,prediction)
 
 	if verbose
-		println("deviance_explained of the train model is : ",deviance_explained_Sn)
+		println("deviance_explained of the train model is : ",Sn_deviance_explained)
     	println("deviance_explained of the test model is : ",deviance_explained)
 	end
 
@@ -262,7 +262,7 @@ function build_and_report_logit_model(Formula, train, test; modelName="model", m
         D = [D_Sn, D],
         D0 = [D0_Sn, D0],
         Dsat = [Dsat_Sn, Dsat],
-        deviance_explained = [deviance_explained_Sn, deviance_explained],
+        deviance_explained = [Sn_deviance_explained, deviance_explained],
         accuracy = [accuracy_Sn, accuracy],
         confusion_matrix = [confusion_matrix_Sn, confusion_matrix])
     
@@ -290,7 +290,7 @@ function build_and_report_logit_model(Formula, train, test; modelName="model", m
 	        Accuracy = accuracy_Sn
 	        subplot(1,2,1)
 	        plot_fit_results(X,Y,Yfit,correct=correct)
-	        title(join(["train, acc=", round(Accuracy, digits=2), " DevRsq=", round(deviance_explained_Sn, digits=2)]))
+	        title(join(["train, acc=", round(Accuracy, digits=2), " DevRsq=", round(Sn_deviance_explained, digits=2)]))
 	        ax=gca()
 	        ax.set_xlabel(predictorname)
 	        ax.set_ylabel(outputname)
@@ -914,50 +914,84 @@ function plot_OLSC_model(df::DataFrame;xIdx=1)
 end
 
 
-function getCompositeTheta(ths, se_ths, dofs)
+function getCompositeTheta(ths, se_ths, dofs; propagate=true)
 # 	% 
 # 	% 	Translated from STAT_Collate photometry Matlab
 # 			Difference: only one theta (e.g., b1) calculated at a time rather than all at once... 
 #				will use a wrapper to do for each other theta (e.g., b0, b2...)
 # 	% 	
-	# Only use non-nan indicies
-	idxs_nonan = findall(x->!isnan(x), dofs)
+	if propagate
+		# Only use non-nan indicies
+		idxs_nonan = findall(x->!isnan(x), dofs)
 
-	N = length(ths[idxs_nonan]); # the number of datasets, N degrees of freedom
-	# NN = N.*ones(1, size(ths, 2)); # I think the number of ths. We only do one th at a time, so NN is ignored
-	# NN = [number of b0, number of b1, number of b2...] this was needed because not all sets had tdt. We just need N
-	
-	
-	meanTh = 1/N .* nansum(ths[idxs_nonan]);
-	propagated_se_th = 1/N .* sqrt(nansum(se_ths[idxs_nonan].^2))
-	mdf = sum(dofs[idxs_nonan])#.*ones(1, size(meanTh,2)); # m is the number of degrees of freedom across all the models
-	# % 
-	# % 	Now, calculate the CI = b +/- t(0.025, n(m-1))*se
-	# % 
-	# for nn = 1:length(meanTh, 2)
-		# CImin(nn) = meanTh(nn) - abs(tinv(.025,numel(NN(nn))*(mdf(nn) - 1))).*propagated_se_th(nn);
-		# CImax(nn) = meanTh(nn) + abs(tinv(.025,numel(NN(nn))*(mdf(nn) - 1))).*propagated_se_th(nn);
-	if isnan(mdf)
-		CImin = NaN
-		CImax = NaN
-	else
-		try
-			CImin = meanTh - abs( quantile(TDist(N*(mdf - 1)),0.025) ).*propagated_se_th;
-			CImax = meanTh + abs( quantile(TDist(N*(mdf - 1)),0.025) ).*propagated_se_th;
-		catch
-			warning(join(["Got error at TDist... N*(mdf - 1))=", N*(mdf - 1), "\n Returning NaN for CI..."]))
+		N = length(ths[idxs_nonan]); # the number of datasets, N degrees of freedom
+		# NN = N.*ones(1, size(ths, 2)); # I think the number of ths. We only do one th at a time, so NN is ignored
+		# NN = [number of b0, number of b1, number of b2...] this was needed because not all sets had tdt. We just need N
+		
+		
+		meanTh = 1/N .* nansum(ths[idxs_nonan]);
+		propagated_se_th = 1/N .* sqrt(nansum(se_ths[idxs_nonan].^2))
+		mdf = sum(dofs[idxs_nonan])#.*ones(1, size(meanTh,2)); # m is the number of degrees of freedom across all the models
+		# % 
+		# % 	Now, calculate the CI = b +/- t(0.025, n(m-1))*se
+		# % 
+		# for nn = 1:length(meanTh, 2)
+			# CImin(nn) = meanTh(nn) - abs(tinv(.025,numel(NN(nn))*(mdf(nn) - 1))).*propagated_se_th(nn);
+			# CImax(nn) = meanTh(nn) + abs(tinv(.025,numel(NN(nn))*(mdf(nn) - 1))).*propagated_se_th(nn);
+		if isnan(mdf)
 			CImin = NaN
 			CImax = NaN
+		else
+			try
+				CImin = meanTh - abs( quantile(TDist(N*(mdf - 1)),0.025) ).*propagated_se_th;
+				CImax = meanTh + abs( quantile(TDist(N*(mdf - 1)),0.025) ).*propagated_se_th;
+			catch
+				warning(join(["Got error at TDist... N*(mdf - 1))=", N*(mdf - 1), "\n Returning NaN for CI..."]))
+				CImin = NaN
+				CImax = NaN
+			end
+		end
+		# CImin = meanTh - abs( tinv(.025,N*(mdf - 1)) ).*propagated_se_th(nn);
+		# CImax = meanTh + abs( tinv(.025,N*(mdf - 1)) ).*propagated_se_th(nn);
+		
+	# %                 Tried below, too, but yields same result. Not different
+	# %                 and I think above is correct version
+	# %                 CIminA(nn) = meanTh(nn) - abs(tinv(.025,numel(mdf(nn))*(NN(nn) - 1))).*propagated_se_th(nn);
+	# % 				CImaxA(nn) = meanTh(nn) + abs(tinv(.025,numel(mdf(nn))*(NN(nn) - 1))).*propagated_se_th(nn);
+		# end
+	else # if we just want the average...
+		# Only use non-nan indicies
+		idxs_nonan = findall(x->!isnan(x), dofs)
+
+		N = length(ths[idxs_nonan]); # the number of datasets, N degrees of freedom
+		# NN = N.*ones(1, size(ths, 2)); # I think the number of ths. We only do one th at a time, so NN is ignored
+		# NN = [number of b0, number of b1, number of b2...] this was needed because not all sets had tdt. We just need N
+		
+		
+		meanTh = 1/N .* nansum(ths[idxs_nonan]);
+		propagated_se_th = 1/N .* nansum(se_ths[idxs_nonan])
+		mdf = round(nanmean(dofs[idxs_nonan]))#.*ones(1, size(meanTh,2)); # m is the number of degrees of freedom across all the models
+		# % 
+		# % 	Now, calculate the CI = b +/- t(0.025, n(m-1))*se
+		# % 
+		# for nn = 1:length(meanTh, 2)
+			# CImin(nn) = meanTh(nn) - abs(tinv(.025,numel(NN(nn))*(mdf(nn) - 1))).*propagated_se_th(nn);
+			# CImax(nn) = meanTh(nn) + abs(tinv(.025,numel(NN(nn))*(mdf(nn) - 1))).*propagated_se_th(nn);
+		if isnan(mdf)
+			CImin = NaN
+			CImax = NaN
+		else
+			CImins = nanmat(N,1)
+			CImaxs = nanmat(N,1)
+			for i = 1:N
+				# println("dofs[i]=", dofs[i]) # the DOFs are not the same for the bootstrapped models...
+				CImins[i] = meanTh - abs( quantile(TDist(N*(dofs[i] - 1)),0.025) ).*propagated_se_th;
+				CImaxs[i] = meanTh + abs( quantile(TDist(N*(dofs[i] - 1)),0.025) ).*propagated_se_th;			
+			end
+			CImin = nanmean(vec(CImins))
+			CImax = nanmean(vec(CImaxs))
 		end
 	end
-	# CImin = meanTh - abs( tinv(.025,N*(mdf - 1)) ).*propagated_se_th(nn);
-	# CImax = meanTh + abs( tinv(.025,N*(mdf - 1)) ).*propagated_se_th(nn);
-	
-# %                 Tried below, too, but yields same result. Not different
-# %                 and I think above is correct version
-# %                 CIminA(nn) = meanTh(nn) - abs(tinv(.025,numel(mdf(nn))*(NN(nn) - 1))).*propagated_se_th(nn);
-# % 				CImaxA(nn) = meanTh(nn) + abs(tinv(.025,numel(mdf(nn))*(NN(nn) - 1))).*propagated_se_th(nn);
-	# end
 
 
 	return (meanTh, propagated_se_th, CImin, CImax, mdf)
@@ -1244,7 +1278,7 @@ function unwrap_theta(thetas)
     [x[1] for x in thetas];
 end
 
-function theta_summary(stats_df::DataFrame; Mode = "sparseFit", result_df::DataFrame)
+function theta_summary(stats_df::DataFrame; Mode = "sparseFit", result_df::DataFrame, propagate=true, verbose=true)
 	# 
 	# Modes = "spaseFit", "oneFit"
 	# 	Use the stats_df for my own ridge_regression
@@ -1278,7 +1312,7 @@ function theta_summary(stats_df::DataFrame; Mode = "sparseFit", result_df::DataF
 	        	CImax = NaN#vec(nanmat(d,1))
 	        	mdf = NaN
 	        else
-		        (meanTh, propagated_se_th, CImin, CImax,mdf) = getCompositeTheta(th, se_th, dofs)
+		        (meanTh, propagated_se_th, CImin, CImax,mdf) = getCompositeTheta(th, se_th, dofs, propagate=false)
 	        end
 	        push!(composite_th, meanTh)
 	        push!(composite_se, propagated_se_th)
@@ -1297,11 +1331,16 @@ function theta_summary(stats_df::DataFrame; Mode = "sparseFit", result_df::DataF
 		composite_CImax = stats_df.CImax_t
 		k = result_df.n_kfold_xval[1]
     end
-    f = figure(figsize=(5,3))
-    ax = subplot(1,1,1)
-    plot_with_CI(composite_th, composite_CImin, composite_CImax, ax=ax)
-    ax.set_title(join(["coefficients, k=", k]))
-    ax.set_xticks(collect(1:d))
+    if verbose
+	    f = figure(figsize=(5,3))
+	    ax = subplot(1,1,1)
+	    plot_with_CI(composite_th, composite_CImin, composite_CImax, ax=ax)
+	    ax.set_title(join(["coefficients, k=", k]))
+	    ax.set_xticks(collect(1:d))
+    else
+    	ax = []
+    	f = []
+    end
     # xticks(collect(1:d), labels=stats_df.)
     return (composite_th, composite_se, composite_CImin, composite_CImax, ax, f, composite_mdof)
 end
@@ -1792,7 +1831,7 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
                    
 	        end
 
-	        (composite_th, composite_se, composite_CImin, composite_CImax, ax, f, composite_mdof) = theta_summary(result_df; Mode = "sparseFit", result_df=result_df)
+	        (composite_th, composite_se, composite_CImin, composite_CImax, ax, f, composite_mdof) = theta_summary(result_df; Mode = "sparseFit", result_df=result_df, propagate=false)
 	        title(modelNames[model])
 	        push!(axs, ax)
 	        push!(fs, f)
@@ -1833,7 +1872,7 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
 	        end
 	        
 
-	        (composite_th, composite_se, composite_CImin, composite_CImax, ax, f, composite_mdof) = theta_summary(result_df; Mode = "sparseFit", result_df=result_df)
+	        (composite_th, composite_se, composite_CImin, composite_CImax, ax, f, composite_mdof) = theta_summary(result_df; Mode = "sparseFit", result_df=result_df, propagate=false)
 	        title(modelNames[model])
 	        push!(axs, ax)
 	        push!(fs, f)
@@ -1851,7 +1890,7 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
 	        push!(meanAIC,mean(AICs[model]))
 	        push!(meanAICc,mean(AICcs[model]))
 	        push!(meanBIC,mean(BICs[model]))
-	        push!(mean_deviance_explained_Sn, mean(deviance_explained_Sn[model]))
+	        push!(mean_deviance_explained_Sn, mean(Sn_deviance_explained[model]))
 			push!(mean_deviance_explained, mean(deviance_explained[model]))
 	        push!(meanAccuracy_Sn,mean(Sn_accuracy[model]))
 	        push!(meanAccuracy_test,mean(test_accuracy[model]))
@@ -1872,11 +1911,11 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
     
     f = figure(figsize=(20,3))
     ax1=subplot(1,3,1)
-    compare_AICBIC(meanAIC, AICs; yl="AIC", iters=n_iters, ax=ax1, minmax="min")
+    stdAIC = compare_AICBIC(meanAIC, AICs; yl="AIC", iters=n_iters, ax=ax1, minmax="min")
     ax2=subplot(1,3,2)
-    compare_AICBIC(meanAICc, AICcs; yl="AICc", iters=n_iters, ax=ax2, minmax="min")
+    stdAICc = compare_AICBIC(meanAICc, AICcs; yl="AICc", iters=n_iters, ax=ax2, minmax="min")
     ax3=subplot(1,3,3)
-    compare_AICBIC(meanBIC, BICs; yl="BIC", iters=n_iters, ax=ax3, minmax="min")
+    stdBIC = compare_AICBIC(meanBIC, BICs; yl="BIC", iters=n_iters, ax=ax3, minmax="min")
     printFigure(join(["AICBIC_summary_nboot", n_iters, "_npercat", npercat, slice]); fig=f, figurePath=figurePath)
     if suppressFigures
     	close()
@@ -1884,10 +1923,10 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
     
     f = figure(figsize=(20,3))
     ax1=subplot(1,3,1)
-    compare_AICBIC(meanAccuracy_Sn, Sn_accuracy; yl="Train Accuracy", iters=n_iters, ax=ax1, minmax="max")
+    std_Sn_accuracy = compare_AICBIC(meanAccuracy_Sn, Sn_accuracy; yl="Train Accuracy", iters=n_iters, ax=ax1, minmax="max")
     ax1.set_ylim([0., 1.])
     ax2=subplot(1,3,2)
-    compare_AICBIC(meanAccuracy_test, test_accuracy; yl="Test Accuracy", iters=n_iters, ax=ax2, minmax="max")
+    std_accuracy_test = compare_AICBIC(meanAccuracy_test, test_accuracy; yl="Test Accuracy", iters=n_iters, ax=ax2, minmax="max")
     ax2.set_ylim([0., 1.])
     printFigure(join(["Accuracy_summary_nboot", n_iters, "_npercat", npercat, slice]); fig=f, figurePath=figurePath)
     if suppressFigures
@@ -1897,10 +1936,10 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
 
 	f = figure(figsize=(20,3))
     ax1=subplot(1,3,1)
-    compare_AICBIC(mean_deviance_explained_Sn, deviance_explained_Sn; yl="Train Rsq-dev", iters=n_iters, ax=ax1, minmax="max")
+    std_Sn_dev_explained = compare_AICBIC(mean_deviance_explained_Sn, Sn_deviance_explained; yl="Train Rsq-dev", iters=n_iters, ax=ax1, minmax="max")
     ax1.set_ylim([0., 1.])
     ax2=subplot(1,3,2)
-    compare_AICBIC(mean_deviance_explained, deviance_explained; yl="Test Rsq-dev", iters=n_iters, ax=ax2, minmax="max")
+    std_dev_explained = compare_AICBIC(mean_deviance_explained, deviance_explained; yl="Test Rsq-dev", iters=n_iters, ax=ax2, minmax="max")
     ax2.set_ylim([0., 1.])
     printFigure(join(["Rsqdevexplained_summary_nboot", n_iters, "_npercat", npercat, slice]); fig=f, figurePath=figurePath)
     if suppressFigures
@@ -1910,19 +1949,26 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
     results = DataFrame(
         AICs = AICs,
         meanAIC=meanAIC,
+        stdAIC = stdAIC,
         AICcs = AICcs,
         meanAICc=meanAICc,
+        stdAICc = stdAICc,
         BICs = BICs,
         meanBIC=meanBIC,
+        stdBIC = stdBIC,
         testloss = testloss,
         Sn_accuracy = Sn_accuracy,
         meanAccuracy_Sn = meanAccuracy_Sn,
+        std_Sn_accuracy = std_Sn_accuracy,
         test_accuracy = test_accuracy,
         meanAccuracy_test = meanAccuracy_test,
-        deviance_explained_Sn = deviance_explained_Sn,
+        std_accuracy_test = std_accuracy_test,
+        Sn_deviance_explained = Sn_deviance_explained,
         mean_deviance_explained_Sn = mean_deviance_explained_Sn,
+        std_Sn_dev_explained = std_Sn_dev_explained,
         deviance_explained = deviance_explained,
         mean_deviance_explained = mean_deviance_explained,
+        std_dev_explained = std_dev_explained,
         th_names = th_names,
         ths = ths,
         se_ths = se_ths,
@@ -1934,19 +1980,26 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
         cd(savePath)
         CSV.write(join(["AICs_", slice, ".csv"]),DataFrame(AICs = AICs))
         CSV.write(join(["meanAIC_", slice, ".csv"]),DataFrame(meanAIC = meanAIC))
+        CSV.write(join(["stdAIC_", slice, ".csv"]),DataFrame(stdAIC = stdAIC))
         CSV.write(join(["AICcs_", slice, ".csv"]),DataFrame(AICcs = AICcs))
         CSV.write(join(["meanAICc_", slice, ".csv"]),DataFrame(meanAICc = meanAICc))
+		CSV.write(join(["stdAICc_", slice, ".csv"]),DataFrame(stdAICc = stdAICc))
         CSV.write(join(["BICs_", slice, ".csv"]),DataFrame(BICs = BICs))
         CSV.write(join(["meanBIC_", slice, ".csv"]),DataFrame(meanBIC = meanBIC))
+        CSV.write(join(["stdBIC_", slice, ".csv"]),DataFrame(stdBIC = stdBIC))
         CSV.write(join(["testloss_", slice, ".csv"]),DataFrame(testloss = testloss))
         CSV.write(join(["Sn_accuracy_", slice, ".csv"]),DataFrame(Sn_accuracy = Sn_accuracy))
         CSV.write(join(["meanAccuracy_Sn_", slice, ".csv"]),DataFrame(meanAccuracy_Sn = meanAccuracy_Sn))
+        CSV.write(join(["std_Sn_accuracy_", slice, ".csv"]),DataFrame(std_Sn_accuracy = std_Sn_accuracy))
         CSV.write(join(["test_accuracy_", slice, ".csv"]),DataFrame(test_accuracy = test_accuracy))
         CSV.write(join(["meanAccuracy_test_", slice, ".csv"]),DataFrame(meanAccuracy_test = meanAccuracy_test))
-        CSV.write(join(["deviance_explained_Sn_", slice, ".csv"]),DataFrame(deviance_explained_Sn = deviance_explained_Sn))
+        CSV.write(join(["std_accuracy_test_", slice, ".csv"]),DataFrame(std_accuracy_test = std_accuracy_test))
+        CSV.write(join(["Sn_deviance_explained_", slice, ".csv"]),DataFrame(Sn_deviance_explained = Sn_deviance_explained))
         CSV.write(join(["mean_deviance_explained_Sn_", slice, ".csv"]),DataFrame(mean_deviance_explained_Sn = mean_deviance_explained_Sn))
+        CSV.write(join(["std_Sn_dev_explained_", slice, ".csv"]),DataFrame(std_Sn_dev_explained = std_Sn_dev_explained))
         CSV.write(join(["deviance_explained_", slice, ".csv"]),DataFrame(deviance_explained = deviance_explained))
         CSV.write(join(["mean_deviance_explained_", slice, ".csv"]),DataFrame(mean_deviance_explained = mean_deviance_explained))
+        CSV.write(join(["std_dev_explained_", slice, ".csv"]),DataFrame(std_dev_explained = std_dev_explained))
         CSV.write(join(["th_names_", slice, ".csv"]),DataFrame(th_names = th_names))
         CSV.write(join(["ths_", slice, ".csv"]),DataFrame(ths = ths))
         CSV.write(join(["se_ths_", slice, ".csv"]),DataFrame(se_ths = se_ths))
@@ -1965,12 +2018,33 @@ function compare_AICBIC(meanAIC, AICs; yl="AIC", iters=0, ax=gca(), minmax="min"
 #     ax.plot(1:length(meanAIC), meanAIC, "k.")
     CIls = []
     CIus = []
+    sds = Vector{Float64}(undef, 0)
+    se2us = Vector{Float64}(undef, 0)
+    se2ls = Vector{Float64}(undef, 0)
     for i=1:length(meanAIC)
         (CIl, CIu)=getBootCI(AICs[i]; alph=0.05)
+        # se = std(AICs[i])/sqrt(length(AICs[i]))
+        sd = std(AICs[i])
+        se2l = mean(AICs[i]) - 2*std(AICs[i])#/sqrt(length(AICs[i]))
+        se2u = mean(AICs[i]) + 2*std(AICs[i])#/sqrt(length(AICs[i]))
+        # println("se=",se)
+        # println("std=",sd)
+        # println("mean=",mean(AICs[i]))
+        # println("CIse=",se2l, "-", se2u)
+        # println("CIboot=",CIl, "-", CIu)
+        push!(sds, sd)
         push!(CIls, CIl)
         push!(CIus, CIu)
+        push!(se2ls, se2l)
+        push!(se2us, se2u)
     end
-    plot_with_CI(meanAIC, CIls, CIus; ax=ax)
+    figure
+    # plot_with_CI(meanAIC, CIls, CIus; ax=ax)
+    # ax.set_title("boot version")
+    # figure
+    # ax2 = subplot(1,1,1)
+    plot_with_CI(meanAIC, se2ls, se2us; ax=ax)
+    # ax2.set_title("se version")
     
     # the best is the min
     if minmax=="min"
@@ -1983,7 +2057,8 @@ function compare_AICBIC(meanAIC, AICs; yl="AIC", iters=0, ax=gca(), minmax="min"
     ax.set_xlabel("Model #")
     ax.set_xticks(collect(1:length(meanAIC)))
     ax.set_ylabel(yl)
-    ax.set_title(join(["mean ", yl, " iters=", iters]))
+    ax.set_title(join(["2std, mean ", yl, " iters=", iters])) # I verified 2std is about the same as bootCI
+    return sds
 end
 function getBootCI(Vec::Vector; alph=0.05)
 	Vec = sort!(Vec)
