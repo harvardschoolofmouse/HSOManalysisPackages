@@ -738,6 +738,7 @@ end;
 # end
 function combine_AICBIC_across_sessions(results, compositesavepath, runID, packagename)
     # this new version will propagate error across sessions rather than using the range on all sesh...
+    modelNames = unique(results.results[1].th_summary[1].modelName)
     warning("using new combine_AICBIC_across_sessions2 that propagates error across sessions")
     n_sesh = length(results.results)
     i_sesh=1
