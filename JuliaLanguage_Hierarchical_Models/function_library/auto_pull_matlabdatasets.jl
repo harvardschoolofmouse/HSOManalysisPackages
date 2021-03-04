@@ -1762,6 +1762,7 @@ function nestlogit_200hx_pkg(path; sessionID ="", getpackagename=false, runID=0,
 		return packagename
 	end
 	modelNames = [
+	    "DA",
 	    "Hx2s",
 	    "Hx2s_1-6s",
 	    "Hx2s_1-4s",
@@ -1774,6 +1775,7 @@ function nestlogit_200hx_pkg(path; sessionID ="", getpackagename=false, runID=0,
 	    "Hx2s_-2s_DA",
 	]
 	formulas = [
+		@formula(LickState ~ Y),
 	    @formula(LickState ~ Hx10),
 	    @formula(LickState ~ Hx10 + Hx9),
 	    @formula(LickState ~ Hx10 + Hx9 + Hx8),
