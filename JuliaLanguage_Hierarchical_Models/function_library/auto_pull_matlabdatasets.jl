@@ -1788,6 +1788,7 @@ function nestlogit_200hx_pkg(path; sessionID ="", getpackagename=false, runID=0,
 	  	@formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
 		]
 
+		println("HERE")
 # Call the runner
 	result = nestlogitrunner(path; sessionID =sessionID, getpackagename=getpackagename, 
 		runID=runID, suppressFigures=suppressFigures, history_spacing_s = history_spacing_s, 
