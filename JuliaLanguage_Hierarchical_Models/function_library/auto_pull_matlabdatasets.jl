@@ -899,9 +899,9 @@ function combine_AICBIC_across_sessions(results, compositesavepath, runID, packa
     cd(compositesavepath)
     CSV.write(join(["compositeAICs_nboot", n_iters, "_nsesh", n_sesh, 
                 ".csv"]),DataFrame(compositeAICs = compositeAICs))
-    CSV.write(join(["compositeAICcs_nboot", compositeAICcs, "_nsesh", n_sesh, 
+    CSV.write(join(["compositeAICcs_nboot", n_iters, "_nsesh", n_sesh, 
                 ".csv"]),DataFrame(compositeAICcs = compositeAICcs))
-    CSV.write(join(["compositeBICs_nboot", compositeAICcs, "_nsesh", n_sesh, 
+    CSV.write(join(["compositeBICs_nboot", n_iters, "_nsesh", n_sesh, 
                 ".csv"]),DataFrame(compositeBICs = compositeBICs))
     CSV.write(join(["composite_Sn_accuracys_nboot", n_iters, "_nsesh", n_sesh, 
                 ".csv"]),DataFrame(composite_Sn_accuracys = composite_Sn_accuracys))
@@ -915,9 +915,9 @@ function combine_AICBIC_across_sessions(results, compositesavepath, runID, packa
     
     CSV.write(join(["CI_AICs_nboot", n_iters, "_nsesh", n_sesh, 
                 ".csv"]),DataFrame(CImin_stdAICs = CImin_stdAICs, CImax_stdAICs = CImax_stdAICs))
-    CSV.write(join(["CI_AICcs_nboot", compositeAICcs, "_nsesh", n_sesh, 
+    CSV.write(join(["CI_AICcs_nboot", n_iters, "_nsesh", n_sesh, 
                 ".csv"]),DataFrame(CImin_stdAICcs = CImin_stdAICcs, CImax_stdAICcs = CImax_stdAICcs))
-    CSV.write(join(["CI_BICs_nboot", compositeAICcs, "_nsesh", n_sesh, 
+    CSV.write(join(["CI_BICs_nboot", n_iters, "_nsesh", n_sesh, 
                 ".csv"]),DataFrame(CImin_stdBICs = CImin_stdBICs, CImax_stdBICs = CImax_stdBICs))
     CSV.write(join(["CI_Sn_accuracys_nboot", n_iters, "_nsesh", n_sesh, 
                 ".csv"]),DataFrame(CImin_std_Sn_accuracys = CImin_std_Sn_accuracys, CImax_std_Sn_accuracys = CImax_std_Sn_accuracys))
