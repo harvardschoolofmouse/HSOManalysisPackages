@@ -1787,11 +1787,11 @@ function nestlogit_200hx_pkg(path; sessionID ="", getpackagename=false, runID=0,
 	  	@formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2),
 	  	@formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
 		]
-
 # Call the runner
 	result = nestlogitrunner(path; sessionID =sessionID, getpackagename=getpackagename, 
 		runID=runID, suppressFigures=suppressFigures, history_spacing_s = history_spacing_s, 
 			modelNames=modelNames, packagename=packagename, formulas=formulas)
+
 	return result
 end
 function nestlogit_allpred_200hx_pkg(path; sessionID ="", getpackagename=false, runID=0, suppressFigures=false)
@@ -1898,6 +1898,14 @@ function nestlogitrunner(path; sessionID ="", getpackagename=false, runID=0, sup
 	
 	results = modelSelectionByAICBICxval(ndf, :LickState, formulas, modelNames, "logit"; 
     		n_iters=100,updownsampleYID=true, figurePath=figurePath, savePath = savepath, suppressFigures=suppressFigures)
+	
+# Save each variable to our results folder
+	# Now let's gather up the coefficients of our model and the formulas
+	# println(typeof(results))
+	modelData = DataFrame(yID = [yID], predictors=[predictors], th_means=[results.th_summary[1].composite_th], df=[ndf])	
+	modelData_result = [DataFrame() for _=1:nrow(results)]
+	modelData_result[1] = modelData
+	results[:modelData] = modelData_result
 # Save each variable to our results folder
 	# this is already handled by the modelSelectionByAICBICxval function
 
