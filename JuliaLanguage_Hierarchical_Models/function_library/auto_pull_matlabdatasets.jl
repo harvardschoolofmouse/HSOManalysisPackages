@@ -1898,10 +1898,11 @@ function nestlogitrunner(path; sessionID ="", getpackagename=false, runID=0, sup
 	
 	results = modelSelectionByAICBICxval(ndf, :LickState, formulas, modelNames, "logit"; 
     		n_iters=100,updownsampleYID=true, figurePath=figurePath, savePath = savepath, suppressFigures=suppressFigures)
-	
+
 # Save each variable to our results folder
 	# Now let's gather up the coefficients of our model and the formulas
 	# println(typeof(results))
+	yID = :LickState
 	modelData = DataFrame(yID = [yID], predictors=[predictors], th_means=[results.th_summary[1].composite_th], df=[ndf])	
 	modelData_result = [DataFrame() for _=1:nrow(results)]
 	modelData_result[1] = modelData
