@@ -2074,14 +2074,14 @@ function compare_AICBIC(meanAIC, AICs; yl="AIC", iters=0, ax=gca(), minmax="min"
     # the best is the min
     
     if minmax=="min"
-        bestix = findall(x->nanmin(meanAIC)==x, meanAIC)
+        bestix = findall(x->minimum(meanAIC)==x, nan2zero(meanAIC, Num=maximum(meanAIC)))
     else
-        bestix = findall(x->nanmax(meanAIC)==x, meanAIC)
+        bestix = findall(x->maximum(meanAIC)==x, nan2zero(meanAIC,Num=0.))
     end
 	if !isempty(bestix)
 		plot(bestix, meanAIC[bestix], "g*", markersize=20)
 	end
-	
+
 
     ax.set_xlabel("Model #")
     ax.set_xticks(collect(1:length(meanAIC)))
