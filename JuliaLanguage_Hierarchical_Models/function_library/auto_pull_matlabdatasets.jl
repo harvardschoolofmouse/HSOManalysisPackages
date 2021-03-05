@@ -885,11 +885,20 @@ function combine_AICBIC_across_sessions(results, compositesavepath, runID, packa
     ax1=subplot(1,3,1)
     plot_with_CI_max(composite_Sn_dev_explained, CImin_std_Sn_dev_explained, CImax_std_Sn_dev_explained; 
         ax=ax1, ylab=join(["R^2"]), tit=join(["Train Dev Explained nsesh=",n_sesh, " iters=", n_iters]), xl="Model #")
-    ax1.set_ylim([-0.1, 0.2])
+    if !isnan(nanmax(composite_Sn_dev_explained))
+    	ax1.set_ylim([-0.1, nanmax(composite_Sn_dev_explained) + 0.1])
+    else
+	    ax1.set_ylim([-0.1, 0.2])
+    end
     ax2=subplot(1,3,2)
     plot_with_CI_max(composite_dev_explained, CImin_std_dev_explained, CImax_std_dev_explained; 
         ax=ax2, ylab=join(["R^2"]), tit=join(["Test Dev Explained nsesh=",n_sesh, " iters=", n_iters]), xl="Model #")
-    ax2.set_ylim([-0.1, 0.2])
+    # ax2.set_ylim([-0.1, 0.2])
+    if !isnan(nanmax(composite_dev_explained))
+    	ax2.set_ylim([-0.1, nanmax(composite_dev_explained) + 0.1])
+    else
+	    ax2.set_ylim([-0.1, 0.2])
+    end
     ax3=subplot(1,3,3)
     printFigure(join(["composite_DevExpl_summary_nboot", n_iters, "_nsesh", n_sesh]); fig=f, figurePath=compositesavepath)
     #
