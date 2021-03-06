@@ -1083,7 +1083,7 @@ end
 function bootlogit_timeslice_modelpackage2(path; sessionID ="", getpackagename=false, runID=0, suppressFigures=false)
 	warning("timeslice model updated 3-3-2021 for new Hx predictors and updates to error prop...")
 # name the package and runID
-	packagename = join(["bootlogit_timeslice_modelpackage2_",runID])
+	packagename = join(["bl_ts_pkg2_",runID])
 	if getpackagename
 		return packagename
 	end
