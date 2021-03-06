@@ -32,7 +32,7 @@ function nanmean_mat(x::Array{Float64}, dim=1)
     end
     return nanmm
 end
-function nanmean(x::Vector{Float64})
+function nanmean(x::Vector)
     xx = filter(!isnan, x)
     sum(xx)/length(xx)
 end

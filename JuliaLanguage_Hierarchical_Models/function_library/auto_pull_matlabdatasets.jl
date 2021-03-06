@@ -942,6 +942,14 @@ function combine_AICBIC_across_sessions(results, compositesavepath, runID, packa
     
 
     cd(ret_dir)
+    # let's return the best model ID for each assessment:
+    return(compositeAICs,
+	compositeAICcs,
+	compositeBICs,
+	composite_Sn_accuracys,
+	composite_accuracys_test,
+	composite_Sn_dev_explained,
+	composite_dev_explained)
 end
 
 
@@ -1427,6 +1435,14 @@ function bootlogit_timeslice_postprocessingfunction1(results::DataFrame, composi
 	# println("n-sesh=", nrow(results))
 	by_slice_dfs = []
 	by_slice_composite_ths = []
+
+	compositeAICs = []
+	compositeAICcs = []
+	compositeBICs = []
+	composite_Sn_accuracys = []
+	composite_accuracy_tests = []
+	composite_Sn_dev_explaineds = []
+	composite_dev_explaineds = []
 	for tslice = 1:length(results.results[1])#.results) # for each timeslice
 		slicepath = results.results[1][tslice][:TimeSlice][1] # the timeslice name from session 1 model 1
 		try 
@@ -1449,16 +1465,70 @@ function bootlogit_timeslice_postprocessingfunction1(results::DataFrame, composi
 		# println("		")
 		# println("	tslice=", tslice)
 		th_summary = combine_th_across_sessions(results_df_this_slice, sav_dir, join([runID,slicepath]), packagename)
-		combine_AICBIC_across_sessions(results_df_this_slice, sav_dir, join([runID,slicepath]), packagename)
+		(compositeAIC,
+	compositeAICc,
+	compositeBIC,
+	composite_Sn_accuracy,
+	composite_accuracy_test,
+	composite_Sn_dev_explained,
+	composite_dev_explained) = combine_AICBIC_across_sessions(results_df_this_slice, sav_dir, join([runID,slicepath]), packagename)
 		cd("..")
 		println(names(th_summary))
 		th_summary[:sliceID] = [slicepath for _=1:nrow(th_summary)]
 		push!(by_slice_composite_ths,th_summary)
+
+		push!(compositeAICs, compositeAIC)
+		push!(compositeAICcs, compositeAICc)
+		push!(compositeBICs, compositeBIC)
+		push!(composite_Sn_accuracys, composite_Sn_accuracy)
+		push!(composite_accuracy_tests, composite_accuracy_test)
+		push!(composite_Sn_dev_explaineds, composite_Sn_dev_explained)
+		push!(composite_dev_explaineds, composite_dev_explained)
 	end
 	plot_th_vs_timeslice(by_slice_composite_ths,savedir=sdd)
+
+	plot_composite_AIC_slice(compositeAICs, "AIC", sdd)
+	plot_composite_AIC_slice(compositeAICcs, "AICc", sdd)
+	plot_composite_AIC_slice(compositeBICs, "BIC", sdd)
+	plot_composite_AIC_slice(composite_Sn_accuracys, "Train Accuracy", sdd)
+	plot_composite_AIC_slice(composite_accuracy_tests, "Test Accuracy", sdd)
+	plot_composite_AIC_slice(composite_Sn_dev_explaineds, "Train Dev Explained", sdd)
+	plot_composite_AIC_slice(composite_dev_explaineds, "Test Dev Explained", sdd)
+
 	cd(ret_dir)
-	return by_slice_dfs,by_slice_composite_ths
+	return by_slice_dfs,by_slice_composite_ths, compositeAICs,
+			compositeAICcs,
+			compositeBICs,
+			composite_Sn_accuracys,
+			composite_accuracy_tests,
+			composite_Sn_dev_explaineds,
+			composite_dev_explaineds
 end
+
+function plot_composite_AIC_slice(slices, metricname, compositesavepath)
+	ret_dir = pwd()
+	# pull out all the data for each slice and then get an average
+	modeldata = [[] for _=1:length(slices[1])]
+	for slice in 1:length(slices)
+		for model in 1:length(slices[slice])
+			push!(modeldata[model], slices[slice][model])
+		end
+	end
+	f = figure(figsize=(5,3))
+	for model = 1:length(slices[1])
+		plot(model.*vec(ones(size(modeldata[model]))), modeldata[model], "k.", markersize=10)
+		plot(model, nanmean(modeldata[model]), "r.", markersize=20)
+	end
+	title(join(["composite ", metricname, " across slices"]))
+	xlabel("model #")
+	ylabel(metricname)
+	xticks(1:length(modeldata))
+	xlim([0, length(modeldata)+1])
+	cd(compositesavepath)
+    printFigure(join(["composite_", metricname, "_across_slices_and_sesssions"]); fig=f,figurePath=compositesavepath)
+    cd(ret_dir)  
+end
+
 
 function slice_dataframe_into_timebins(df::DataFrame, slice_width_ms::Float64=250.)
 	
