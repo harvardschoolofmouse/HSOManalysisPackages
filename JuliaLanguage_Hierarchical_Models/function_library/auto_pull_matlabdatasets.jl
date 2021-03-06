@@ -1409,7 +1409,7 @@ function bootlogit_timeslice_postprocessingfunction1(results::DataFrame, composi
 	#
 	# name the package and runID
 	packagename = modelpackagefunction(""; sessionID ="", getpackagename=true, runID=runID)
-	
+	println(packagename)
 
 	# do the business of the package on this session
 	# 
