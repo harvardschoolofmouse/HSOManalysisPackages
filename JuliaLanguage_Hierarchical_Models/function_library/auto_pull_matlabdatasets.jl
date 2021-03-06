@@ -1117,26 +1117,26 @@ function bootlogit_timeslice_modelpackage2(path; sessionID ="", getpackagename=f
 		    @formula(LickState ~ LickTime_1back),
 		    @formula(LickState ~ LickTime_2back + LickTime_1back),
 		    @formula(LickState ~ LickTime_2back + LickTime_1back + Y),
-		    @formula(LickState ~ LickTime_2back + LickTime_1back + Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
+		    # @formula(LickState ~ LickTime_2back + LickTime_1back + Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
 		    @formula(LickState ~ NoReward_2back),
 		    @formula(LickState ~ NoReward_1back),
 		    @formula(LickState ~ NoReward_2back + NoReward_1back),
 		    @formula(LickState ~ LickTime_2back + LickTime_1back + NoReward_2back + NoReward_1back),
 		    @formula(LickState ~ NoReward_2back + NoReward_1back + Y),
-		    @formula(LickState ~ NoReward_2back + NoReward_1back + Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
+		    # @formula(LickState ~ NoReward_2back + NoReward_1back + Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
 		    @formula(LickState ~ LickTime_2back + LickTime_1back + NoReward_2back + NoReward_1back + Y),
-		    @formula(LickState ~ LickTime_2back + LickTime_1back + NoReward_2back + NoReward_1back + Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
+		    # @formula(LickState ~ LickTime_2back + LickTime_1back + NoReward_2back + NoReward_1back + Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
 		    @formula(LickState ~ Y),
-		    @formula(LickState ~ Hx10),
-		    @formula(LickState ~ Hx10 + Hx9),
-		    @formula(LickState ~ Hx10 + Hx9 + Hx8),
-		    @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7),
-		    @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6),
-		    @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5),
-		  	@formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4),
-		  	@formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3),
-		  	@formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2),
-		  	@formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
+		   #  @formula(LickState ~ Hx10),
+		   #  @formula(LickState ~ Hx10 + Hx9),
+		   #  @formula(LickState ~ Hx10 + Hx9 + Hx8),
+		   #  @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7),
+		   #  @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6),
+		   #  @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5),
+		  	# @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4),
+		  	# @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3),
+		  	# @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2),
+		  	# @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
 			]
 
 		modelNames = [
@@ -1144,26 +1144,26 @@ function bootlogit_timeslice_modelpackage2(path; sessionID ="", getpackagename=f
 		    "Lt1b",
 		    "Lt1b-Lt2b",
 		    "Lt1b-Lt2b-DA",
-		    "Lt12b-Hx0-2-DA",
+		    # "Lt12b-Hx0-2-DA",
 		    "oc2b",
 		    "oc1b",
 		    "oc1b-oc2b",
 		    "Lt12b-oc12b",
 		    "oc1b-oc2b-DA",
-		    "oc12b-Hx0-2-DA",
+		    # "oc12b-Hx0-2-DA",
 		    "Lt12b-oc12b-DA",
-		    "Lt12b-oc12b-Hx0-2-DA",
+		    # "Lt12b-oc12b-Hx0-2-DA",
 		    "DA",
-		    "Hx2s",
-		    "Hx2s_1-6s",
-		    "Hx2s_1-4s",
-		    "Hx2s_1-2s",
-		    "Hx2s_1s",
-		    "Hx2s_-8s",
-		    "Hx2s_-6s",
-		    "Hx2s_-4s",
-		    "Hx2s_-2s",
-		    "Hx2s_-2s_DA",
+		    # "Hx2s",
+		    # "Hx2s_1-6s",
+		    # "Hx2s_1-4s",
+		    # "Hx2s_1-2s",
+		    # "Hx2s_1s",
+		    # "Hx2s_-8s",
+		    # "Hx2s_-6s",
+		    # "Hx2s_-4s",
+		    # "Hx2s_-2s",
+		    # "Hx2s_-2s_DA",
 		]
 
 		predictors = [
@@ -1171,26 +1171,26 @@ function bootlogit_timeslice_modelpackage2(path; sessionID ="", getpackagename=f
 		    [:LickTime_1back],
 		    [:LickTime_2back, :LickTime_1back],
 		    [:LickTime_2back, :LickTime_1back, :Y],
-		    [:LickTime_2back, :LickTime_1back, :Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4, :Hx3, :Hx2, :Y],
+		    # [:LickTime_2back, :LickTime_1back, :Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4, :Hx3, :Hx2, :Y],
 		    [:NoReward_2back],
 		    [:NoReward_1back],
 		    [:NoReward_2back, :NoReward_1back],
 		    [:LickTime_2back, :LickTime_1back, :NoReward_2back, :NoReward_1back],
 		    [:NoReward_2back, :NoReward_1back, :Y],
-		    [:NoReward_2back, :NoReward_1back, :Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4, :Hx3, :Hx2, :Y],
+		    # [:NoReward_2back, :NoReward_1back, :Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4, :Hx3, :Hx2, :Y],
 		    [:LickTime_2back, :LickTime_1back, :NoReward_2back, :NoReward_1back, :Y],
-		    [:LickTime_2back, :LickTime_1back, :NoReward_2back, :NoReward_1back, :Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4, :Hx3, :Hx2, :Y],
+		    # [:LickTime_2back, :LickTime_1back, :NoReward_2back, :NoReward_1back, :Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4, :Hx3, :Hx2, :Y],
 		    [:Y],
-		    [:Hx10],
-		    [:Hx10, :Hx9],
-		    [:Hx10, :Hx9, :Hx8],
-		    [:Hx10, :Hx9, :Hx8, :Hx7],
-		    [:Hx10, :Hx9, :Hx8, :Hx7, :Hx6],
-		    [:Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5],
-		  	[:Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4],
-		  	[:Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4, :Hx3],
-		  	[:Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4, :Hx3, :Hx2],
-		  	[:Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4, :Hx3, :Hx2, :Y],
+		   #  [:Hx10],
+		   #  [:Hx10, :Hx9],
+		   #  [:Hx10, :Hx9, :Hx8],
+		   #  [:Hx10, :Hx9, :Hx8, :Hx7],
+		   #  [:Hx10, :Hx9, :Hx8, :Hx7, :Hx6],
+		   #  [:Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5],
+		  	# [:Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4],
+		  	# [:Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4, :Hx3],
+		  	# [:Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4, :Hx3, :Hx2],
+		  	# [:Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4, :Hx3, :Hx2, :Y],
 			]
 
 	if length(modelNames) != length(formulas)
@@ -1575,6 +1575,19 @@ end
 
 
 function plot_th_vs_timeslice(by_slice_composite_ths; savedir=pwd())
+	include_poor_models = false
+	propagate_error = false
+	if include_poor_models
+		warning("including poor model fits in ths")
+	else
+		warning("excluding ths with more than 10 CI")
+	end
+	if propagate_error
+		warning("propagating error across timeslices. This may not be appropriate (3/6/2021)")
+	else
+		warning("averaging standard error across timeslices to get the overall ths - this seems approp (3/6/2021)")
+	end
+
     ret_dir=pwd()
     cd(savedir)
     try
@@ -1613,6 +1626,35 @@ function plot_th_vs_timeslice(by_slice_composite_ths; savedir=pwd())
         f = figure(figsize=(d_model*5,2))
         my_suptitle=suptitle(by_slice_composite_ths[1][:modelName][modelIdxs[imodel][1]], y=1.2)
         composite_th_summaries = DataFrame(thID=[], th = [], se_th=[], CImin=[], CImax=[], mdof=[], nslices=[])
+
+        if !include_poor_models
+	    	# first check for all the poorly fitting models. don't include thetas from any where one of the std coeffs is > 10
+	    	goodidx = vec(ones(nTimeSlices,1))
+	    	for iTh = 1:d_model
+
+	    		CImin_i = [CImin[imodel][i_timeslice][iTh] for i_timeslice=1:nTimeSlices]
+	    		# println("model: ", imodel, " iTh", iTh," goodidx: ", goodidx)
+	    		# println("	 CImin_i: ", CImin_i)
+
+	    		for i_timeslice = 1:nTimeSlices
+		    		if abs(CImin_i[i_timeslice]) > 10. || isnan(CImin_i[i_timeslice])
+		    			goodidx[i_timeslice] = 0.
+	    			end
+    			end
+    			# println(" goodidx now: ", goodidx)
+	    	end
+	    	goodidx = goodidx .== 1.
+	    	# println("model: ", imodel, "goodidx final: ", goodidx)
+        	goodidx = findall(x->x==true, goodidx)#findall(x->abs(x)<10 && !isnan(x), goodidx)\
+        	# println("model: ", imodel, "goodidx final: ", goodidx)
+        	# println(" ")
+	    	# println(". ")
+    	else
+        	# warning("here")
+            goodidx = 1:length(nTimeSlices)#findall(x->abs(x)<10 && !isnan(x), CImin_i)
+            
+    	end
+
         for iTh = 1:d_model
 
             subplot(1,d_model,iTh)
@@ -1650,9 +1692,18 @@ function plot_th_vs_timeslice(by_slice_composite_ths; savedir=pwd())
             #  Get a composite th across slices
             #             
             #    Don't include bad models!!
+            #. Let's try with bad models -- a little funny not to. We are doing ave error so propagation shhould correct this
             #
-            goodidx = findall(x->abs(x)<10 && !isnan(x), CImin_i)
-            (meanTh_c, propagated_se_th_c, CImin_c, CImax_c, mdf_c) = getCompositeTheta(thi[goodidx], se_th_i[goodidx], dof_i[goodidx])
+            
+
+            # println("model=", imodel, " iTh=", iTh, " goodidx=", goodidx, " length(goodidx)=", length(goodidx))
+
+            # trying without propagation of error
+            if propagate_error
+            	(meanTh_c, propagated_se_th_c, CImin_c, CImax_c, mdf_c) = getCompositeTheta(thi[goodidx], se_th_i[goodidx], dof_i[goodidx],; propagate=true)
+            else
+	            (meanTh_c, propagated_se_th_c, CImin_c, CImax_c, mdf_c) = getCompositeTheta(thi[goodidx], se_th_i[goodidx], dof_i[goodidx],; propagate=false)
+            end
             composite_th_summary = DataFrame(thID=join(["th", iTh]), th = meanTh_c, se_th=propagated_se_th_c, CImin=CImin_c, CImax=CImax_c, mdof=mdf_c, nslices=length(goodidx))
             append!(composite_th_summaries,composite_th_summary)
             
@@ -1663,6 +1714,7 @@ function plot_th_vs_timeslice(by_slice_composite_ths; savedir=pwd())
         
         #
         # Don't use any bad models, ie where SE is > 10
+        #	Actually, trying now with those bad models
         #
         thiii = composite_th_summaries.th
         CIminiii = composite_th_summaries.CImin

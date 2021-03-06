@@ -37,8 +37,6 @@ function nanmean(x::Vector{Float64})
     sum(xx)/length(xx)
 end
 function nanmin(x)#::Vector{Float64})
-    println("in nanmin")
-    println(x)
     if !isempty(x)
         xx = filter(!isnan, x)
         if !isempty(xx)
@@ -51,8 +49,6 @@ function nanmin(x)#::Vector{Float64})
     end
 end
 function nanmax(x)#::Vector{Float64})
-    println("in nanmax")
-    println(x)
     if !isempty(x)
         xx = filter(!isnan, x)
         if !isempty(xx)
