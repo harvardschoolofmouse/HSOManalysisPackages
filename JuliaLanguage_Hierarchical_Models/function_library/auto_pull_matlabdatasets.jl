@@ -1403,7 +1403,7 @@ end
 
 
 
-function bootlogit_timeslice_postprocessingfunction1(results::DataFrame, compositesavepath, modelpackagefunction; runID=0)
+function bootlogit_timeslice_postprocessingfunction1(results::DataFrame, compositesavepath, modelpackagefunction; runID=0, inclusionthresh=10.)
 	#
 	# Use this to compile the analysis when we have a LIST of result dfs
 	#
@@ -1485,7 +1485,7 @@ function bootlogit_timeslice_postprocessingfunction1(results::DataFrame, composi
 		push!(composite_Sn_dev_explaineds, composite_Sn_dev_explained)
 		push!(composite_dev_explaineds, composite_dev_explained)
 	end
-	plot_th_vs_timeslice(by_slice_composite_ths,savedir=sdd)
+	plot_th_vs_timeslice(by_slice_composite_ths,savedir=sdd, inclusionthresh=inclusionthresh)
 
 	plot_composite_AIC_slice(compositeAICs, "AIC", sdd)
 	plot_composite_AIC_slice(compositeAICcs, "AICc", sdd)
@@ -1644,13 +1644,13 @@ function slice_dataframe_into_timebins(df::DataFrame, slice_width_ms::Float64=25
 end
 
 
-function plot_th_vs_timeslice(by_slice_composite_ths; savedir=pwd())
+function plot_th_vs_timeslice(by_slice_composite_ths; savedir=pwd(), inclusionthresh=10.)
 	include_poor_models = false
 	propagate_error = false
 	if include_poor_models
 		warning("including poor model fits in ths")
 	else
-		warning("excluding ths with more than 10 CI")
+		warning(join(["excluding ths with more than ", inclusionthresh, " CI"]))
 	end
 	if propagate_error
 		warning("propagating error across timeslices. This may not be appropriate (3/6/2021)")
@@ -1707,7 +1707,7 @@ function plot_th_vs_timeslice(by_slice_composite_ths; savedir=pwd())
 	    		# println("	 CImin_i: ", CImin_i)
 
 	    		for i_timeslice = 1:nTimeSlices
-		    		if abs(CImin_i[i_timeslice]) > 10. || isnan(CImin_i[i_timeslice])
+		    		if abs(CImin_i[i_timeslice]) > inclusionthresh || isnan(CImin_i[i_timeslice])
 		    			goodidx[i_timeslice] = 0.
 	    			end
     			end
