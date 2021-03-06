@@ -1682,6 +1682,8 @@ function plot_th_vs_timeslice(by_slice_composite_ths; savedir=pwd(), inclusionth
     composite_th_summary = [[] for _=1:nmodels]
     ax = []
     axs2 = []
+    f2s = []
+    my_suptitles = []
     for imodel = 1:nmodels
         for iTimeSlice = 1:nTimeSlices
             push!(ths[imodel], by_slice_composite_ths[iTimeSlice][:composite_th][modelIdxs[imodel]])
@@ -1808,11 +1810,17 @@ function plot_th_vs_timeslice(by_slice_composite_ths; savedir=pwd(), inclusionth
         push!(axs2, gca())
         figname = join(["th_across_timeslices_Model_", imodel, "_", timestamp_now(), ".eps"])
         my_suptitle=suptitle(by_slice_composite_ths[1][:modelName][modelIdxs[imodel][1]], y=1.2)
-        f2.savefig(figname, transparent=true, format="eps", bbox_inches="tight",bbox_extra_artists=[my_suptitle])
+        push!(f2s, f2)
+        push!(my_suptitles, my_suptitle)
     end
     set_yaxes_same_scale(ax)
     set_yaxes_same_scale(axs2)
-    cd(ret_dir)
+    
+    for i=1:length(f2s)
+    	figname = join(["th_across_timeslices_Model_", i, "_", timestamp_now(), ".eps"])
+    	f2s[i].savefig(figname, transparent=true, format="eps", bbox_inches="tight",bbox_extra_artists=my_suptitles[i])
+	end
+	cd(ret_dir)
 end
 
 
