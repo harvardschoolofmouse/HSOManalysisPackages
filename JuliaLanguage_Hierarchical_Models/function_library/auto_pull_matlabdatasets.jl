@@ -1517,7 +1517,7 @@ function plot_composite_AIC_slice(slices, metricname, compositesavepath)
 	f = figure(figsize=(5,3))
 	for model = 1:length(slices[1])
 		plot(model.*vec(ones(size(modeldata[model]))), modeldata[model], "k.", markersize=10)
-		plot(model, nanmean(modeldata[model]), "r.", markersize=20)
+		plot(model, nanmean(modeldata[model]), "r.", markersize=30)
 	end
 	title(join(["composite ", metricname, " across slices"]))
 	xlabel("model #")
@@ -1817,7 +1817,10 @@ function plot_th_vs_timeslice(by_slice_composite_ths; savedir=pwd(), inclusionth
     set_yaxes_same_scale(axs2)
     
     for i=1:length(f2s)
+    	println(i)
     	figname = join(["th_across_timeslices_Model_", i, "_", timestamp_now(), ".eps"])
+    	println(figname)
+    	println(my_suptitles[i])
     	f2s[i].savefig(figname, transparent=true, format="eps", bbox_inches="tight",bbox_extra_artists=my_suptitles[i])
 	end
 	cd(ret_dir)
