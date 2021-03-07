@@ -13,6 +13,7 @@
 #   checksign(p1, p2)
 
 using StatsBase
+println("v 11:37")
 
 function nanmean_mat(x::Array{Float64}, dim=1)
     if dim == 1
@@ -31,17 +32,33 @@ function nanmean_mat(x::Array{Float64}, dim=1)
     end
     return nanmm
 end
-function nanmean(x::Vector{Float64})
+function nanmean(x::Vector)
     xx = filter(!isnan, x)
     sum(xx)/length(xx)
 end
-function nanmin(x::Vector{Float64})
-    xx = filter(!isnan, x)
-    minimum(xx)
+function nanmin(x)#::Vector{Float64})
+    if !isempty(x)
+        xx = filter(!isnan, x)
+        if !isempty(xx)
+            return minimum(xx)
+        else
+            return Vector{Float64}(undef, 0)
+        end
+    else
+        return Vector{Float64}(undef, 0)
+    end
 end
-function nanmax(x::Vector{Float64})
-    xx = filter(!isnan, x)
-    maximum(xx)
+function nanmax(x)#::Vector{Float64})
+    if !isempty(x)
+        xx = filter(!isnan, x)
+        if !isempty(xx)
+            maximum(xx)
+        else
+            return Vector{Float64}(undef, 0)
+        end
+    else
+        return Vector{Float64}(undef, 0)
+    end
 end
 
 function nansum(x::Vector{Float64})
@@ -65,16 +82,16 @@ end
 function nanmat(r,c)
     NaN.*ones(r,c)
 end
-function nan2zero(vec)
+function nan2zero(vec; Num = 0.)
     if !(typeof(vec) <: Array)
         if isnan(vec)
-            return 0.
+            return Num
         else
             return vec
         end
     else
         ix = findall(x->isnan(x), vec)
-        vec[ix] = zeros(length(ix))
+        vec[ix] = Num.*ones(length(ix))
         return vec
     end
 end

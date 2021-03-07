@@ -931,25 +931,32 @@ function getCompositeTheta(ths, se_ths, dofs; propagate=true)
 		
 		meanTh = 1/N .* nansum(ths[idxs_nonan]);
 		propagated_se_th = 1/N .* sqrt(nansum(se_ths[idxs_nonan].^2))
-		mdf = sum(dofs[idxs_nonan])#.*ones(1, size(meanTh,2)); # m is the number of degrees of freedom across all the models
-		# % 
-		# % 	Now, calculate the CI = b +/- t(0.025, n(m-1))*se
-		# % 
-		# for nn = 1:length(meanTh, 2)
-			# CImin(nn) = meanTh(nn) - abs(tinv(.025,numel(NN(nn))*(mdf(nn) - 1))).*propagated_se_th(nn);
-			# CImax(nn) = meanTh(nn) + abs(tinv(.025,numel(NN(nn))*(mdf(nn) - 1))).*propagated_se_th(nn);
-		if isnan(mdf)
-			CImin = NaN
-			CImax = NaN
-		else
-			try
-				CImin = meanTh - abs( quantile(TDist(N*(mdf - 1)),0.025) ).*propagated_se_th;
-				CImax = meanTh + abs( quantile(TDist(N*(mdf - 1)),0.025) ).*propagated_se_th;
-			catch
-				warning(join(["Got error at TDist... N*(mdf - 1))=", N*(mdf - 1), "\n Returning NaN for CI..."]))
+		if !isempty(dofs[idxs_nonan])
+			mdf = sum(dofs[idxs_nonan])#.*ones(1, size(meanTh,2)); # m is the number of degrees of freedom across all the models
+			# % 
+			# % 	Now, calculate the CI = b +/- t(0.025, n(m-1))*se
+			# % 
+			# for nn = 1:length(meanTh, 2)
+				# CImin(nn) = meanTh(nn) - abs(tinv(.025,numel(NN(nn))*(mdf(nn) - 1))).*propagated_se_th(nn);
+				# CImax(nn) = meanTh(nn) + abs(tinv(.025,numel(NN(nn))*(mdf(nn) - 1))).*propagated_se_th(nn);
+			if isnan(mdf)
 				CImin = NaN
 				CImax = NaN
+			else
+				try
+					CImin = meanTh - abs( quantile(TDist(N*(mdf - 1)),0.025) ).*propagated_se_th;
+					CImax = meanTh + abs( quantile(TDist(N*(mdf - 1)),0.025) ).*propagated_se_th;
+				catch
+					warning(join(["Got error at TDist... N*(mdf - 1))=", N*(mdf - 1), "\n Returning NaN for CI..."]))
+					CImin = NaN
+					CImax = NaN
+				end
 			end
+		else
+			mdf=NaN
+			# warning(join(["Got error at TDist... N*(mdf - 1))=", N*(mdf - 1), "\n Returning NaN for CI..."]))
+			CImin = NaN
+			CImax = NaN
 		end
 		# CImin = meanTh - abs( tinv(.025,N*(mdf - 1)) ).*propagated_se_th(nn);
 		# CImax = meanTh + abs( tinv(.025,N*(mdf - 1)) ).*propagated_se_th(nn);
@@ -985,8 +992,14 @@ function getCompositeTheta(ths, se_ths, dofs; propagate=true)
 			CImaxs = nanmat(N,1)
 			for i = 1:N
 				# println("dofs[i]=", dofs[i]) # the DOFs are not the same for the bootstrapped models...
-				CImins[i] = meanTh - abs( quantile(TDist(N*(dofs[i] - 1)),0.025) ).*propagated_se_th;
-				CImaxs[i] = meanTh + abs( quantile(TDist(N*(dofs[i] - 1)),0.025) ).*propagated_se_th;			
+				try
+					CImins[i] = meanTh - abs( quantile(TDist(N*(dofs[i] - 1)),0.025) ).*propagated_se_th;
+					CImaxs[i] = meanTh + abs( quantile(TDist(N*(dofs[i] - 1)),0.025) ).*propagated_se_th;			
+				catch
+					warning(join(["Got error at TDist... N*(dofs[i] - 1))=", N*(dofs[i] - 1), "\n Returning NaN for CI..."]))
+					CImin = NaN
+					CImax = NaN
+				end
 			end
 			CImin = nanmean(vec(CImins))
 			CImax = nanmean(vec(CImaxs))
@@ -1701,76 +1714,66 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
     		println("\x1b[31m\"      all_df[yID]=",all_df[yID], "\"\x1b[0m")
 		end
     	println(join(["Downsampling the no-lick state => using ", npercat, "=n, the number of first-licks"]))
-	 #    #
-	 #    # Get the number of up/down samples by querying smote -- Jan thinks is no good
-	 #    #
-	 #    X2, y2 =smote(all_df[!,[:Y, :X]], all_df[yID], k = 5, pct_under = 150, pct_over = 200)
-		# df_balanced = X2
-		# df_balanced[yID] = y2;
-		# a = countmap(df_balanced[yID])
-		# if a[true] != a[false]
-		# 	println(a)
-		# 	error("we didn't get an even number.")
-		# end
-	 #    npercat = a[true]
-
-	    # println(join(["Used smote to estimate the number of up/down sampling needed => using ", npercat, "=n"]))
-	    retry = true # we should try to sample enough times to get cholesky factorizable matrix. I'll give it 10 shots
-	    attempts = 1
-	    nomodelfits = false
+	
+	    attempts = vec(ones(length(modelNames),1))#1
+	    nomodelfits = vec(zeros(length(modelNames),1))#1#false
 	    for i = 1:n_iters
 	    	if !suppressFigures
 		        progressbar(i,n_iters)
 	        end
-	        retry=true
-	        while retry
-		        try # we might have a bad subsample and not be able to fit the model
-			        if updownsampleYID
-
-			            working_df = updownsample(all_df, all_df[yID], npercat, downOnly=true); # I chose this based on the 
-			            # sample n that was picked by smote. In the next version for across models, be sure to adjust for the dataset...
-			        else
-			            working_df = all_df
-			        end
-			        train, test = TrainTestSplit(working_df, 0.75)
+	        proceed = false
+    		while !proceed
+		        if updownsampleYID
+		            working_df = updownsample(all_df, all_df[yID], npercat, downOnly=true);
+		        else
+		            working_df = all_df
+		        end
+		        train, test = TrainTestSplit(working_df, 0.75)
+		        currentmodel = 1
+		        try
 			        for model = 1:length(modelNames)
-			            if modelClass == "logit"
-			                # get AIC, BIC with the original model and an average coefficient with propagated se
-			                if length(AICs[model]) != n_iters
-				                (logit_model, _, accuracy_Sn, accuracy_test, model_results) = build_and_report_logit_model(formulas[model], train, test; modelName=modelNames[model], modelClass="logit", verbose=false)
-				                push!(AICs[model], aic(logit_model))
-				                push!(AICcs[model], aicc(logit_model))
-				                push!(BICs[model], bic(logit_model))
-				                push!(Sn_deviance_explained[model], model_results.deviance_explained[1])
-								push!(deviance_explained[model], model_results.deviance_explained[2])
-				                push!(Sn_accuracy[model], accuracy_Sn)
-				                push!(test_accuracy[model], accuracy_test)
-				                stats_df = get_model_stats(logit_model)
-				                push!(th_names[model], stats_df.th_names)
-				                push!(ths[model], stats_df.th)
-				                push!(se_ths[model], stats_df.se_th)
-				                push!(dofs[model], stats_df.dof)
-			                else
-			                	# println("*************went past number of iters desired, I think this happens when one model fits ok for a sampled dataset, when a later model does not.")# break
-			                end
+			        	currentmodel = model
+			        	if nomodelfits[model] < 1 # if we are trying to fit this model...
+				            if modelClass == "logit"
+				                # get AIC, BIC with the original model and an average coefficient with propagated se
+				                if length(AICs[model]) != n_iters #!= n_iters
+					                (logit_model, _, accuracy_Sn, accuracy_test, model_results) = build_and_report_logit_model(formulas[model], train, test; modelName=modelNames[model], modelClass="logit", verbose=false)
+					                push!(AICs[model], aic(logit_model))
+					                push!(AICcs[model], aicc(logit_model))
+					                push!(BICs[model], bic(logit_model))
+					                push!(Sn_deviance_explained[model], model_results.deviance_explained[1])
+									push!(deviance_explained[model], model_results.deviance_explained[2])
+					                push!(Sn_accuracy[model], accuracy_Sn)
+					                push!(test_accuracy[model], accuracy_test)
+					                stats_df = get_model_stats(logit_model)
+					                push!(th_names[model], stats_df.th_names)
+					                push!(ths[model], stats_df.th)
+					                push!(se_ths[model], stats_df.se_th)
+					                push!(dofs[model], stats_df.dof)
+				                else
+				                	# println("*************went past number of iters desired, I think this happens when one model fits ok for a sampled dataset, when a later model does not.")# break
+				                end
+				            else
+				                error("not implemented for non-logit yet")
+				            end # if logit
 			            else
-			                error("not implemented for non-logit yet")
-			            end
-			        end
-			        retry = false
-		        catch e 
+			            	# println("iter: ", i, " skipping models for:", modelNames[model])
+			            end # if we fit this model
+		            end # for each model
+	            	proceed = true
+	            catch e 
 		        	if isa(e, PosDefException)
-			        	if attempts < maxattempts
+			        	if attempts[currentmodel] < maxattempts
 			        		if !suppressFigures
-			        			println("***PosDefException...retrying. (", attempts, "/", maxattempts, ")")
+			        			# println("***PosDefException @", modelNames[currentmodel], "...retrying. (", attempts[currentmodel], "/", maxattempts, ")")
 		        			end
-			        		retry = true
-			        		attempts = attempts + 1
+			        		# retry = true
+			        		attempts[currentmodel] = attempts[currentmodel] + 1
 			    		else
-			    			println(join(["***PosDefException -- Matrix could not fit after ", attempts, " attempts at up/down sampling. Ignoring this set!"]))
-			    			retry = false
+			    			println(join(["***PosDefException @", modelNames[currentmodel], "-- Matrix could not fit after ", attempts[currentmodel], " attempts at up/down sampling. Ignoring this set!"]))
+			    			# retry = false
 			    			# rethrow()
-			    			nomodelfits = true
+			    			nomodelfits[currentmodel] = 1
 			        	end
 			        else
 			        	println(typeof(e))
@@ -1778,13 +1781,14 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
 			        	warning("YIKES! WEIRD ERROR - could be fit never converged?")
 			        	rethrow()
 		        	end
-		        end
-	        end
-	    end
-    else
-    	nomodelfits = true
+	            end #try/catch model
+	        end # while trying this dataset sampling...
+	    end #for each iter
+    else #if there is no data
+    	nomodelfits = vec(ones(length(modelNames),1))#1#true
     	npercat = 0
-    end
+    end # model fitting
+
     th_summary = DataFrame(modelName=[], composite_th=[], composite_se=[], composite_CImin=[], composite_CImax=[],composite_mdof = [])
     meanAIC = []
     meanAICc = []
@@ -1795,8 +1799,11 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
     mean_deviance_explained = []
     axs = []
     fs = []
-    if nomodelfits
-    	for model = 1:length(modelNames)
+    
+
+	for model = 1:length(modelNames)
+		if nomodelfits[model] == 1
+			# println("no fits for model @", modelNames[model])
     		#
     		#  get d for each model
     		#
@@ -1858,10 +1865,12 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
 			BICs[model] = vec(nanmat(n_iters,1))
 	        Sn_accuracy[model] = vec(nanmat(n_iters,1))
 	        test_accuracy[model] = vec(nanmat(n_iters,1))
+	  #       Sn_deviance_explained[model]= vec(nanmat(n_iters,1))
+			# deviance_explained[model]= vec(nanmat(n_iters,1))
 
-	    end
-    else
-	    for model = 1:length(modelNames)
+	    # end
+		else
+	    # for model = 1:length(modelNames)	    	
 	        result_df = DataFrame(train_dof = [dofs[model][1]], train_ths = [[ths[model][1]]], train_se_ths=[[se_ths[model][1]]])
 	        for i=2:n_iters
 	            append!(result_df, 
@@ -1936,7 +1945,16 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
 
 	f = figure(figsize=(20,3))
     ax1=subplot(1,3,1)
-    std_Sn_dev_explained = compare_AICBIC(mean_deviance_explained_Sn, Sn_deviance_explained; yl="Train Rsq-dev", iters=n_iters, ax=ax1, minmax="max")
+    std_Sn_dev_explained = NaN
+    try
+	    std_Sn_dev_explained = compare_AICBIC(mean_deviance_explained_Sn, Sn_deviance_explained; yl="Train Rsq-dev", iters=n_iters, ax=ax1, minmax="max")
+    catch
+    	warning(join(["Error in deviance_explained"]))
+    	warning(join(["mean_deviance_explained_Sn=", mean_deviance_explained_Sn]))
+    	warning(join(["Correlates:"]))
+    	warning(join(["meanAccuracy_Sn=", meanAccuracy_Sn]))
+    	warning(join(["meanAIC=", meanAIC]))
+    end
     ax1.set_ylim([0., 1.])
     ax2=subplot(1,3,2)
     std_dev_explained = compare_AICBIC(mean_deviance_explained, deviance_explained; yl="Test Rsq-dev", iters=n_iters, ax=ax2, minmax="max")
@@ -2023,10 +2041,17 @@ function compare_AICBIC(meanAIC, AICs; yl="AIC", iters=0, ax=gca(), minmax="min"
     se2ls = Vector{Float64}(undef, 0)
     for i=1:length(meanAIC)
         (CIl, CIu)=getBootCI(AICs[i]; alph=0.05)
-        # se = std(AICs[i])/sqrt(length(AICs[i]))
-        sd = std(AICs[i])
-        se2l = mean(AICs[i]) - 2*std(AICs[i])#/sqrt(length(AICs[i]))
-        se2u = mean(AICs[i]) + 2*std(AICs[i])#/sqrt(length(AICs[i]))
+
+        if !isnan(CIl)
+	        # se = std(AICs[i])/sqrt(length(AICs[i]))
+	        sd = std(AICs[i])
+	        se2l = mean(AICs[i]) - 2*std(AICs[i])#/sqrt(length(AICs[i]))
+	        se2u = mean(AICs[i]) + 2*std(AICs[i])#/sqrt(length(AICs[i]))
+        else
+			sd = NaN
+	        se2l = NaN
+	        se2u = NaN
+        end
         # println("se=",se)
         # println("std=",sd)
         # println("mean=",mean(AICs[i]))
@@ -2047,12 +2072,16 @@ function compare_AICBIC(meanAIC, AICs; yl="AIC", iters=0, ax=gca(), minmax="min"
     # ax2.set_title("se version")
     
     # the best is the min
+    
     if minmax=="min"
-        bestix = findall(x->minimum(meanAIC)==x, meanAIC)
+        bestix = findall(x->minimum(meanAIC)==x, nan2zero(meanAIC, Num=maximum(meanAIC)))
     else
-        bestix = findall(x->maximum(meanAIC)==x, meanAIC)
+        bestix = findall(x->maximum(meanAIC)==x, nan2zero(meanAIC,Num=0.))
     end
-    plot(bestix, meanAIC[bestix], "g*", markersize=20)
+	if !isempty(bestix)
+		plot(bestix, meanAIC[bestix], "g*", markersize=20)
+	end
+
 
     ax.set_xlabel("Model #")
     ax.set_xticks(collect(1:length(meanAIC)))
@@ -2061,18 +2090,32 @@ function compare_AICBIC(meanAIC, AICs; yl="AIC", iters=0, ax=gca(), minmax="min"
     return sds
 end
 function getBootCI(Vec::Vector; alph=0.05)
-	Vec = sort!(Vec)
-    n = length(Vec)
-    minix = round(Int,(alph/2)*n)
-    maxix = round(Int,(1-(alph/2))*n)
-    if minix == 0 #|| isnan(minix)
-    	minix = 1
+	# try
+	# 	sum(isnan.(Vec))
+	# catch
+	# 	warning("Error in getBootCI")
+	# 	warning(join(["Vec =", Vec]))
+	# 	warning(join(["isnan.(Vec) =", isnan.(Vec)]))
+	# 	rethrow()
+	# end
+	if isempty(Vec)
+		CImin = NaN
+		CImax = NaN
+	else
+		if sum(isnan.(Vec)) > 0 # == length(Vec)
+			CImin = NaN
+			CImax = NaN
+		else
+			Vec = sort!(Vec)
+		    n = length(Vec)
+		    minix = round(Int,(alph/2)*n)
+		    maxix = round(Int,(1-(alph/2))*n)
+		    if minix == 0 #|| isnan(minix)
+		    	minix = 1
+		    end
+		    CImin = Vec[minix]
+		    CImax = Vec[maxix]
+	    end
     end
-  #   if isnan(maxix)
-		# maxix = 1
-  #   end
-    CImin = Vec[minix]
-    CImax = Vec[maxix]
-    # println("mean=",mean(Vec), " (", CImin, ", ", CImax, ")")
     return (CImin, CImax)
 end

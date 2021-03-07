@@ -499,7 +499,7 @@ function combine_th_across_sessions(results, compositesavepath, runID,packagenam
     end
     println("Figs saved to:", compositesavepath)
     cd(ret_dir)  
-    return Nothing
+    return th_summary
 end;
 
 # function combine_th_across_sessions(results, compositesavepath, runID,packagename)
@@ -885,11 +885,23 @@ function combine_AICBIC_across_sessions(results, compositesavepath, runID, packa
     ax1=subplot(1,3,1)
     plot_with_CI_max(composite_Sn_dev_explained, CImin_std_Sn_dev_explained, CImax_std_Sn_dev_explained; 
         ax=ax1, ylab=join(["R^2"]), tit=join(["Train Dev Explained nsesh=",n_sesh, " iters=", n_iters]), xl="Model #")
-    ax1.set_ylim([-0.1, 0.2])
+
+    warning("is new")
+    
+    if sum(isnan.(composite_Sn_dev_explained)) == length(composite_Sn_dev_explained) 
+    	ax1.set_ylim([-0.1, 0.2])
+    else
+	    ax1.set_ylim([-0.1, nanmax(composite_Sn_dev_explained) + 0.1])
+    end
     ax2=subplot(1,3,2)
     plot_with_CI_max(composite_dev_explained, CImin_std_dev_explained, CImax_std_dev_explained; 
         ax=ax2, ylab=join(["R^2"]), tit=join(["Test Dev Explained nsesh=",n_sesh, " iters=", n_iters]), xl="Model #")
-    ax2.set_ylim([-0.1, 0.2])
+    # ax2.set_ylim([-0.1, 0.2])
+    if sum(isnan.(composite_dev_explained)) == length(composite_dev_explained) 
+    	ax2.set_ylim([-0.1, 0.2])
+    else
+	    ax2.set_ylim([-0.1, nanmax(composite_dev_explained) + 0.1])
+    end
     ax3=subplot(1,3,3)
     printFigure(join(["composite_DevExpl_summary_nboot", n_iters, "_nsesh", n_sesh]); fig=f, figurePath=compositesavepath)
     #
@@ -930,6 +942,14 @@ function combine_AICBIC_across_sessions(results, compositesavepath, runID, packa
     
 
     cd(ret_dir)
+    # let's return the best model ID for each assessment:
+    return(compositeAICs,
+	compositeAICcs,
+	compositeBICs,
+	composite_Sn_accuracys,
+	composite_accuracys_test,
+	composite_Sn_dev_explained,
+	composite_dev_explained)
 end
 
 
@@ -1063,7 +1083,7 @@ end
 function bootlogit_timeslice_modelpackage2(path; sessionID ="", getpackagename=false, runID=0, suppressFigures=false)
 	warning("timeslice model updated 3-3-2021 for new Hx predictors and updates to error prop...")
 # name the package and runID
-	packagename = join(["bootlogit_timeslice_modelpackage2_",runID])
+	packagename = join(["bl_ts_pkg2_",runID])
 	if getpackagename
 		return packagename
 	end
@@ -1082,7 +1102,9 @@ function bootlogit_timeslice_modelpackage2(path; sessionID ="", getpackagename=f
 	# first, we extract the relevant data: the singletrial, baseline and LOI sets and make a df
 	# (expecting singletrial, baseline, and LOI folders for each dataset with CSV files from matlab)
 	#
-	ndf = extract_data_with_baselineandLOI(path; normalize=true)
+	ndf = extract_data_with_baselineandLOI(path; normalize=true, useHx=true, history_spacing_s = 0.2)
+	ndf[:NoReward_1back] = (ndf[:Rxn_1back] .+ ndf[:Early_1back] .+ ndf[:Reward_1back] .+ ndf[:ITI_1back]) .== 1 
+	ndf[:NoReward_2back] = (ndf[:Rxn_2back] .+ ndf[:Early_2back] .+ ndf[:Reward_2back] .+ ndf[:ITI_2back]) .== 1 
 	#
 	# next, we need to specify binning for our timeslices
 	#. as a start to match the hazard analysis, I'll use 250 ms bins
@@ -1092,7 +1114,165 @@ function bootlogit_timeslice_modelpackage2(path; sessionID ="", getpackagename=f
 	(binned_ndfs, binEdges) = slice_dataframe_into_timebins(ndf, slice_width_ms)
 	# name the timeslices
 	timeslice_names = []
-	for i = 1:length(binned_ndfs)
+	for i = 1:round(Int, 7000 ./slice_width_ms)#length(binned_ndfs)
+		push!(timeslice_names, join(["_", round(Int,1000*binEdges[i]), "-", round(Int,1000*binEdges[i+1])]))
+	end
+	
+
+
+	formulas = [
+			@formula(LickState ~ LickTime_2back),
+		    @formula(LickState ~ LickTime_1back),
+		    @formula(LickState ~ LickTime_2back + LickTime_1back),
+		    @formula(LickState ~ LickTime_2back + LickTime_1back + Y),
+		    # @formula(LickState ~ LickTime_2back + LickTime_1back + Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
+		    @formula(LickState ~ NoReward_2back),
+		    @formula(LickState ~ NoReward_1back),
+		    @formula(LickState ~ NoReward_2back + NoReward_1back),
+		    @formula(LickState ~ LickTime_2back + LickTime_1back + NoReward_2back + NoReward_1back),
+		    @formula(LickState ~ NoReward_2back + NoReward_1back + Y),
+		    # @formula(LickState ~ NoReward_2back + NoReward_1back + Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
+		    @formula(LickState ~ LickTime_2back + LickTime_1back + NoReward_2back + NoReward_1back + Y),
+		    # @formula(LickState ~ LickTime_2back + LickTime_1back + NoReward_2back + NoReward_1back + Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
+		    @formula(LickState ~ Y),
+		   #  @formula(LickState ~ Hx10),
+		   #  @formula(LickState ~ Hx10 + Hx9),
+		   #  @formula(LickState ~ Hx10 + Hx9 + Hx8),
+		   #  @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7),
+		   #  @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6),
+		   #  @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5),
+		  	# @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4),
+		  	# @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3),
+		  	# @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2),
+		  	# @formula(LickState ~ Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
+			]
+
+		modelNames = [
+			"Lt2b",
+		    "Lt1b",
+		    "Lt1b-Lt2b",
+		    "Lt1b-Lt2b-DA",
+		    # "Lt12b-Hx0-2-DA",
+		    "oc2b",
+		    "oc1b",
+		    "oc1b-oc2b",
+		    "Lt12b-oc12b",
+		    "oc1b-oc2b-DA",
+		    # "oc12b-Hx0-2-DA",
+		    "Lt12b-oc12b-DA",
+		    # "Lt12b-oc12b-Hx0-2-DA",
+		    "DA",
+		    # "Hx2s",
+		    # "Hx2s_1-6s",
+		    # "Hx2s_1-4s",
+		    # "Hx2s_1-2s",
+		    # "Hx2s_1s",
+		    # "Hx2s_-8s",
+		    # "Hx2s_-6s",
+		    # "Hx2s_-4s",
+		    # "Hx2s_-2s",
+		    # "Hx2s_-2s_DA",
+		]
+
+		predictors = [
+			[:LickTime_2back],
+		    [:LickTime_1back],
+		    [:LickTime_2back, :LickTime_1back],
+		    [:LickTime_2back, :LickTime_1back, :Y],
+		    # [:LickTime_2back, :LickTime_1back, :Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4, :Hx3, :Hx2, :Y],
+		    [:NoReward_2back],
+		    [:NoReward_1back],
+		    [:NoReward_2back, :NoReward_1back],
+		    [:LickTime_2back, :LickTime_1back, :NoReward_2back, :NoReward_1back],
+		    [:NoReward_2back, :NoReward_1back, :Y],
+		    # [:NoReward_2back, :NoReward_1back, :Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4, :Hx3, :Hx2, :Y],
+		    [:LickTime_2back, :LickTime_1back, :NoReward_2back, :NoReward_1back, :Y],
+		    # [:LickTime_2back, :LickTime_1back, :NoReward_2back, :NoReward_1back, :Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4, :Hx3, :Hx2, :Y],
+		    [:Y],
+		   #  [:Hx10],
+		   #  [:Hx10, :Hx9],
+		   #  [:Hx10, :Hx9, :Hx8],
+		   #  [:Hx10, :Hx9, :Hx8, :Hx7],
+		   #  [:Hx10, :Hx9, :Hx8, :Hx7, :Hx6],
+		   #  [:Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5],
+		  	# [:Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4],
+		  	# [:Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4, :Hx3],
+		  	# [:Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4, :Hx3, :Hx2],
+		  	# [:Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4, :Hx3, :Hx2, :Y],
+			]
+
+	if length(modelNames) != length(formulas)
+		error("Model names and formulas not matched...")
+	end
+
+	nbins = length(binEdges) - 1
+	results = Vector{DataFrame}()
+	for slice = 1:nbins-1
+		progressbar(slice,nbins)
+		println("----------slice: ", timeslice_names[slice])
+		#
+		# Specify the timeslice
+		#
+		modelNames_slice = [join(hcat(modelNames[x], timeslice_names[slice])) for x=1:length(modelNames)]
+		result = modelSelectionByAICBICxval(binned_ndfs[slice], :LickState, formulas, modelNames_slice, "logit"; 
+	    		n_iters=100,updownsampleYID=true, figurePath=figurePath, savePath = savepath, suppressFigures=suppressFigures, slice=timeslice_names[slice])
+		result[:TimeSlice] = [timeslice_names[slice] for _ = 1:nrow(result)]
+		result[:predictors] = predictors
+		push!(results, result)
+	end
+
+	
+
+# make a working result list of dfs with all the results to keep in workspace
+	return results#, ndf
+end
+
+
+
+
+
+
+
+
+function extract_testables_bootlogit_timeslice_modelpackage2(path; sessionID ="", getpackagename=false, runID=0, suppressFigures=false)
+	# THIS JUST LETS US PULL VARIABLES FOR TESTING!!!!!!!!!!!!!
+
+
+
+	warning("timeslice model updated 3-3-2021 for new Hx predictors and updates to error prop...")
+# name the package and runID
+	packagename = join(["bl_ts_pkg2_",runID])
+	if getpackagename
+		return packagename
+	end
+# Try to enter the results folder
+	savepath = joinpath(path, join(["results_", packagename]))
+	figurePath = joinpath(path, join(["figures_", packagename]))
+	try 
+		cd(savepath)
+	catch
+		mkdir(savepath)
+		mkdir(figurePath)
+		cd(savepath)
+	end
+# do the business of the package on this session
+	#
+	# first, we extract the relevant data: the singletrial, baseline and LOI sets and make a df
+	# (expecting singletrial, baseline, and LOI folders for each dataset with CSV files from matlab)
+	#
+	ndf = extract_data_with_baselineandLOI(path; normalize=true, useHx=true, history_spacing_s = 0.2)
+	ndf[:NoReward_1back] = (ndf[:Rxn_1back] .+ ndf[:Early_1back] .+ ndf[:Reward_1back] .+ ndf[:ITI_1back]) .== 1 
+	ndf[:NoReward_2back] = (ndf[:Rxn_2back] .+ ndf[:Early_2back] .+ ndf[:Reward_2back] .+ ndf[:ITI_2back]) .== 1 
+	#
+	# next, we need to specify binning for our timeslices
+	#. as a start to match the hazard analysis, I'll use 250 ms bins
+	#
+	slice_width_ms = 250.#3000.#250.
+	println("slice_width_ms: ", slice_width_ms)
+	(binned_ndfs, binEdges) = slice_dataframe_into_timebins(ndf, slice_width_ms)
+	# name the timeslices
+	timeslice_names = []
+	for i = 1:round(Int, 7000 ./slice_width_ms)#length(binned_ndfs)
 		push!(timeslice_names, join(["_", round(Int,1000*binEdges[i]), "-", round(Int,1000*binEdges[i+1])]))
 	end
 	
@@ -1104,14 +1284,14 @@ function bootlogit_timeslice_modelpackage2(path; sessionID ="", getpackagename=f
 		    @formula(LickState ~ LickTime_2back + LickTime_1back),
 		    @formula(LickState ~ LickTime_2back + LickTime_1back + Y),
 		    @formula(LickState ~ LickTime_2back + LickTime_1back + Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
-		    @formula(LickState ~ Rxn_2back + Early_2back + Reward_2back + ITI_2back),
-		    @formula(LickState ~ Rxn_1back + Early_1back + Reward_1back + ITI_1back),
-		    @formula(LickState ~ Rxn_2back + Early_2back + Reward_2back + ITI_2back + Rxn_1back + Early_1back + Reward_1back + ITI_1back),
-		    @formula(LickState ~ LickTime_2back + LickTime_1back + Rxn_2back + Early_2back + Reward_2back + ITI_2back + Rxn_1back + Early_1back + Reward_1back + ITI_1back),
-		    @formula(LickState ~ Rxn_2back + Early_2back + Reward_2back + ITI_2back + Rxn_1back + Early_1back + Reward_1back + ITI_1back + Y),
-		    @formula(LickState ~ Rxn_2back + Early_2back + Reward_2back + ITI_2back + Rxn_1back + Early_1back + Reward_1back + ITI_1back + Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
-		    @formula(LickState ~ LickTime_2back + LickTime_1back + Rxn_2back + Early_2back + Reward_2back + ITI_2back +Rxn_1back + Early_1back + Reward_1back + ITI_1back + Y),
-		    @formula(LickState ~ LickTime_2back + LickTime_1back + Rxn_2back + Early_2back + Reward_2back + ITI_2back +Rxn_1back + Early_1back + Reward_1back + Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
+		    @formula(LickState ~ NoReward_2back),
+		    @formula(LickState ~ NoReward_1back),
+		    @formula(LickState ~ NoReward_2back + NoReward_1back),
+		    @formula(LickState ~ LickTime_2back + LickTime_1back + NoReward_2back + NoReward_1back),
+		    @formula(LickState ~ NoReward_2back + NoReward_1back + Y),
+		    @formula(LickState ~ NoReward_2back + NoReward_1back + Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
+		    @formula(LickState ~ LickTime_2back + LickTime_1back + NoReward_2back + NoReward_1back + Y),
+		    @formula(LickState ~ LickTime_2back + LickTime_1back + NoReward_2back + NoReward_1back + Hx10 + Hx9 + Hx8 + Hx7 + Hx6 + Hx5 + Hx4 + Hx3 + Hx2 + Y),
 		    @formula(LickState ~ Y),
 		    @formula(LickState ~ Hx10),
 		    @formula(LickState ~ Hx10 + Hx9),
@@ -1152,38 +1332,84 @@ function bootlogit_timeslice_modelpackage2(path; sessionID ="", getpackagename=f
 		    "Hx2s_-2s_DA",
 		]
 
+		predictors = [
+			[:LickTime_2back],
+		    [:LickTime_1back],
+		    [:LickTime_2back, :LickTime_1back],
+		    [:LickTime_2back, :LickTime_1back, :Y],
+		    [:LickTime_2back, :LickTime_1back, :Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4, :Hx3, :Hx2, :Y],
+		    [:NoReward_2back],
+		    [:NoReward_1back],
+		    [:NoReward_2back, :NoReward_1back],
+		    [:LickTime_2back, :LickTime_1back, :NoReward_2back, :NoReward_1back],
+		    [:NoReward_2back, :NoReward_1back, :Y],
+		    [:NoReward_2back, :NoReward_1back, :Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4, :Hx3, :Hx2, :Y],
+		    [:LickTime_2back, :LickTime_1back, :NoReward_2back, :NoReward_1back, :Y],
+		    [:LickTime_2back, :LickTime_1back, :NoReward_2back, :NoReward_1back, :Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4, :Hx3, :Hx2, :Y],
+		    [:Y],
+		    [:Hx10],
+		    [:Hx10, :Hx9],
+		    [:Hx10, :Hx9, :Hx8],
+		    [:Hx10, :Hx9, :Hx8, :Hx7],
+		    [:Hx10, :Hx9, :Hx8, :Hx7, :Hx6],
+		    [:Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5],
+		  	[:Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4],
+		  	[:Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4, :Hx3],
+		  	[:Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4, :Hx3, :Hx2],
+		  	[:Hx10, :Hx9, :Hx8, :Hx7, :Hx6, :Hx5, :Hx4, :Hx3, :Hx2, :Y],
+			]
+
 	if length(modelNames) != length(formulas)
 		error("Model names and formulas not matched...")
 	end
 
 	nbins = length(binEdges) - 1
-	results = Vector{DataFrame}()
-	for slice = 1:nbins-1
-		progressbar(slice,nbins)
-		println("----------slice: ", timeslice_names[slice])
-		#
-		# Specify the timeslice
-		#
-		modelNames_slice = [join(hcat(modelNames[x], timeslice_names[slice])) for x=1:length(modelNames)]
-		result = modelSelectionByAICBICxval(binned_ndfs[slice], :LickState, formulas, modelNames_slice, "logit"; 
-	    		n_iters=100,updownsampleYID=true, figurePath=figurePath, savePath = savepath, suppressFigures=suppressFigures, slice=timeslice_names[slice])
-		result[:TimeSlice] = [timeslice_names[slice] for _ = 1:nrow(result)]
-		push!(results, result)
-	end
+	results = DataFrame(ndf = [ndf],
+		slice_width_ms = [slice_width_ms],
+		binned_ndfs = [binned_ndfs],
+		binEdges = [binEdges],
+		timeslice_names = [timeslice_names],
+		formulas = [formulas],
+		modelNames = [modelNames],
+		predictors = [predictors],
+		nbins = [nbins],
+		figurePath = [figurePath],
+		savepath = [savepath])
 
 	
+	# extract from with:
+	# ndf = variables_r[:ndf][1]
+	# slice_width_ms = variables_r[:slice_width_ms][1]
+	# binned_ndfs = variables_r[:binned_ndfs][1]
+	# binEdges = variables_r[:binEdges][1]
+	# timeslice_names = variables_r[:timeslice_names][1]
+	# formulas = variables_r[:formulas][1]
+	# modelNames = variables_r[:modelNames][1]
+	# predictors = variables_r[:predictors][1]
+	# nbins = variables_r[:nbins][1]
+	# figurePath = variables_r[:figurePath][1]
+	# savepath = variables_r[:savepath][1]
+
 
 # make a working result list of dfs with all the results to keep in workspace
 	return results#, ndf
 end
 
-function bootlogit_timeslice_postprocessingfunction1(results::DataFrame, compositesavepath, modelpackagefunction; runID=0)
+
+
+
+
+
+
+
+
+function bootlogit_timeslice_postprocessingfunction1(results::DataFrame, compositesavepath, modelpackagefunction; runID=0, inclusionthresh=10.)
 	#
 	# Use this to compile the analysis when we have a LIST of result dfs
 	#
 	# name the package and runID
 	packagename = modelpackagefunction(""; sessionID ="", getpackagename=true, runID=runID)
-	
+	println(packagename)
 
 	# do the business of the package on this session
 	# 
@@ -1209,6 +1435,14 @@ function bootlogit_timeslice_postprocessingfunction1(results::DataFrame, composi
 	# println("n-sesh=", nrow(results))
 	by_slice_dfs = []
 	by_slice_composite_ths = []
+
+	compositeAICs = []
+	compositeAICcs = []
+	compositeBICs = []
+	composite_Sn_accuracys = []
+	composite_accuracy_tests = []
+	composite_Sn_dev_explaineds = []
+	composite_dev_explaineds = []
 	for tslice = 1:length(results.results[1])#.results) # for each timeslice
 		slicepath = results.results[1][tslice][:TimeSlice][1] # the timeslice name from session 1 model 1
 		try 
@@ -1231,15 +1465,70 @@ function bootlogit_timeslice_postprocessingfunction1(results::DataFrame, composi
 		# println("		")
 		# println("	tslice=", tslice)
 		th_summary = combine_th_across_sessions(results_df_this_slice, sav_dir, join([runID,slicepath]), packagename)
-		combine_AICBIC_across_sessions(results_df_this_slice, sav_dir, join([runID,slicepath]), packagename)
+		(compositeAIC,
+	compositeAICc,
+	compositeBIC,
+	composite_Sn_accuracy,
+	composite_accuracy_test,
+	composite_Sn_dev_explained,
+	composite_dev_explained) = combine_AICBIC_across_sessions(results_df_this_slice, sav_dir, join([runID,slicepath]), packagename)
 		cd("..")
+		println(names(th_summary))
 		th_summary[:sliceID] = [slicepath for _=1:nrow(th_summary)]
 		push!(by_slice_composite_ths,th_summary)
+
+		push!(compositeAICs, compositeAIC)
+		push!(compositeAICcs, compositeAICc)
+		push!(compositeBICs, compositeBIC)
+		push!(composite_Sn_accuracys, composite_Sn_accuracy)
+		push!(composite_accuracy_tests, composite_accuracy_test)
+		push!(composite_Sn_dev_explaineds, composite_Sn_dev_explained)
+		push!(composite_dev_explaineds, composite_dev_explained)
 	end
-	plot_th_vs_timeslice(by_slice_composite_ths,savedir=sdd)
+	plot_th_vs_timeslice(by_slice_composite_ths,savedir=sdd, inclusionthresh=inclusionthresh)
+
+	plot_composite_AIC_slice(compositeAICs, "AIC", sdd)
+	plot_composite_AIC_slice(compositeAICcs, "AICc", sdd)
+	plot_composite_AIC_slice(compositeBICs, "BIC", sdd)
+	plot_composite_AIC_slice(composite_Sn_accuracys, "Train Accuracy", sdd)
+	plot_composite_AIC_slice(composite_accuracy_tests, "Test Accuracy", sdd)
+	plot_composite_AIC_slice(composite_Sn_dev_explaineds, "Train Dev Explained", sdd)
+	plot_composite_AIC_slice(composite_dev_explaineds, "Test Dev Explained", sdd)
+
 	cd(ret_dir)
-	return by_slice_dfs,by_slice_composite_ths
+	return by_slice_dfs,by_slice_composite_ths, compositeAICs,
+			compositeAICcs,
+			compositeBICs,
+			composite_Sn_accuracys,
+			composite_accuracy_tests,
+			composite_Sn_dev_explaineds,
+			composite_dev_explaineds
 end
+
+function plot_composite_AIC_slice(slices, metricname, compositesavepath)
+	ret_dir = pwd()
+	# pull out all the data for each slice and then get an average
+	modeldata = [[] for _=1:length(slices[1])]
+	for slice in 1:length(slices)
+		for model in 1:length(slices[slice])
+			push!(modeldata[model], slices[slice][model])
+		end
+	end
+	f = figure(figsize=(5,3))
+	for model = 1:length(slices[1])
+		plot(model.*vec(ones(size(modeldata[model]))), modeldata[model], "k.", markersize=10)
+		plot(model, nanmean(modeldata[model]), "r.", markersize=30)
+	end
+	title(join(["composite ", metricname, " across slices"]))
+	xlabel("model #")
+	ylabel(metricname)
+	xticks(1:length(modeldata))
+	xlim([0, length(modeldata)+1])
+	cd(compositesavepath)
+    printFigure(join(["composite_", metricname, "_across_slices_and_sesssions"]); fig=f,figurePath=compositesavepath)
+    cd(ret_dir)  
+end
+
 
 function slice_dataframe_into_timebins(df::DataFrame, slice_width_ms::Float64=250.)
 	
@@ -1355,7 +1644,20 @@ function slice_dataframe_into_timebins(df::DataFrame, slice_width_ms::Float64=25
 end
 
 
-function plot_th_vs_timeslice(by_slice_composite_ths; savedir=pwd())
+function plot_th_vs_timeslice(by_slice_composite_ths; savedir=pwd(), inclusionthresh=10.)
+	include_poor_models = false
+	propagate_error = false
+	if include_poor_models
+		warning("including poor model fits in ths")
+	else
+		warning(join(["excluding ths with more than ", inclusionthresh, " CI"]))
+	end
+	if propagate_error
+		warning("propagating error across timeslices. This may not be appropriate (3/6/2021)")
+	else
+		warning("averaging standard error across timeslices to get the overall ths - this seems approp (3/6/2021)")
+	end
+
     ret_dir=pwd()
     cd(savedir)
     try
@@ -1380,6 +1682,8 @@ function plot_th_vs_timeslice(by_slice_composite_ths; savedir=pwd())
     composite_th_summary = [[] for _=1:nmodels]
     ax = []
     axs2 = []
+    f2s = []
+    my_suptitles = []
     for imodel = 1:nmodels
         for iTimeSlice = 1:nTimeSlices
             push!(ths[imodel], by_slice_composite_ths[iTimeSlice][:composite_th][modelIdxs[imodel]])
@@ -1394,6 +1698,35 @@ function plot_th_vs_timeslice(by_slice_composite_ths; savedir=pwd())
         f = figure(figsize=(d_model*5,2))
         my_suptitle=suptitle(by_slice_composite_ths[1][:modelName][modelIdxs[imodel][1]], y=1.2)
         composite_th_summaries = DataFrame(thID=[], th = [], se_th=[], CImin=[], CImax=[], mdof=[], nslices=[])
+
+        if !include_poor_models
+	    	# first check for all the poorly fitting models. don't include thetas from any where one of the std coeffs is > 10
+	    	goodidx = vec(ones(nTimeSlices,1))
+	    	for iTh = 1:d_model
+
+	    		CImin_i = [CImin[imodel][i_timeslice][iTh] for i_timeslice=1:nTimeSlices]
+	    		# println("model: ", imodel, " iTh", iTh," goodidx: ", goodidx)
+	    		# println("	 CImin_i: ", CImin_i)
+
+	    		for i_timeslice = 1:nTimeSlices
+		    		if abs(CImin_i[i_timeslice]) > inclusionthresh || isnan(CImin_i[i_timeslice])
+		    			goodidx[i_timeslice] = 0.
+	    			end
+    			end
+    			# println(" goodidx now: ", goodidx)
+	    	end
+	    	goodidx = goodidx .== 1.
+	    	# println("model: ", imodel, "goodidx final: ", goodidx)
+        	goodidx = findall(x->x==true, goodidx)#findall(x->abs(x)<10 && !isnan(x), goodidx)\
+        	# println("model: ", imodel, "goodidx final: ", goodidx)
+        	# println(" ")
+	    	# println(". ")
+    	else
+        	# warning("here")
+            goodidx = 1:length(nTimeSlices)#findall(x->abs(x)<10 && !isnan(x), CImin_i)
+            
+    	end
+
         for iTh = 1:d_model
 
             subplot(1,d_model,iTh)
@@ -1431,9 +1764,18 @@ function plot_th_vs_timeslice(by_slice_composite_ths; savedir=pwd())
             #  Get a composite th across slices
             #             
             #    Don't include bad models!!
+            #. Let's try with bad models -- a little funny not to. We are doing ave error so propagation shhould correct this
             #
-            goodidx = findall(x->abs(x)<10 && !isnan(x), CImin_i)
-            (meanTh_c, propagated_se_th_c, CImin_c, CImax_c, mdf_c) = getCompositeTheta(thi[goodidx], se_th_i[goodidx], dof_i[goodidx])
+            
+
+            # println("model=", imodel, " iTh=", iTh, " goodidx=", goodidx, " length(goodidx)=", length(goodidx))
+
+            # trying without propagation of error
+            if propagate_error
+            	(meanTh_c, propagated_se_th_c, CImin_c, CImax_c, mdf_c) = getCompositeTheta(thi[goodidx], se_th_i[goodidx], dof_i[goodidx],; propagate=true)
+            else
+	            (meanTh_c, propagated_se_th_c, CImin_c, CImax_c, mdf_c) = getCompositeTheta(thi[goodidx], se_th_i[goodidx], dof_i[goodidx],; propagate=false)
+            end
             composite_th_summary = DataFrame(thID=join(["th", iTh]), th = meanTh_c, se_th=propagated_se_th_c, CImin=CImin_c, CImax=CImax_c, mdof=mdf_c, nslices=length(goodidx))
             append!(composite_th_summaries,composite_th_summary)
             
@@ -1444,6 +1786,7 @@ function plot_th_vs_timeslice(by_slice_composite_ths; savedir=pwd())
         
         #
         # Don't use any bad models, ie where SE is > 10
+        #	Actually, trying now with those bad models
         #
         thiii = composite_th_summaries.th
         CIminiii = composite_th_summaries.CImin
@@ -1467,11 +1810,21 @@ function plot_th_vs_timeslice(by_slice_composite_ths; savedir=pwd())
         push!(axs2, gca())
         figname = join(["th_across_timeslices_Model_", imodel, "_", timestamp_now(), ".eps"])
         my_suptitle=suptitle(by_slice_composite_ths[1][:modelName][modelIdxs[imodel][1]], y=1.2)
-        f2.savefig(figname, transparent=true, format="eps", bbox_inches="tight",bbox_extra_artists=[my_suptitle])
+        push!(f2s, f2)
+        push!(my_suptitles, my_suptitle)
+        f2.savefig(figname, transparent=true, format="eps", bbox_inches="tight",bbox_extra_artists=my_suptitle)
     end
     set_yaxes_same_scale(ax)
     set_yaxes_same_scale(axs2)
-    cd(ret_dir)
+    
+ #    for i=1:length(f2s)
+ #    	println(i)
+ #    	figname = join(["th_across_timeslices_Model_", i, "_", timestamp_now(), ".eps"])
+ #    	println(figname)
+ #    	println(my_suptitles[i])
+ #    	f2s[i].savefig(figname, transparent=true, format="eps", bbox_inches="tight",bbox_extra_artists=my_suptitles[i])
+	# end
+	cd(ret_dir)
 end
 
 
