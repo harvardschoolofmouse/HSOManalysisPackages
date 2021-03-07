@@ -1083,7 +1083,7 @@ end
 function bootlogit_timeslice_modelpackage2(path; sessionID ="", getpackagename=false, runID=0, suppressFigures=false)
 	warning("timeslice model updated 3-3-2021 for new Hx predictors and updates to error prop...")
 # name the package and runID
-	packagename = join(["bootlogit_timeslice_modelpackage2_",runID])
+	packagename = join(["bl_ts_pkg2_",runID])
 	if getpackagename
 		return packagename
 	end
@@ -1409,7 +1409,7 @@ function bootlogit_timeslice_postprocessingfunction1(results::DataFrame, composi
 	#
 	# name the package and runID
 	packagename = modelpackagefunction(""; sessionID ="", getpackagename=true, runID=runID)
-	
+	println(packagename)
 
 	# do the business of the package on this session
 	# 
@@ -1517,7 +1517,7 @@ function plot_composite_AIC_slice(slices, metricname, compositesavepath)
 	f = figure(figsize=(5,3))
 	for model = 1:length(slices[1])
 		plot(model.*vec(ones(size(modeldata[model]))), modeldata[model], "k.", markersize=10)
-		plot(model, nanmean(modeldata[model]), "r.", markersize=20)
+		plot(model, nanmean(modeldata[model]), "r.", markersize=30)
 	end
 	title(join(["composite ", metricname, " across slices"]))
 	xlabel("model #")
@@ -1682,6 +1682,8 @@ function plot_th_vs_timeslice(by_slice_composite_ths; savedir=pwd(), inclusionth
     composite_th_summary = [[] for _=1:nmodels]
     ax = []
     axs2 = []
+    f2s = []
+    my_suptitles = []
     for imodel = 1:nmodels
         for iTimeSlice = 1:nTimeSlices
             push!(ths[imodel], by_slice_composite_ths[iTimeSlice][:composite_th][modelIdxs[imodel]])
@@ -1808,11 +1810,21 @@ function plot_th_vs_timeslice(by_slice_composite_ths; savedir=pwd(), inclusionth
         push!(axs2, gca())
         figname = join(["th_across_timeslices_Model_", imodel, "_", timestamp_now(), ".eps"])
         my_suptitle=suptitle(by_slice_composite_ths[1][:modelName][modelIdxs[imodel][1]], y=1.2)
-        f2.savefig(figname, transparent=true, format="eps", bbox_inches="tight",bbox_extra_artists=[my_suptitle])
+        push!(f2s, f2)
+        push!(my_suptitles, my_suptitle)
+        f2.savefig(figname, transparent=true, format="eps", bbox_inches="tight",bbox_extra_artists=my_suptitle)
     end
     set_yaxes_same_scale(ax)
     set_yaxes_same_scale(axs2)
-    cd(ret_dir)
+    
+ #    for i=1:length(f2s)
+ #    	println(i)
+ #    	figname = join(["th_across_timeslices_Model_", i, "_", timestamp_now(), ".eps"])
+ #    	println(figname)
+ #    	println(my_suptitles[i])
+ #    	f2s[i].savefig(figname, transparent=true, format="eps", bbox_inches="tight",bbox_extra_artists=my_suptitles[i])
+	# end
+	cd(ret_dir)
 end
 
 
