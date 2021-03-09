@@ -17,6 +17,14 @@ using DelimitedFiles
 using DataFrames
 using Dates
 using CSV
+using MAT
+
+
+function writeMATLAB(Var, FileName)
+	file = matopen(join([FileName, "_",timestamp_now(), ".mat"]), "w")
+	write(file, "Var", Var)
+	close(file)
+end
 
 function refresh_tools(path; exact=false)
     # Extracts dependencies from folder

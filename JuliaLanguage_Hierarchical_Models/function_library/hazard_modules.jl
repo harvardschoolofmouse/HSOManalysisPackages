@@ -217,49 +217,74 @@ function haz_results(haz, lt, ndp_per_sample; normalize=false)
 end
 
 function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normalize=true, figname="", figurePath="")
+    # fig 1 is te normalized hazard true, fit and overlay
     fig=figure(figsize=(12,3))
     axIRT = subplot(1,3,1)
     axHaz = subplot(1,3,2)
     axOverlay = subplot(1,3,3)
+    # fig 2 is a misguided attempt at CI. This will never work
     fig2=figure(figsize=(12,3))
     ax2IRT = subplot(1,3,1)
     ax2Haz = subplot(1,3,2)
     ax2Overlay = subplot(1,3,3)
+    # fig 3 is going to be where we plot the by-animal averages normalized and the grandave.
+    fig3=figure(figsize=(12,3))
+    ax3IRT = subplot(1,3,1)
+    ax3Haz = subplot(1,3,2)
+    ax3Overlay = subplot(1,3,3)
+
+
     meanIRT = []
     meanHaz = []
     goodidx = findall(x->!isnan(x[1]), hazs)
     failidx = findall(x->isnan(x[1]), hazs)
-    for i=1:length(goodidx)
-        
-        ii = goodidx[i]
-        sesh=seshCodes[ii]
-        # get the nanmean of the vectors
-        IRTbyOP = IRT_byOpportunity(lts[ii], edges=0:0.01*ndp_per_sample:17, verbose=false)   
-        xs = range(0.01, step=0.01*ndp_per_sample, stop=7)
-        haz=hazs[ii]
-        if normalize
-            IRTbyOP = (IRTbyOP .- nanmin(IRTbyOP[1:length(xs)])) ./ nanmax((IRTbyOP .- nanmin(IRTbyOP[1:length(xs)]))[1:length(xs)])
-            haz = (haz .- nanmin(haz[1:length(xs)])) ./ nanmax((haz .- nanmin(haz[1:length(xs)]))[1:length(xs)])
-        end
 
-        println(join([seshCodes[ii], " Rsq=", round(Rsq(IRTbyOP[1:length(xs)], haz[1:length(xs)]), digits=3)]))
-        xs = range(0.01, step=0.01*ndp_per_sample, stop=7)
+    # we will store these and save properly to have a matlab-compatible variable
+    normIRTs = nanmat(size(hazs)[1], size(hazs)[2])
+    normhazs = nanmat(size(hazs)[1], size(hazs)[2])
+    for ii=1:size(hazs[1])#length(goodidx)
+        if ii in goodidx
+            # ii = goodidx[i]
+            i = find(x->x==ii, goodidx)
+            sesh=seshCodes[ii]
+            # get the nanmean of the vectors
+            IRTbyOP = IRT_byOpportunity(lts[ii], edges=0:0.01*ndp_per_sample:17, verbose=false)   
+            xs = range(0.01, step=0.01*ndp_per_sample, stop=7)
+            haz=hazs[ii]
+            if normalize
+                IRTbyOP = (IRTbyOP .- nanmin(IRTbyOP[1:length(xs)])) ./ nanmax((IRTbyOP .- nanmin(IRTbyOP[1:length(xs)]))[1:length(xs)])
+                haz = (haz .- nanmin(haz[1:length(xs)])) ./ nanmax((haz .- nanmin(haz[1:length(xs)]))[1:length(xs)])
+            end
+            # need to keep track to plot mean by mouse...
+            normIRTs[ii, :] = IRTbyOP
+            normhazs[ii, :] = haz
 
-        edges=0:0.01*ndp_per_sample:17
-        axIRT.plot(edges[1:length(xs)], IRTbyOP[1:length(xs)], linewidth=0.5, "k-", label=sesh)
-        axHaz.plot(xs, haz[1:length(xs)], "r-", linewidth=0.5,label=sesh)
-        axOverlay.plot(edges[1:length(xs)], IRTbyOP[1:length(xs)], linewidth=0.5, "k-", label=sesh)
-        axOverlay.plot(xs, haz[1:length(xs)], "r-",linewidth=0.5, label=sesh)
+            println(join([seshCodes[ii], " Rsq=", round(Rsq(IRTbyOP[1:length(xs)], haz[1:length(xs)]), digits=3)]))
+            xs = range(0.01, step=0.01*ndp_per_sample, stop=7)
+
+            edges=0:0.01*ndp_per_sample:17
+            axIRT.plot(edges[1:length(xs)], IRTbyOP[1:length(xs)], linewidth=0.5, "k-", label=sesh)
+            axHaz.plot(xs, haz[1:length(xs)], "r-", linewidth=0.5,label=sesh)
+            axOverlay.plot(edges[1:length(xs)], IRTbyOP[1:length(xs)], linewidth=0.5, "k-", label=sesh)
+            axOverlay.plot(xs, haz[1:length(xs)], "r-",linewidth=0.5, label=sesh)
+            
+            if i==1
+                meanIRT = IRTbyOP
+                meanHaz = haz
+            else
+                meanIRT = hcat(meanIRT, IRTbyOP)
+                meanHaz = hcat(meanHaz, haz)
         
-        if i==1
-            meanIRT = IRTbyOP
-            meanHaz = haz
+            end
         else
-            meanIRT = hcat(meanIRT, IRTbyOP)
-            meanHaz = hcat(meanHaz, haz)
-    
+
         end
     end
+
+
+
+
+
     allIRT = meanIRT
     allHaz = meanHaz
     # sort these out to get 95% CI
@@ -272,6 +297,40 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     edges=0:0.01*ndp_per_sample:17
     meanIRT = nanmean_mat(meanIRT, 2)
     meanHaz = nanmean_mat(meanHaz, 2)
+
+
+
+    # now we need to get the by animal situation...
+    names = ["B1", "B2", "B3", "b5", "B6", "H3", "H4", "H5", "h6", "h7", "H14", "H15"]
+    IRTbymouse = nanmat(length(names), size(normIRTs)[2])
+    hazbymouse = nanmat(length(names), size(normhazs)[2])
+    for i = 1:length(names)
+        name = names[i]
+        ix = findall( x -> occursin(name, x), seshcodes)
+
+        IRT_thismouse = normIRTs[ix, :]
+        IRTbymouse[i,:] = IRT_thismouse
+        ax3IRT.plot(edges[1:length(xs)],nanmean_mat(IRT_thismouse, 1)[1:length(xs)], label=name)
+        ax3Overlay.plot(edges[1:length(xs)], nanmean_mat(IRT_thismouse, 1)[1:length(xs)], label=name)
+
+
+        haz_thismouse = normhazs[ix, :]
+        hazbymouse[i,:] = haz_thismouse
+        ax3Haz.plot(edges[1:length(xs)], nanmean_mat(haz_thismouse, 1)[1:length(xs)], label=name)
+        ax3Overlay.plot(edges[1:length(xs)], nanmean_mat(haz_thismouse, 1)[1:length(xs)], label=name)
+
+    end
+    ax3IRT.plot(edges[1:length(xs)], meanIRT[1:length(xs)], "k-", linewidth=3, label="MEAN")
+    ax3Haz.plot(xs, meanHaz[1:length(xs)], "r-", linewidth=3, label="MEAN")
+    ax3Overlay.plot(edges[1:length(xs)], meanIRT[1:length(xs)], "k-", linewidth=3, label="MEAN")
+    ax3Overlay.plot(xs, meanHaz[1:length(xs)], "r-", linewidth=3, label="MEAN")
+    ax3Haz.legend()
+
+
+
+
+
+
 
 
     idxx_min = round(Int,0.025*size(allIRT)[2])
@@ -351,6 +410,28 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
      
     printFigure(join(["haz_results_composite_", figname]); fig=fig,figurePath=figurePath, suptitle=true, h_suptitle=h)
     printFigure(join(["haz_results_CI_composite_", figname]); fig=fig2,figurePath=figurePath, suptitle=true, h_suptitle=h)
+
+    ret_dir = pwd()
+
+    cd(figurePath)
+    # save the new variables...
+    writeMATLAB(allIRT, allIRT)
+    writeMATLAB(allHaz, allHaz)
+    writeMATLAB(meanIRT, meanIRT)
+    writeMATLAB(meanHaz, meanHaz)
+    writeMATLAB(xs, 1:length(xs))
+    writeMATLAB(IRTbymouse, IRTbymouse)
+    writeMATLAB(hazbymouse, hazbymouse)
+    writeMATLAB(names, names)
+    
+
+
+    
+
+
+
+
+    cd(ret_dir)
 end
 function composite_fit_hazard(collated_results; seshNos=[], p_prior=0., ndp_per_sample=50, pre_normalize_p=false, normalize=true, filename="", savepath="")
     
@@ -429,9 +510,46 @@ function composite_fit_hazard(collated_results; seshNos=[], p_prior=0., ndp_per_
     cc=pwd()
     cd(savepath)
     println("saving... \n")
-    CSV.write(join([filename, "_hazs.csv"]), DataFrame(hazs=hazs))
-    CSV.write(join([filename, "_lts.csv"]), DataFrame(lts=lts))
-    CSV.write(join([filename, "_seshCodes.csv"]), DataFrame(seshCodes=seshCodes))
+
+    try
+        writeMATLAB(hazs, hazs)
+        writeMATLAB(lts, lts)
+        writeMATLAB(seshCodes, seshCodes)
+    catch
+        warning("Was not able to write matlab file...check this. Writing CSV instead")
+        CSV.write(join([filename, "_hazs.csv"]), DataFrame(hazs=hazs))
+        CSV.write(join([filename, "_lts.csv"]), DataFrame(lts=lts))
+        CSV.write(join([filename, "_seshCodes.csv"]), DataFrame(seshCodes=seshCodes))
+    end
+    
     cd(cc)
     return (hazs,lts,seshCodes)
+end
+function bootCI_excludenan(Arr, nboot; a=0.05)
+    # replicates are in DIM 1
+    #
+    #  sample x datapoints, e.g., 98 animals x 5000 ms hazard
+    #
+    n = size(Arr)[2]
+    reps = size(Arr)[1]
+    bootData = nanmat(nboot, n)
+
+    # for iboot = 1:nboot
+    idxs = sample(1:reps,n)
+    println(idxs)
+    bootData = Arr[idxs,:]
+    # end
+    ix_min = round(Int, nboot * a/2)
+    ix_max = round(Int, nboot - nboot * a/2)
+    sortedBoot = sort(bootData, dims=1)
+    CImin = sortedBoot[ix_min, :]
+    CImax = sortedBoot[ix_max, :]
+
+    figure(figsize=(5,3))
+    plot(nanmean_mat(Arr, 1),"k-", linewidth=3)
+    plot(nanmean_mat(bootData, 1),"r-", linewidth=1)
+    plot(CImin,"g-", linewidth=1)
+    plot(CImax,"g-", linewidth=1)
+
+
 end
