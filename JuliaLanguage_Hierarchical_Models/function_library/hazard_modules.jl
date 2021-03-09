@@ -364,6 +364,7 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     
     h = fig.suptitle(join(["Mean Rsq=", round(Rsq(meanIRT[1:length(xs)], meanHaz[1:length(xs)]), digits=3)]), y=1.15)
     h2 = fig2.suptitle(join(["Mean Rsq=", round(Rsq(meanIRT[1:length(xs)], meanHaz[1:length(xs)]), digits=3)]), y=1.15)
+    h3 = fig3.suptitle(join(["Mean Rsq=", round(Rsq(meanIRT[1:length(xs)], meanHaz[1:length(xs)]), digits=3)]), y=1.15)
     axIRT.plot(edges[1:length(xs)], meanIRT[1:length(xs)], "k-", linewidth=3, label="MEAN")
     axHaz.plot(xs, meanHaz[1:length(xs)], "r-", linewidth=3, label="MEAN")
     axOverlay.plot(edges[1:length(xs)], meanIRT[1:length(xs)], "k-", linewidth=3, label="MEAN")
@@ -430,7 +431,8 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     println(" ")
      
     printFigure(join(["haz_results_composite_", figname]); fig=fig,figurePath=figurePath, suptitle=true, h_suptitle=h)
-    printFigure(join(["haz_results_CI_composite_", figname]); fig=fig2,figurePath=figurePath, suptitle=true, h_suptitle=h)
+    printFigure(join(["haz_results_CI_composite_", figname]); fig=fig2,figurePath=figurePath, suptitle=true, h_suptitle=h2)
+    printFigure(join(["haz_by_mID_compos_", figname]); fig=fig3,figurePath=figurePath, suptitle=true, h_suptitle=h3)
 
     ret_dir = pwd()
 
