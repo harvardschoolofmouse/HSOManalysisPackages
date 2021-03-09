@@ -243,6 +243,8 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     xs = range(0.01, step=0.01*ndp_per_sample, stop=7)
     normIRTs = nanmat(length(hazs), length(length(xs)))
     normhazs = nanmat(length(hazs), length(length(xs)))
+    println("normIRTs=", size(normIRTs))
+    println("normhazs=", size(normhazs))
     for ii=1:length(hazs)#length(goodidx)
         if ii in goodidx
             # ii = goodidx[i]
@@ -256,6 +258,8 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
                 IRTbyOP = (IRTbyOP .- nanmin(IRTbyOP[1:length(xs)])) ./ nanmax((IRTbyOP .- nanmin(IRTbyOP[1:length(xs)]))[1:length(xs)])
                 haz = (haz .- nanmin(haz[1:length(xs)])) ./ nanmax((haz .- nanmin(haz[1:length(xs)]))[1:length(xs)])
             end
+            println("IRTbyOP=", size(IRTbyOP))
+            println("haz=", size(haz))
             # need to keep track to plot mean by mouse...
             normIRTs[ii, :] = IRTbyOP
             normhazs[ii, :] = haz
