@@ -420,7 +420,7 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
 
     cd(figurePath)
     # save the new variables...
-    plot_xs =1:length(xs)
+    plot_xs =collect(1:length(xs))
     writeMATLAB(allIRT, "allIRT")
     writeMATLAB(allHaz, "allHaz")
     writeMATLAB(meanIRT, "meanIRT")
