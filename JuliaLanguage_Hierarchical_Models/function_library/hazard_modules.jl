@@ -240,8 +240,9 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     failidx = findall(x->isnan(x[1]), hazs)
 
     # we will store these and save properly to have a matlab-compatible variable
-    normIRTs = nanmat(length(hazs), length(hazs[1]))
-    normhazs = nanmat(length(hazs), length(hazs[1]))
+    xs = range(0.01, step=0.01*ndp_per_sample, stop=7)
+    normIRTs = nanmat(length(hazs), length(length(xs)))
+    normhazs = nanmat(length(hazs), length(length(xs)))
     for ii=1:length(hazs)#length(goodidx)
         if ii in goodidx
             # ii = goodidx[i]
