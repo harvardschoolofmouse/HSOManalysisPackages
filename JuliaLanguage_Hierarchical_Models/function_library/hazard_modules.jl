@@ -245,7 +245,7 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     for ii=1:length(hazs)#length(goodidx)
         if ii in goodidx
             # ii = goodidx[i]
-            i = find(x->x==ii, goodidx)
+            i = findall(x->x==ii, goodidx)
             sesh=seshCodes[ii]
             # get the nanmean of the vectors
             IRTbyOP = IRT_byOpportunity(lts[ii], edges=0:0.01*ndp_per_sample:17, verbose=false)   
