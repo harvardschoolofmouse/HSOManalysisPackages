@@ -403,6 +403,17 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     ax2Haz.set_xlabel("time (s)") 
     ax2Overlay.set_xlabel("time (s)") 
     ax2IRT.set_ylabel("normalized hazard") 
+
+    ax3IRT.set_xticks(0:1:7)
+    ax3Haz.set_xticks(0:1:7)
+    ax3Overlay.set_xticks(0:1:7)
+    ax3IRT.set_xlim([0,7])
+    ax3Haz.set_xlim([0,7])
+    ax3Overlay.set_xlim([0,7])
+    ax3IRT.set_xlabel("time (s)") 
+    ax3Haz.set_xlabel("time (s)") 
+    ax3Overlay.set_xlabel("time (s)") 
+    ax3IRT.set_ylabel("normalized hazard") 
     
     # diagnostics:
     println("Good fits included: ")
