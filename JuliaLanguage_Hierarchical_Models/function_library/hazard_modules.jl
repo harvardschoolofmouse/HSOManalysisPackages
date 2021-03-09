@@ -425,7 +425,7 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     writeMATLAB(allHaz, "allHaz")
     writeMATLAB(meanIRT, "meanIRT")
     writeMATLAB(meanHaz, "meanHaz")
-    writeMATLAB(plot_xs, "plot_xs")
+    writeMATLAB(plot_xs, "plotxs")
     writeMATLAB(IRTbymouse, "IRTbymouse")
     writeMATLAB(hazbymouse, "hazbymouse")
     writeMATLAB(names, "names")
