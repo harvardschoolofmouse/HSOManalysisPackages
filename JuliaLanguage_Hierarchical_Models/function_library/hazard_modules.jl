@@ -329,7 +329,7 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     ax3Haz.plot(xs, meanHaz[1:length(xs)], "r-", linewidth=3, label="MEAN")
     ax3Overlay.plot(edges[1:length(xs)], meanIRT[1:length(xs)], "k-", linewidth=3, label="MEAN")
     ax3Overlay.plot(xs, meanHaz[1:length(xs)], "r-", linewidth=3, label="MEAN")
-    ax3Haz.legend(loc="bottom", bbox_to_anchor=(0, 1.3))
+    ax3Haz.legend(loc="lower left", bbox_to_anchor=(0, 1.3))
 
 
 
