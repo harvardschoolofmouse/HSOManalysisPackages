@@ -377,6 +377,10 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     ax2IRT.set_title("True Hazard")
     ax2Haz.set_title("Fit Hazard")
     ax2Overlay.set_title("Overlay")
+
+    ax3IRT.set_title("True Hazard")
+    ax3Haz.set_title("Fit Hazard")
+    ax3Overlay.set_title("Overlay")
     
     
 #     axIRT.legend(loc="bottom", bbox_to_anchor=(0, 1.3))
