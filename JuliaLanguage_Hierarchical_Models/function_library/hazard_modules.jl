@@ -311,7 +311,7 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     hazbymouse = nanmat(length(names), size(normhazs)[2])
     for i = 1:length(names)
         name = names[i]
-        ix = findall( x -> occursin(name, x), seshcodes)
+        ix = findall( x -> occursin(name, x), seshCodes)
 
         IRT_thismouse = normIRTs[ix, :]
         IRTbymouse[i,:] = IRT_thismouse
