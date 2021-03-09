@@ -242,7 +242,7 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     # we will store these and save properly to have a matlab-compatible variable
     normIRTs = nanmat(length(hazs), length(hazs[1]))
     normhazs = nanmat(length(hazs), length(hazs[1]))
-    for ii=1:size(hazs[1])#length(goodidx)
+    for ii=1:length(hazs)#length(goodidx)
         if ii in goodidx
             # ii = goodidx[i]
             i = find(x->x==ii, goodidx)
