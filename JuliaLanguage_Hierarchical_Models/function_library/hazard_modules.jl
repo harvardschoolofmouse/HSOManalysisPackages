@@ -316,20 +316,21 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
         IRT_thismouse = normIRTs[ix, :]
         IRTbymouse[i,:] = nanmean_mat(IRT_thismouse,1)
         ax3IRT.plot(edges[1:length(xs)],nanmean_mat(IRT_thismouse, 1)[1:length(xs)], label=name)
-        ax3Overlay.plot(edges[1:length(xs)], nanmean_mat(IRT_thismouse, 1)[1:length(xs)], label=name)
+        ax3Overlay.plot(edges[1:length(xs)], nanmean_mat(IRT_thismouse, 1)[1:length(xs)], "k-", label=name)
 
 
         haz_thismouse = normhazs[ix, :]
         hazbymouse[i,:] = nanmean_mat(haz_thismouse,1)
         ax3Haz.plot(edges[1:length(xs)], nanmean_mat(haz_thismouse, 1)[1:length(xs)], label=name)
-        ax3Overlay.plot(edges[1:length(xs)], nanmean_mat(haz_thismouse, 1)[1:length(xs)], label=name)
+        ax3Overlay.plot(edges[1:length(xs)], nanmean_mat(haz_thismouse, 1)[1:length(xs)], "r-", label=name)
 
     end
     ax3IRT.plot(edges[1:length(xs)], meanIRT[1:length(xs)], "k-", linewidth=3, label="MEAN")
     ax3Haz.plot(xs, meanHaz[1:length(xs)], "r-", linewidth=3, label="MEAN")
     ax3Overlay.plot(edges[1:length(xs)], meanIRT[1:length(xs)], "k-", linewidth=3, label="MEAN")
     ax3Overlay.plot(xs, meanHaz[1:length(xs)], "r-", linewidth=3, label="MEAN")
-    ax3Haz.legend()
+    ax3Haz.legend(loc="bottom", bbox_to_anchor=(0, 1.3))
+
 
 
 
