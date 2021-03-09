@@ -1734,7 +1734,7 @@ function modelSelectionByAICBICxval(all_df::DataFrame, yID::Symbol, formulas, mo
 			        for model = 1:length(modelNames)
 			        	currentmodel = model
 			        	if nomodelfits[model] < 1 # if we are trying to fit this model...
-				            if modelClass == "logit"
+				            if modelClass == "logit" || modelClass == "probit"
 				                # get AIC, BIC with the original model and an average coefficient with propagated se
 				                if length(AICs[model]) != n_iters #!= n_iters
 					                (logit_model, _, accuracy_Sn, accuracy_test, model_results) = build_and_report_logit_model(formulas[model], train, test; modelName=modelNames[model], modelClass="logit", verbose=false)
