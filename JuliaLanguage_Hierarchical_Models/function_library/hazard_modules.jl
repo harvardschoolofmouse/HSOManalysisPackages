@@ -258,8 +258,8 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
                 IRTbyOP = (IRTbyOP .- nanmin(IRTbyOP[1:length(xs)])) ./ nanmax((IRTbyOP .- nanmin(IRTbyOP[1:length(xs)]))[1:length(xs)])
                 haz = (haz .- nanmin(haz[1:length(xs)])) ./ nanmax((haz .- nanmin(haz[1:length(xs)]))[1:length(xs)])
             end
-            println("IRTbyOP=", size(IRTbyOP))
-            println("haz=", size(haz))
+            # println("IRTbyOP=", size(IRTbyOP))
+            # println("haz=", size(haz))
             # need to keep track to plot mean by mouse...
             normIRTs[ii, :] = IRTbyOP
             normhazs[ii, :] = haz
@@ -314,13 +314,13 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
         ix = findall( x -> occursin(name, x), seshCodes)
 
         IRT_thismouse = normIRTs[ix, :]
-        IRTbymouse[i,:] = IRT_thismouse
+        IRTbymouse[i,:] = nanmean_mat(IRT_thismouse,1)
         ax3IRT.plot(edges[1:length(xs)],nanmean_mat(IRT_thismouse, 1)[1:length(xs)], label=name)
         ax3Overlay.plot(edges[1:length(xs)], nanmean_mat(IRT_thismouse, 1)[1:length(xs)], label=name)
 
 
         haz_thismouse = normhazs[ix, :]
-        hazbymouse[i,:] = haz_thismouse
+        hazbymouse[i,:] = nanmean_mat(haz_thismouse,1)
         ax3Haz.plot(edges[1:length(xs)], nanmean_mat(haz_thismouse, 1)[1:length(xs)], label=name)
         ax3Overlay.plot(edges[1:length(xs)], nanmean_mat(haz_thismouse, 1)[1:length(xs)], label=name)
 
