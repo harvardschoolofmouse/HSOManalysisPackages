@@ -420,6 +420,12 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     ax3Overlay.set_xlabel("time (s)") 
     ax3IRT.set_ylabel("normalized hazard") 
     
+
+    axs3 = [ax3Haz,ax3Overlay,ax3IRT]
+    # set_yaxes_same_scale(axs1)
+    # set_yaxes_same_scale(axs2)
+    set_yaxes_same_scale(axs3)
+
     # diagnostics:
     println("Good fits included: ")
     print("     ")
