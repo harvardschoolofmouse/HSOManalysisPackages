@@ -245,10 +245,10 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
     normhazs = nanmat(length(hazs), length(hazs[1]))
     println("normIRTs=", size(normIRTs))
     println("normhazs=", size(normhazs))
-    for ii=1:length(hazs)#length(goodidx)
-        if ii in goodidx
-            # ii = goodidx[i]
-            i = findall(x->x==ii, goodidx)
+    for i=1:length(goodidx)#length(hazs)#length(goodidx)
+        # if ii in goodidx
+            ii = goodidx[i]
+            # i = findall(x->x==ii, goodidx)
             sesh=seshCodes[ii]
             # get the nanmean of the vectors
             IRTbyOP = IRT_byOpportunity(lts[ii], edges=0:0.01*ndp_per_sample:17, verbose=false)   
@@ -281,9 +281,9 @@ function haz_results_composite(hazs, lts, seshCodes; ndp_per_sample=50, normaliz
                 meanHaz = hcat(meanHaz, haz)
         
             end
-        else
+        # else
 
-        end
+        # end
     end
 
 
