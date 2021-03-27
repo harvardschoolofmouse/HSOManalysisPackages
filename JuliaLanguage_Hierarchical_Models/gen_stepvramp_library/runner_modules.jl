@@ -30,7 +30,7 @@ function run_hierarchy_on_session(inference_function, trial_data::TrialData; ntr
         overlay(render_trace,tr[1:end])
         ax = gca()
         ax.set_title(join(["t=",tNo, " lt=", lt, " p(slope)=", percent_slope]))
-        name = join(["sessionCode_t",tNo, "_lt=", lt, "_pslope=", percent_slope])
+        name = join(["t",tNo, "_p", percent_slope])
         
         printFigure(name; fig=f, figurePath=figpath, verbose=false, suptitle=false, h_suptitle=[])
         close(f)
