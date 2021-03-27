@@ -32,12 +32,34 @@ function pretty_print_list(myList; orient="vertical", digits=3, enum=false)
 	    end
     end
 end;
-function warning(msg::String)
-    red = "\033[1m\033[31m"
-    # println("\x1b[31m\"********************************************************************************************\"\x1b[0m")
-    println(join(["\x1b[31m\"     WARNING: ", msg, "\"\x1b[0m"]))
-    # println("\x1b[31m\"********************************************************************************************\"\x1b[0m")
+function warning(msg)
+# color options :normal, :default, :bold, :black, :blink, :blue, :cyan, :green, :hidden, 
+# :light_black, :light_blue, :light_cyan, :light_green, :light_magenta, :light_red, :light_yellow, 
+# :magenta, :nothing, :red, :reverse, :underline, :white, or :yellow 
+    # red = "\033[1m\033[31m"
+    # # println("\x1b[31m\"********************************************************************************************\"\x1b[0m")
+    # println(join(["\x1b[31m\"     WARNING: ", msg, "\"\x1b[0m"]))
+    # # println("\x1b[31m\"********************************************************************************************\"\x1b[0m")
+    printstyled("! - WARNING:", msg; bold=true, color=:red)
 end
+function warning2(msg)
+    # red = "\033[1m\033[31m"
+    # # println("\x1b[31m\"********************************************************************************************\"\x1b[0m")
+    # println(join(["\x1b[31m\"     WARNING: ", msg, "\"\x1b[0m"]))
+    # # println("\x1b[31m\"********************************************************************************************\"\x1b[0m")
+    printstyled("! - WARNING:", msg; bold=true, color=:red)
+end
+function headsup(msg)
+    # red = "\033[1m\033[31m"
+    # # println("\x1b[31m\"********************************************************************************************\"\x1b[0m")
+    # println(join(["\x1b[31m\"     WARNING: ", msg, "\"\x1b[0m"]))
+    # # println("\x1b[31m\"********************************************************************************************\"\x1b[0m")
+    printstyled("! - ", msg; bold=true, color=:blue)
+end
+function goodnews(msg)
+	printstyled("! - ", msg; bold=true, color=:green)
+end
+
 function progressbar(iter,total)
     done = ["=", "=", "=", "=", "=", "=", "=", "=", "=", "="]
     incomplete = ["-", "-", "-", "-", "-", "-", "-", "-", "-", "-"]

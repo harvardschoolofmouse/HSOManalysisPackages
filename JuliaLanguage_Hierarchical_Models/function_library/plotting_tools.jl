@@ -35,7 +35,7 @@ function render_xy(x, y; t="title", xl="xlabel", yl="ylabel", alph=nothing, ax=n
 	return ax
 end
 
-function render_distribution(data, xl; bins=nothing, t="data", condition="", ax=nothing, normalization="prob", histtype="bar")
+function render_distribution(data::Vector, xl; bins=nothing, t="data", condition="", ax=nothing, normalization="prob", histtype="bar")
     if isnothing(ax)
         figure(figsize=(2,2))
         ax = gca()

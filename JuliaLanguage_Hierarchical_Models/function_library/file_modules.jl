@@ -761,7 +761,7 @@ function truncate_at_cue_and_lickp250(td::TrialData; cbuffer_s=0., lbuffer_s=0,b
 	    	xx_loi = loi_data.xdata[i]
 	    	yy_loi = loi_data.ydata[i]
 	    end
-        if !isnothing(lidx)
+        if !isnothing(lidx) && !isnothing(cidx)
 	        xx = xx[1:lidx]
 	        xx = xx[cidx:end]
 	        yy = yy[1:lidx]
