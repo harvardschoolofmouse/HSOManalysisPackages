@@ -42,12 +42,12 @@ function warning(msg)
     # # println("\x1b[31m\"********************************************************************************************\"\x1b[0m")
     printstyled("! - WARNING:", msg; bold=true, color=:red)
 end
-function warning2(msg)
+function badnews(msg)
     # red = "\033[1m\033[31m"
     # # println("\x1b[31m\"********************************************************************************************\"\x1b[0m")
     # println(join(["\x1b[31m\"     WARNING: ", msg, "\"\x1b[0m"]))
     # # println("\x1b[31m\"********************************************************************************************\"\x1b[0m")
-    printstyled("! - WARNING:", msg; bold=true, color=:red)
+    printstyled("! - SoftERROR:", msg; bold=true, color=:red)
 end
 function headsup(msg)
     # red = "\033[1m\033[31m"

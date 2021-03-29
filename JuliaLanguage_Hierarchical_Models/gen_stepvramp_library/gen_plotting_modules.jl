@@ -1,4 +1,4 @@
-function render_trace(trace; show_data=true, limit_y=true, Alpha=1, ax=nothing)
+function render_trace(trace; show_data=true, limit_y=true, Alpha=1, ax=nothing, suppressAlpha=false)
     xs = get_args(trace)[1]
     xmin = minimum(xs)
     xmax = maximum(xs)
@@ -20,16 +20,26 @@ function render_trace(trace; show_data=true, limit_y=true, Alpha=1, ax=nothing)
         noiseband = trace[:noise]
         noiseband_min = slope *  [xmin, xmax] .+ intercept .- noiseband
         noiseband_max = slope *  [xmin, xmax] .+ intercept .+ noiseband
-        ax.fill_between([xmin, xmax],noiseband_min, noiseband_max, color="grey",alpha=0.1)
-        plot([xmin, xmax], slope *  [xmin, xmax] .+ intercept, color="black", alpha=0.5)
+        if suppressAlpha
+            ax.fill_between([xmin, xmax],noiseband_min, noiseband_max, color="grey")
+            plot([xmin, xmax], slope *  [xmin, xmax] .+ intercept, color="black")
+        else
+            ax.fill_between([xmin, xmax],noiseband_min, noiseband_max, color="grey",alpha=0.1)
+            plot([xmin, xmax], slope *  [xmin, xmax] .+ intercept, color="black", alpha=0.5)
+        end
     catch
         try
             intercept_flat = trace[:intercept_flat]
             noiseband = trace[:noise_flat]
             noiseband_min = intercept_flat .- noiseband
             noiseband_max = intercept_flat .+ noiseband
-            ax.fill_between([xmin, xmax],noiseband_min, noiseband_max, color="grey",alpha=0.1)
-            plot([xmin, xmax], [intercept_flat, intercept_flat], color="black", alpha=0.5)
+            if suppressAlpha
+                ax.fill_between([xmin, xmax],noiseband_min, noiseband_max, color="grey")
+                plot([xmin, xmax], [intercept_flat, intercept_flat], color="black")
+            else
+                ax.fill_between([xmin, xmax],noiseband_min, noiseband_max, color="grey",alpha=0.1)
+                plot([xmin, xmax], [intercept_flat, intercept_flat], color="black", alpha=0.5)
+            end
         catch
             left_segment_amp = trace[:left_segment_amp]
             right_segment_amp = trace[:right_segment_amp]
@@ -40,13 +50,24 @@ function render_trace(trace; show_data=true, limit_y=true, Alpha=1, ax=nothing)
             mean_segment = vec(hcat(ls,rs))
             noiseband_min = mean_segment .- noiseband
             noiseband_max = mean_segment .+ noiseband
-            ax.fill_between(xs, noiseband_min, noiseband_max, color="grey",alpha=0.1)
-            plot(xs, mean_segment, color="black", alpha=0.5)
-            plot(xs, noiseband_min, color="grey", alpha=0.1)
-            plot(xs, noiseband_max, color="grey", alpha=0.1)
+            if suppressAlpha
+                ax.fill_between(xs, noiseband_min, noiseband_max, color="grey")
+                plot(xs, mean_segment, color="black")
+                plot(xs, noiseband_min, color="grey")
+                plot(xs, noiseband_max, color="grey")
+            else
+                ax.fill_between(xs, noiseband_min, noiseband_max, color="grey",alpha=0.1)
+                plot(xs, mean_segment, color="black", alpha=0.5)
+                plot(xs, noiseband_min, color="grey", alpha=0.1)
+                plot(xs, noiseband_max, color="grey", alpha=0.1)
+            end
         end
     end
-    scatter(xs, ys, c="blue", alpha=Alpha)
+    if suppressAlpha
+        scatter(xs, ys, c="blue")
+    else
+        scatter(xs, ys, c="blue", alpha=Alpha)
+    end
     ax.set_xlim((xmin, xmax))
     if limit_y
         ax.set_ylim((ymin, ymax))
@@ -60,9 +81,9 @@ function grid(renderer::Function, traces; ncols=6, nrows=3)
         renderer(trace, Alpha=1)
     end
 end;
-function overlay(renderer, traces; ax=nothing)
+function overlay(renderer, traces; ax=nothing, suppressAlpha=false)
     for i=1:length(traces)
-        renderer(traces[i], Alpha=1/length(traces), ax=ax)
+        renderer(traces[i], Alpha=1/length(traces), ax=ax,suppressAlpha=suppressAlpha)
     end
 end;
 function render_distribution(trace, data; yl="p", xl="data", ax=nothing, xlims=nothing)

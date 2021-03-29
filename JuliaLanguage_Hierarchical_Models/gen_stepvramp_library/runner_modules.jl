@@ -26,10 +26,17 @@ function run_hierarchy_on_session(inference_function, trial_data::TrialData; ntr
         xx = trial_data.xdata[t]
         yy = trial_data.ydata[t]
 #         println(size(xx))
-        (percent_slope, tr, flgs) =inference_function(generate_hierarchical_model_fxn, 
-                (xx,1), yy, ransac_assisted_model_selection_proposal, 
-                (xx,yy); amount_of_computation=amount_of_computation, ntraces=ntraces_per_trial)
-        println("finished inference_function")
+
+        try
+            (percent_slope, tr, flgs) =inference_function(generate_hierarchical_model_fxn, 
+                    (xx,1), yy, ransac_assisted_model_selection_proposal, 
+                    (xx,yy); amount_of_computation=amount_of_computation, ntraces=ntraces_per_trial)
+            println("finished inference_function")
+        catch
+            warning(join(["failed to complete inference function on trial ", t]))
+            badnews(join([e.msg, "!"]))
+            continue
+        end
         # # Plotting takes a long time to render. So let's implement tools to save the figures but not leave them open.
 
         f = figure(figsize=(3,3))
