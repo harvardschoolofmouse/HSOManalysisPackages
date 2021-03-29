@@ -85,7 +85,7 @@ function run_collated_model(collatedPath::String, modelpackagefunction::Function
 	    for i = 1:length(dirs)
 	    	dir = dirs[i]
 	        # println(joinpath(root, dir)) # path to directories
-	        try
+	        # try
 	        	println("-----------------------------------------------")
 	        	println("Processing ", dir, "...(", timestamp_now(), ")")
 	        	print("   ")
@@ -104,12 +104,12 @@ function run_collated_model(collatedPath::String, modelpackagefunction::Function
 	        	if suppressFigures
 	        		close() # closes all the open figures
         		end
-	        catch
-	        	println("	!********* Encountered error! Skipping this directory")
-	        	println("	")
-	        	push!(failDirs, dir)
-	        	rethrow()
-	        end
+	        # catch
+	        # 	println("	!********* Encountered error! Skipping this directory")
+	        # 	println("	")
+	        # 	push!(failDirs, dir)
+	        # 	rethrow()
+	        # end
 	    end
 	    println("-----------------------------------------------")
 	    println("	")
