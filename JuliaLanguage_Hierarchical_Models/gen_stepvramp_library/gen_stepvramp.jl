@@ -612,9 +612,9 @@ end;
         (a,b) = get_beta_params(mean([StatsBase.std(ys[1:step_position]),StatsBase.std(ys[step_position+1:end])])) # want to use a more local estimate of noise
     end
     if isnan(a) || isnan(b)
-        warning(join(["a=", a]))
-        warning(join(["b=", b]))
-        warning(join(["setting noise-step to noise."]))
+        # warning(join(["a=", a]))
+        # warning(join(["b=", b]))
+        # warning(join(["setting noise-step to noise."]))
         noise_step = noise
     else
         noise_step ~ beta(a,b)#sum([y_Q1_std,y_Q4_std])/2)

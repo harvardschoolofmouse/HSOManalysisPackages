@@ -34,7 +34,7 @@ function run_hierarchy_on_session(inference_function, trial_data::TrialData; ntr
             (percent_slope, tr, flgs) =inference_function(generate_hierarchical_model_fxn, 
                     (xx,1), yy, ransac_assisted_model_selection_proposal, 
                     (xx,yy); amount_of_computation=amount_of_computation, ntraces=ntraces_per_trial)
-        catch
+        catch e
             warning(join(["failed to complete inference function on trial ", t]))
             badnews(join([e.msg, "!"]))
             continue
