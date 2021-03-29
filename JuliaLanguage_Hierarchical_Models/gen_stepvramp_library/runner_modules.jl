@@ -11,9 +11,15 @@ function run_hierarchy_on_session(inference_function, trial_data::TrialData; ntr
     rs = []
     sps = []
     flags = []
+
+    function get_t(t)
+        println("starting trial ", t)
+    end
     
     for t = 1:length(trial_data.xdata)
 #         println(t)
+        get_t(t)
+
         progressbar(t,length(trial_data.xdata))
         tNo = trial_data.trialNo[t]
         lt = trial_data.lickTime_s[t]
@@ -23,7 +29,7 @@ function run_hierarchy_on_session(inference_function, trial_data::TrialData; ntr
         (percent_slope, tr, flgs) =inference_function(generate_hierarchical_model_fxn, 
                 (xx,1), yy, ransac_assisted_model_selection_proposal, 
                 (xx,yy); amount_of_computation=amount_of_computation, ntraces=ntraces_per_trial)
-
+        println("finished inference_function")
         # # Plotting takes a long time to render. So let's implement tools to save the figures but not leave them open.
 
         f = figure(figsize=(3,3))
@@ -31,9 +37,13 @@ function run_hierarchy_on_session(inference_function, trial_data::TrialData; ntr
         ax = gca()
         ax.set_title(join(["t=",tNo, " lt=", lt, " p(slope)=", percent_slope]))
         name = join([sessionCode,"_t",tNo])
+
+        println("finished figure")
         
         printFigure(name; fig=f, figurePath=figpath, verbose=false, suptitle=false, h_suptitle=[])
         close(f)
+
+        println("printed figure")
 
 
         push!(p,percent_slope)
@@ -60,6 +70,7 @@ function run_hierarchy_on_session(inference_function, trial_data::TrialData; ntr
         push!(rs, r)
         push!(sps, sp)
         push!(flags, flgs)
+        println("reached end of loop")
     end
 
     results = MR4(sessionCode, modelID, amount_of_computation, ntraces_per_trial, 
