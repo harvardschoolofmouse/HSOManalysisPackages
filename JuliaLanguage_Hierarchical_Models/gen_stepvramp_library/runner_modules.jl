@@ -43,7 +43,7 @@ function run_hierarchy_on_session(inference_function, trial_data::TrialData; ntr
         # # Plotting takes a long time to render. So let's implement tools to save the figures but not leave them open.
 
         f = figure(figsize=(3,3))
-        overlay(render_trace,tr[1:end])
+        overlay(render_trace,tr[1:end], suppressAlpha=true)
         ax = gca()
         ax.set_title(join(["t=",tNo, " lt=", lt, " p(slope)=", percent_slope]))
         name = join([sessionCode,"_t",tNo])
