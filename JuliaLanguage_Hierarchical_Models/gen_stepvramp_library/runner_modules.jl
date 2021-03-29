@@ -27,6 +27,9 @@ function run_hierarchy_on_session(inference_function, trial_data::TrialData; ntr
         yy = trial_data.ydata[t]
 #         println(size(xx))
 
+        percent_slope=NaN
+        tr=[];
+        flgs=[];
         try
             (percent_slope, tr, flgs) =inference_function(generate_hierarchical_model_fxn, 
                     (xx,1), yy, ransac_assisted_model_selection_proposal, 
