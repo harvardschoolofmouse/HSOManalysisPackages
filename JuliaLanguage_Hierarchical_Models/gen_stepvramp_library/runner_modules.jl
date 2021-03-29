@@ -34,7 +34,6 @@ function run_hierarchy_on_session(inference_function, trial_data::TrialData; ntr
             (percent_slope, tr, flgs) =inference_function(generate_hierarchical_model_fxn, 
                     (xx,1), yy, ransac_assisted_model_selection_proposal, 
                     (xx,yy); amount_of_computation=amount_of_computation, ntraces=ntraces_per_trial)
-            println("finished inference_function")
         catch
             warning(join(["failed to complete inference function on trial ", t]))
             badnews(join([e.msg, "!"]))
@@ -48,12 +47,10 @@ function run_hierarchy_on_session(inference_function, trial_data::TrialData; ntr
         ax.set_title(join(["t=",tNo, " lt=", lt, " p(slope)=", percent_slope]))
         name = join([sessionCode,"_t",tNo])
 
-        println("finished figure")
         
         printFigure(name; fig=f, figurePath=figpath, verbose=false, suptitle=false, h_suptitle=[])
         close(f)
 
-        println("printed figure")
 
 
         push!(p,percent_slope)
@@ -80,7 +77,6 @@ function run_hierarchy_on_session(inference_function, trial_data::TrialData; ntr
         push!(rs, r)
         push!(sps, sp)
         push!(flags, flgs)
-        println("reached end of loop")
     end
 
     results = MR4(sessionCode, modelID, amount_of_computation, ntraces_per_trial, 
