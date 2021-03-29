@@ -102,7 +102,7 @@ function hierarchy_v1(path; sessionID ="", getpackagename=false, runID=0, suppre
 
     # Try to enter the results folder
     # savepath = joinpath(path, join(["results_", packagename]))
-    savepath = joinpath(path, "hier_FIGs")
+    savepath = joinpath(path, packagename)
     try 
         cd(savepath)
     catch
