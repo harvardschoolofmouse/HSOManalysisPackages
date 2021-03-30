@@ -34,22 +34,22 @@ function run_hierarchy_on_session(inference_function, trial_data::TrialData; ntr
             (percent_slope, tr, flgs) =inference_function(generate_hierarchical_model_fxn, 
                     (xx,1), yy, ransac_assisted_model_selection_proposal, 
                     (xx,yy); amount_of_computation=amount_of_computation, ntraces=ntraces_per_trial)
+
+            # # Plotting takes a long time to render. So let's implement tools to save the figures but not leave them open.
+
+            f = figure(figsize=(3,3))
+            overlay(render_trace,tr[1:end], suppressAlpha=true)
+            ax = gca()
+            ax.set_title(join(["t=",tNo, " lt=", lt, " p(slope)=", percent_slope]))
+            name = join([sessionCode,"_t",tNo])
+
+            
+            printFigure(name; fig=f, figurePath=figpath, verbose=false, suptitle=false, h_suptitle=[])
+            close(f)
         catch e
-            warning(join(["failed to complete inference function on trial ", t]))
+            warning(join(["failed to complete inference function on trial ", tNo]))
             badnews(join([e.msg, "!"]))
-            continue
         end
-        # # Plotting takes a long time to render. So let's implement tools to save the figures but not leave them open.
-
-        f = figure(figsize=(3,3))
-        overlay(render_trace,tr[1:end], suppressAlpha=true)
-        ax = gca()
-        ax.set_title(join(["t=",tNo, " lt=", lt, " p(slope)=", percent_slope]))
-        name = join([sessionCode,"_t",tNo])
-
-        
-        printFigure(name; fig=f, figurePath=figpath, verbose=false, suptitle=false, h_suptitle=[])
-        close(f)
 
 
 
@@ -81,6 +81,9 @@ function run_hierarchy_on_session(inference_function, trial_data::TrialData; ntr
 
     results = MR4(sessionCode, modelID, amount_of_computation, ntraces_per_trial, 
         p,traces,slopes,intercepts,ls,rs,sps, flags,trial_data.trialNo,trial_data.lickTime_s)
+    println("wrote MR4 results")
+    println("results type=", typeof(results))
+    println(results)
     return results
 end;
 
