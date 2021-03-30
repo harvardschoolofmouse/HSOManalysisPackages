@@ -12,14 +12,8 @@ function run_hierarchy_on_session(inference_function, trial_data::TrialData; ntr
     sps = []
     flags = []
 
-    function get_t(t)
-        println("starting trial ", t)
-    end
     
     for t = 1:length(trial_data.xdata)
-#         println(t)
-        get_t(t)
-
         progressbar(t,length(trial_data.xdata))
         tNo = trial_data.trialNo[t]
         lt = trial_data.lickTime_s[t]
