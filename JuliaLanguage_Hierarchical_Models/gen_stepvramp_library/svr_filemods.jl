@@ -36,7 +36,7 @@ struct MR4
     lick_time::Vector{Float64}
 end
 
-function saveMR4asMAT(data::MR4, path, trim_cue_s, trim_lick_s)
+function saveMR4asMAT(data::MR4, path; trim_cue_s=0.5, trim_lick_s=0.15)
 	headsup("refreshed")
 	retdir = pwd()
 	cd(path)
