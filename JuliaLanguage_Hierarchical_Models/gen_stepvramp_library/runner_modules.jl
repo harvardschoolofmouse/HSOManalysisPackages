@@ -77,7 +77,7 @@ function run_hierarchy_on_session(inference_function, trial_data::TrialData; ntr
         p,traces,slopes,intercepts,ls,rs,sps, flags,trial_data.trialNo,trial_data.lickTime_s)
     println("wrote MR4 results")
     println("results type=", typeof(results))
-    println(results)
+    # println(results)
     return results
 end;
 
@@ -118,7 +118,7 @@ function hierarchy_v1(path; sessionID ="", getpackagename=false, runID=0, suppre
         amount_of_computation=50, 
         figpath=savepath, 
         generate_hierarchical_model_fxn=generate_hierarchical_model);
-    saveMR4asMAT(data_fullmodel, savepath)
+    saveMR4asMAT(data_fullmodel, savepath, trim_cue_s=0.5, trim_lick_s=lb)
 
 
     # Save each variable to our results folder
