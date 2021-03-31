@@ -712,3 +712,12 @@ function test_out_inf(xx,yy)
     println(" ")
     return (percent_slope_test, traces_test)
 end;
+
+@gen function generate_hierarchical_model_steponly(xs, noiseCenter)
+    model_choice_is_slope = {:model_choice_is_slope} ~ bernoulli(0.0)
+    {*} ~ generate_step_model(xs, noiseCenter)
+end;
+@gen function generate_hierarchical_model_ramponly(xs, noiseCenter)
+    model_choice_is_slope = {:model_choice_is_slope} ~ bernoulli(1.0)
+    {*} ~ regression_variable_noise(xs, noiseCenter)
+end;

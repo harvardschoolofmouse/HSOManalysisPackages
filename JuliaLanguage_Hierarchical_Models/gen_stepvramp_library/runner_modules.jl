@@ -82,6 +82,16 @@ function run_hierarchy_on_session(inference_function, trial_data::TrialData; ntr
 end;
 
 
+@gen function generate_hierarchical_model_steponly(xs, noiseCenter)
+    model_choice_is_slope = {:model_choice_is_slope} ~ bernoulli(0.0)
+    {*} ~ generate_step_model(xs, noiseCenter)
+end;
+@gen function generate_hierarchical_model_ramponly(xs, noiseCenter)
+    model_choice_is_slope = {:model_choice_is_slope} ~ bernoulli(1.0)
+    {*} ~ regression_variable_noise(xs, noiseCenter)
+end;
+
+
 
 function hierarchy_v1(path; sessionID ="", getpackagename=false, runID=0, suppressFigures=false)
     #
@@ -118,6 +128,100 @@ function hierarchy_v1(path; sessionID ="", getpackagename=false, runID=0, suppre
         amount_of_computation=50, 
         figpath=savepath, 
         generate_hierarchical_model_fxn=generate_hierarchical_model);
+    saveMR4asMAT(data_fullmodel, savepath, trim_cue_s=0.5, trim_lick_s=lb)
+
+
+    # Save each variable to our results folder
+    
+
+    # make a working result df with all the results to keep in workspace
+    result = DataFrame(savepath=savepath)
+    return result
+end
+
+
+
+function steponly_v1(path; sessionID ="", getpackagename=false, runID=0, suppressFigures=false)
+    #
+    # Use this to build a new analysis
+    #
+    # name the package and runID
+    packagename = join(["steponly_v1_",runID])
+    if getpackagename
+        return packagename
+    end
+
+    # do the business of the package on this session
+    data_single_trial = extract_data(joinpath(path, "singletrial"), blmode=false, LOImode=false)
+    lb = -0.15
+    println("truncating data back: ",lb, "s")
+    data_baseline_trial = extract_data(joinpath(path, "baseline"), blmode=true, LOImode=false);
+    data_LOI_trial = extract_data(joinpath(path, "LOI"), blmode=false, LOImode=true);
+    (data_single_trial,data_baseline_trial,data_LOI_trial) = truncate_at_cue_and_lickp250(data_single_trial; cbuffer_s=0.5, lbuffer_s=lb, bl_data=data_baseline_trial, loi_data=data_LOI_trial);
+    data = data_single_trial;
+
+
+    # Try to enter the results folder
+    # savepath = joinpath(path, join(["results_", packagename]))
+    savepath = joinpath(path, packagename)
+    try 
+        cd(savepath)
+    catch
+        mkdir(savepath)
+        cd(savepath)
+    end
+    data_fullmodel = run_hierarchy_on_session(data_driven_probability_of_model_class, 
+        data; 
+        ntraces_per_trial=20, 
+        amount_of_computation=50, 
+        figpath=savepath, 
+        generate_hierarchical_model_fxn=generate_hierarchical_model_steponly);
+    saveMR4asMAT(data_fullmodel, savepath, trim_cue_s=0.5, trim_lick_s=lb)
+
+
+    # Save each variable to our results folder
+    
+
+    # make a working result df with all the results to keep in workspace
+    result = DataFrame(savepath=savepath)
+    return result
+end
+
+function ramponly_v1(path; sessionID ="", getpackagename=false, runID=0, suppressFigures=false)
+    #
+    # Use this to build a new analysis
+    #
+    # name the package and runID
+    packagename = join(["ramponly_v1_",runID])
+    if getpackagename
+        return packagename
+    end
+
+    # do the business of the package on this session
+    data_single_trial = extract_data(joinpath(path, "singletrial"), blmode=false, LOImode=false)
+    lb = -0.15
+    println("truncating data back: ",lb, "s")
+    data_baseline_trial = extract_data(joinpath(path, "baseline"), blmode=true, LOImode=false);
+    data_LOI_trial = extract_data(joinpath(path, "LOI"), blmode=false, LOImode=true);
+    (data_single_trial,data_baseline_trial,data_LOI_trial) = truncate_at_cue_and_lickp250(data_single_trial; cbuffer_s=0.5, lbuffer_s=lb, bl_data=data_baseline_trial, loi_data=data_LOI_trial);
+    data = data_single_trial;
+
+
+    # Try to enter the results folder
+    # savepath = joinpath(path, join(["results_", packagename]))
+    savepath = joinpath(path, packagename)
+    try 
+        cd(savepath)
+    catch
+        mkdir(savepath)
+        cd(savepath)
+    end
+    data_fullmodel = run_hierarchy_on_session(data_driven_probability_of_model_class, 
+        data; 
+        ntraces_per_trial=20, 
+        amount_of_computation=50, 
+        figpath=savepath, 
+        generate_hierarchical_model_fxn=generate_hierarchical_model_ramponly);
     saveMR4asMAT(data_fullmodel, savepath, trim_cue_s=0.5, trim_lick_s=lb)
 
 
